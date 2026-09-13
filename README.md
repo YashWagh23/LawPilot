@@ -19,7 +19,7 @@ An intelligent, jurisdiction-aware legal assistance platform that deconstructs c
 LawPilot addresses the critical access-to-justice gap between unguided individuals and professional legal counsel by providing:
 - **Document Understanding**: Converting dense legal text into transparent, plain-English findings with standout financial and time-bound obligations.
 - **Risk Identification**: Flagging one-sided covenants, indemnities, and exit penalties.
-- **Jurisdiction-Aware Legal Context**: Grounding analysis in local statutory frameworks (with first-class support for India and Maharashtra state law, plus US/Delaware routing).
+- **Jurisdiction-Aware Legal Context**: India-first legal intelligence grounded in relevant Central Acts and Maharashtra state context where applicable, supported by jurisdiction-detection safeguards that prevent mismatched foreign-law application.
 - **Document Comparison**: Semantically matching clause revisions to detect hidden liabilities and scope shifts.
 - **Grounded Q&A**: Interactive document exploration strictly constrained to verified facts.
 - **Preparation & Action**: Action checklists, counterparty negotiation scripts, and structured attorney intake briefs.
@@ -87,7 +87,7 @@ Extraction (Page-aware raw text extraction via unpdf & mammoth)
 Clause Analysis (Pattern-based heading segmentation & clause categorization)
   │
   ▼
-Jurisdiction (Jurisdiction context detection: India / Central / Maharashtra / Delaware)
+Jurisdiction (Jurisdiction context detection: India / Central / State jurisdiction context)
   │
   ▼
 Legal Research (Targeted statutory grounding against Central & State Acts)
@@ -175,7 +175,7 @@ Action (Deterministic action checklists, negotiation prompts & counsel brief)
 
 - **Informational Legal Scope**: LawPilot is designed for preparation and educational support; it does not replace licensed legal counsel or provide legal representation.
 - **Text Layer Availability**: Documents are assumed to contain machine-readable text layers (standard PDF, DOCX, TXT). Scanned documents without text layers require OCR preprocessing.
-- **Jurisdictional Baseline**: Flagship legal intelligence is grounded in Indian central law (Contract Act, 1872; Specific Relief Act, 1963; Arbitration Act, 1996) and Maharashtra state law, with secondary routing for US/Delaware standards.
+- **Jurisdictional Baseline**: Flagship legal intelligence is grounded in Indian central law (Contract Act, 1872; Specific Relief Act, 1963; Arbitration Act, 1996) and Maharashtra state law, with routing safeguards designed to prevent incorrect legal cross-application.
 - **Extrinsic Facts**: Contract enforceability depends heavily on facts outside the four corners of the document (e.g., actual expenses incurred, employee status, or coercion); LawPilot models these as explicit factual uncertainties rather than asserting legal finality.
 - **Local-First Privacy**: User session actions and chat histories are stored locally in the browser (`localStorage`), enabling zero-auth usage without requiring an account or cloud database write.
 
@@ -185,7 +185,7 @@ Action (Deterministic action checklists, negotiation prompts & counsel brief)
 
 - **No Court Appearances or Formal Filings**: LawPilot does not draft court pleadings or submit formal filings to judicial or administrative bodies.
 - **Document Boundary**: Grounded Q&A answers questions only based on the document text provided; it does not assume external unstated contract terms.
-- **Jurisdictional Boundaries**: Deepest statutory grounding applies to Indian and US common-law frameworks; civil law jurisdictions are handled through general contractual principles.
+- **Jurisdictional Boundaries**: Deepest statutory grounding is India-first, with Maharashtra-aware routing where applicable; legal coverage outside supported jurisdictions is limited and should not be treated as authoritative.
 - **Scanned Image Processing**: Documents containing only rasterized images without text layers cannot be extracted without an OCR conversion pipeline.
 
 ---
@@ -231,7 +231,7 @@ npm test
 - `tests/legal-research-verification.test.ts` (18 tests): Statutory verification, source hierarchy, jurisdiction grounding.
 - `tests/situation-navigator.test.ts` (16 tests): Fact extraction, legal routing, vague input handling, recovery avenues.
 - `tests/document-intelligence.test.ts` (17 tests): Extraction, clause mapping, entity recognition.
-- `tests/jurisdiction-aware-intelligence.test.ts` (12 tests): India/Maharashtra law, Delaware routing, statutory rules.
+- `tests/jurisdiction-aware-intelligence.test.ts` (12 tests): Jurisdiction routing and India/Maharashtra statutory rules.
 - `tests/frictionless-intake-and-demo.test.ts` (12 tests): Demo intake, zero-auth access, sample report integrity.
 - `tests/document-segmentation-robustness.test.ts` (5 tests): Real 4-page PDF extraction, multi-heading patterns.
 - `tests/theme-toggle.test.ts` (11 tests): Dark/light theme state, accessibility, persistence.
