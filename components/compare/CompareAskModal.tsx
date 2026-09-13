@@ -214,18 +214,8 @@ const CompareAskModalContent: React.FC<ModalContentProps> = ({
         {/* Answer Card */}
         {answer && !isLoading && (
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 p-4 space-y-4">
-            {/* Classification */}
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
-                {answer.classification.replace(/_/g, " ")}
-              </span>
-              <span className="text-[10px] text-slate-500">
-                Confidence: {answer.confidence.toUpperCase()}
-              </span>
-            </div>
-
             {/* Main Answer */}
-            <p className="text-xs text-slate-900 dark:text-white leading-relaxed font-medium">
+            <p className="text-xs sm:text-sm text-slate-900 dark:text-white leading-relaxed font-medium">
               {answer.answer}
             </p>
 

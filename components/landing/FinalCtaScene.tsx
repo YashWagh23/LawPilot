@@ -62,12 +62,12 @@ export function FinalCtaScene() {
           <span className="text-slate-300 dark:text-slate-700">·</span>
           <span className="flex items-center gap-1.5">
             <Lock className="w-3.5 h-3.5 text-indigo-500" />
-            Untrusted Memory Isolation Boundary
+            Private & Encrypted Processing
           </span>
           <span className="text-slate-300 dark:text-slate-700">·</span>
           <span className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            100% Free Competition Evaluation
+            Instant Evaluation
           </span>
         </div>
       </div>

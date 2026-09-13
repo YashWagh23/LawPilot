@@ -58,10 +58,10 @@ export function Footer() {
             </h4>
             <ul className="space-y-2.5">
               {[
-                "Untrusted Document Isolation",
-                "Zero Citation Fabrication",
-                "Transparent Uncertainty",
-                "Prompt-Injection Boundary",
+                "Private Document Processing",
+                "Verified Legal Citations",
+                "Clear Uncertainty Boundaries",
+                "Secure Document Sandboxing",
               ].map((label) => (
                 <li key={label} className="text-xs text-slate-500 dark:text-slate-400">
                   {label}

@@ -16,17 +16,13 @@ export const CompareHeader: React.FC<CompareHeaderProps> = ({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-            Pathway 03
-          </span>
-          <span className="text-slate-400 dark:text-slate-600">·</span>
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <GitCompare className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            Semantic Legal Change Analysis
+            Document Comparison
           </span>
           <span className="text-slate-400 dark:text-slate-600">·</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
-            Understand · Verify · Act
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            What Changed
           </span>
         </div>
 

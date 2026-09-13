@@ -31,7 +31,7 @@ const INITIAL_STAGES: StageStatus[] = [
   {
     id: "read",
     name: "Reading document",
-    detail: "Establishing untrusted memory boundary",
+    detail: "Securely reading document",
     status: "pending",
   },
   {
@@ -298,7 +298,7 @@ export default function ReviewPage() {
           </div>
 
           <p className="text-[11px] text-slate-400 text-center pt-1">
-            Server-side prompt-injection boundary enforced · No fake counters
+            Private & confidential · Processed securely
           </p>
         </div>
       ) : selectedFile ? (
@@ -446,8 +446,8 @@ export default function ReviewPage() {
         <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           <Shield className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
           <p>
-            <strong className="text-slate-700 dark:text-slate-300 font-semibold">Untrusted Data Isolation:</strong>{" "}
-            Documents are parsed under strict prompt-injection boundaries. Injected instructions cannot alter model safety rules.
+            <strong className="text-slate-700 dark:text-slate-300 font-semibold">Privacy & Security:</strong>{" "}
+            Your documents are analyzed in private memory and never used to train public AI models.
           </p>
         </div>
 
