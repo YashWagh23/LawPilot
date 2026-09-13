@@ -61,7 +61,7 @@ export default function ComparePage() {
   };
 
   // Load Flagship India Demo pair
-  const handleLoadDemo = () => {
+  const handleLoadDemo = React.useCallback(() => {
     setErrorMessage(null);
     setPreviousDoc({
       file: null,
@@ -83,17 +83,20 @@ export default function ComparePage() {
       setSelectedChange(FLAGSHIP_DEMO_COMPARISON.changes[0]);
     }
     showToast("Loaded sample redline comparison: Candidate Baseline vs HR Redline.");
-  };
+  }, []);
 
   // Support direct ?demo=true or ?demo=1 link loading
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("demo") === "true" || params.get("demo") === "1") {
-        handleLoadDemo();
+        const timer = setTimeout(() => {
+          handleLoadDemo();
+        }, 0);
+        return () => clearTimeout(timer);
       }
     }
-  }, []);
+  }, [handleLoadDemo]);
 
   // Swap PREVIOUS <-> CURRENT versions
   const handleSwapVersions = () => {
