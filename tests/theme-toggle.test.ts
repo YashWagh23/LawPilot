@@ -1,13 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { THEME_STORAGE_KEY } from "@/components/theme/ThemeProvider";
+import {
+  THEME_STORAGE_KEY,
+  THEME_COOKIE_KEY,
+  resolveTheme,
+} from "@/components/theme/ThemeProvider";
 
-describe("Theme System & Toggle Logic", () => {
+describe("Theme System & SSR Cookie Architecture", () => {
   let localStorageMock: Record<string, string> = {};
   let classListSet: Set<string> = new Set();
+  let cookieMock = "";
 
   beforeEach(() => {
     localStorageMock = {};
     classListSet = new Set();
+    cookieMock = "";
 
     vi.stubGlobal("localStorage", {
       getItem: (key: string) => localStorageMock[key] ?? null,
@@ -23,6 +29,12 @@ describe("Theme System & Toggle Logic", () => {
     });
 
     vi.stubGlobal("document", {
+      get cookie() {
+        return cookieMock;
+      },
+      set cookie(val: string) {
+        cookieMock = val;
+      },
       documentElement: {
         classList: {
           add: (cls: string) => classListSet.add(cls),
@@ -33,152 +45,117 @@ describe("Theme System & Toggle Logic", () => {
     });
   });
 
-  it("exports the expected localStorage key", () => {
+  it("exports the expected cookie and storage keys", () => {
     expect(THEME_STORAGE_KEY).toBe("lawpilot-theme");
+    expect(THEME_COOKIE_KEY).toBe("lawpilot-theme");
   });
 
-  it("persists user selected theme to localStorage", () => {
-    localStorage.setItem(THEME_STORAGE_KEY, "light");
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+  describe("Server-Side resolveTheme Utility", () => {
+    it("defaults strictly to light on first visit when cookie is absent or empty", () => {
+      expect(resolveTheme(undefined)).toBe("light");
+      expect(resolveTheme(null)).toBe("light");
+      expect(resolveTheme("")).toBe("light");
+    });
 
-    localStorage.setItem(THEME_STORAGE_KEY, "dark");
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+    it("resolves dark theme when lawpilot-theme cookie is dark", () => {
+      expect(resolveTheme("dark")).toBe("dark");
+    });
+
+    it("resolves light theme when lawpilot-theme cookie is light", () => {
+      expect(resolveTheme("light")).toBe("light");
+    });
+
+    it("sanitizes unexpected or malicious values to default light theme", () => {
+      expect(resolveTheme("auto")).toBe("light");
+      expect(resolveTheme("system")).toBe("light");
+      expect(resolveTheme("<script>alert(1)</script>")).toBe("light");
+      expect(resolveTheme("admin")).toBe("light");
+    });
   });
 
-  it("defaults to light theme on first visit regardless of system preference", () => {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    expect(stored).toBeNull();
+  describe("Client-Side Persistence & Synchronization", () => {
+    it("persists user selected theme to both localStorage and cookie", () => {
+      const updateTheme = (newTheme: "light" | "dark") => {
+        localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+        document.cookie = `${THEME_COOKIE_KEY}=${newTheme}; path=/; max-age=31536000; SameSite=Lax`;
+      };
 
-    // Priority: Saved preference > Default light (NOT system preference > Default light)
-    const resolveEffectiveTheme = (saved: string | null): "light" | "dark" => {
-      if (saved === "dark" || saved === "light") return saved;
-      return "light";
-    };
+      updateTheme("dark");
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+      expect(document.cookie).toContain("lawpilot-theme=dark");
+      expect(document.cookie).toContain("SameSite=Lax");
 
-    expect(resolveEffectiveTheme(stored)).toBe("light");
-  });
+      updateTheme("light");
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+      expect(document.cookie).toContain("lawpilot-theme=light");
+    });
 
-  it("prioritizes stored user preference over default light theme", () => {
-    localStorage.setItem(THEME_STORAGE_KEY, "dark");
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    it("updates DOM classes correctly on theme switch", () => {
+      const applyTheme = (theme: "light" | "dark") => {
+        const root = document.documentElement;
+        if (theme === "dark") {
+          root.classList.add("dark");
+          root.classList.remove("light");
+        } else {
+          root.classList.remove("dark");
+          root.classList.add("light");
+        }
+      };
 
-    const resolveEffectiveTheme = (saved: string | null): "light" | "dark" => {
-      if (saved === "dark" || saved === "light") return saved;
-      return "light";
-    };
+      applyTheme("dark");
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+      expect(document.documentElement.classList.contains("light")).toBe(false);
 
-    expect(resolveEffectiveTheme(stored)).toBe("dark");
+      applyTheme("light");
+      expect(document.documentElement.classList.contains("light")).toBe(true);
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
+    });
 
-    // Switching back to light persists
-    localStorage.setItem(THEME_STORAGE_KEY, "light");
-    expect(resolveEffectiveTheme(localStorage.getItem(THEME_STORAGE_KEY))).toBe("light");
-  });
+    it("generates correct accessible labels depending on theme", () => {
+      const getActionLabel = (theme: "light" | "dark") =>
+        theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
 
-  it("updates DOM classes correctly on theme switch", () => {
-    const applyTheme = (theme: "light" | "dark") => {
-      const root = document.documentElement;
-      if (theme === "dark") {
-        root.classList.add("dark");
-        root.classList.remove("light");
-      } else {
-        root.classList.remove("dark");
-        root.classList.add("light");
-      }
-    };
+      expect(getActionLabel("dark")).toBe("Switch to light mode");
+      expect(getActionLabel("light")).toBe("Switch to dark mode");
+    });
 
-    applyTheme("dark");
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(document.documentElement.classList.contains("light")).toBe(false);
+    it("shows the action icon to transform the theme (Moon in light mode, Sun in dark mode)", () => {
+      const getVisibleIcon = (theme: "light" | "dark") =>
+        theme === "light" ? "moon" : "sun";
 
-    applyTheme("light");
-    expect(document.documentElement.classList.contains("light")).toBe(true);
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  });
+      expect(getVisibleIcon("light")).toBe("moon");
+      expect(getVisibleIcon("dark")).toBe("sun");
+    });
 
-  it("generates correct accessible labels depending on theme", () => {
-    const getActionLabel = (theme: "light" | "dark") =>
-      theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+    it("toggles between dark and light seamlessly", () => {
+      let currentTheme: "light" | "dark" = "dark";
+      const toggle = () => {
+        currentTheme = currentTheme === "dark" ? "light" : "dark";
+        localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+        document.cookie = `${THEME_COOKIE_KEY}=${currentTheme}; path=/; max-age=31536000; SameSite=Lax`;
+      };
 
-    expect(getActionLabel("dark")).toBe("Switch to light mode");
-    expect(getActionLabel("light")).toBe("Switch to dark mode");
-  });
+      expect(currentTheme).toBe("dark");
 
-  it("shows the action icon to transform the theme (Moon in light mode, Sun in dark mode)", () => {
-    const getVisibleIcon = (theme: "light" | "dark") =>
-      theme === "light" ? "moon" : "sun";
+      // Click 1: Dark -> Light
+      toggle();
+      expect(currentTheme).toBe("light");
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+      expect(document.cookie).toContain("lawpilot-theme=light");
 
-    expect(getVisibleIcon("light")).toBe("moon");
-    expect(getVisibleIcon("dark")).toBe("sun");
-  });
+      // Click 2: Light -> Dark
+      toggle();
+      expect(currentTheme).toBe("dark");
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+      expect(document.cookie).toContain("lawpilot-theme=dark");
+    });
 
-  it("toggles between dark and light seamlessly", () => {
-    let currentTheme: "light" | "dark" = "dark";
-    const toggle = () => {
-      currentTheme = currentTheme === "dark" ? "light" : "dark";
-      localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
-    };
-
-    expect(currentTheme).toBe("dark");
-
-    // Click 1: Dark -> Light
-    toggle();
-    expect(currentTheme).toBe("light");
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
-
-    // Click 2: Light -> Dark
-    toggle();
-    expect(currentTheme).toBe("dark");
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
-  });
-
-  it("theme initializer script only accesses the lawpilot-theme key and no secrets", () => {
-    // Audit allowed storage keys accessed by theme initializer
-    const accessedKeys: string[] = [];
-    const spyStorage: Record<string, string> = {
-      "lawpilot-theme": "dark",
-      "GEMINI_API_KEY": "secret-123",
-      "AUTH_TOKEN": "token-456",
-    };
-
-    const auditedGetItem = (key: string) => {
-      accessedKeys.push(key);
-      return spyStorage[key] ?? null;
-    };
-
-    // Simulated theme initializer execution
-    const runThemeInit = (getter: (k: string) => string | null) => {
-      try {
-        const saved = getter("lawpilot-theme");
-        const theme = (saved === "dark" || saved === "light") ? saved : "light";
-        return theme;
-      } catch {
-        return "light";
-      }
-    };
-
-    const result = runThemeInit(auditedGetItem);
-    expect(result).toBe("dark");
-    expect(accessedKeys).toEqual(["lawpilot-theme"]);
-    expect(accessedKeys).not.toContain("GEMINI_API_KEY");
-    expect(accessedKeys).not.toContain("AUTH_TOKEN");
-  });
-
-  it("gracefully falls back to light if localStorage throws (e.g., privacy mode / disabled storage)", () => {
-    const throwingGetItem = () => {
-      throw new Error("SecurityError: The operation is insecure.");
-    };
-
-    const runSafeThemeInit = (getter: () => string | null) => {
-      try {
-        const saved = getter();
-        const theme = (saved === "dark" || saved === "light") ? saved : "light";
-        return theme;
-      } catch {
-        return "light";
-      }
-    };
-
-    const fallbackTheme = runSafeThemeInit(throwingGetItem);
-    expect(fallbackTheme).toBe("light");
+    it("ensures cookie contains only theme value and never exposes secrets", () => {
+      const safeCookie = `${THEME_COOKIE_KEY}=dark; path=/; max-age=31536000; SameSite=Lax`;
+      expect(safeCookie).not.toContain("API_KEY");
+      expect(safeCookie).not.toContain("TOKEN");
+      expect(safeCookie).not.toContain("SECRET");
+      expect(safeCookie).toMatch(/^lawpilot-theme=(light|dark);/);
+    });
   });
 });

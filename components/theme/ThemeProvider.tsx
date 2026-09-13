@@ -9,9 +9,17 @@ import React, {
   useSyncExternalStore,
 } from "react";
 
-export type Theme = "light" | "dark";
-
-export const THEME_STORAGE_KEY = "lawpilot-theme";
+export type { Theme } from "@/lib/theme";
+export {
+  THEME_STORAGE_KEY,
+  THEME_COOKIE_KEY,
+  resolveTheme,
+} from "@/lib/theme";
+import type { Theme } from "@/lib/theme";
+import {
+  THEME_STORAGE_KEY,
+  THEME_COOKIE_KEY,
+} from "@/lib/theme";
 
 interface ThemeContextType {
   theme: Theme;
@@ -22,19 +30,6 @@ interface ThemeContextType {
 
 const emptySubscribe = () => () => {};
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark") return stored;
-    const isDomDark = document.documentElement.classList.contains("dark");
-    if (isDomDark) return "dark";
-    return "light";
-  } catch {
-    return "light";
-  }
-}
-
 const ThemeContext = createContext<ThemeContextType>({
   theme: "light",
   toggleTheme: () => {},
@@ -42,8 +37,14 @@ const ThemeContext = createContext<ThemeContextType>({
   mounted: false,
 });
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+export function ThemeProvider({
+  children,
+  initialTheme = "light",
+}: {
+  children: React.ReactNode;
+  initialTheme?: Theme;
+}) {
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -75,27 +76,50 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Synchronize DOM on initial client mount without transition animation
-  useEffect(() => {
-    applyThemeToDOM(theme, false);
-  }, [applyThemeToDOM, theme]);
+  const persistTheme = useCallback((newTheme: Theme) => {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    } catch {
+      // no-op
+    }
+    try {
+      document.cookie = `${THEME_COOKIE_KEY}=${newTheme}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {
+      // no-op
+    }
+  }, []);
 
   const setTheme = useCallback(
     (newTheme: Theme) => {
       setThemeState(newTheme);
       applyThemeToDOM(newTheme, true);
-      try {
-        localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-      } catch {
-        // no-op
-      }
+      persistTheme(newTheme);
     },
-    [applyThemeToDOM]
+    [applyThemeToDOM, persistTheme]
   );
 
   const toggleTheme = useCallback(() => {
     const nextTheme: Theme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
+  }, [theme, setTheme]);
+
+  // After mount, verify if localStorage has a preference that differs from cookie
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY);
+      if (stored === "dark" || stored === "light") {
+        if (stored !== theme) {
+          requestAnimationFrame(() => {
+            setTheme(stored);
+          });
+          return;
+        }
+      }
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+      document.cookie = `${THEME_COOKIE_KEY}=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {
+      // no-op
+    }
   }, [theme, setTheme]);
 
   return (

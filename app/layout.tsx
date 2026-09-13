@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Script from "next/script";
+import { cookies } from "next/headers";
 import { GlobalDisclaimer } from "@/components/common/GlobalDisclaimer";
 import { Navbar } from "@/components/common/Navbar";
 import { Footer } from "@/components/common/Footer";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import {
+  THEME_COOKIE_KEY,
+  resolveTheme,
+  type Theme,
+} from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,41 +36,22 @@ export const metadata: Metadata = {
   ],
 };
 
-const themeInitializerScript = `
-(function() {
-  try {
-    var saved = localStorage.getItem('lawpilot-theme');
-    var theme = (saved === 'dark' || saved === 'light') ? saved : 'light';
-    var root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    } else {
-      root.classList.remove('dark');
-      root.classList.add('light');
-    }
-  } catch (e) {}
-})();
-`;
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get(THEME_COOKIE_KEY)?.value;
+  const initialTheme: Theme = resolveTheme(themeCookie);
+
   return (
     <html
       lang="en"
-      suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased light`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased ${initialTheme}`}
     >
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-[#0C0E14] dark:text-slate-100 font-sans">
-        <Script
-          id="lawpilot-theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeInitializerScript }}
-        />
-        <ThemeProvider>
+        <ThemeProvider initialTheme={initialTheme}>
           <GlobalDisclaimer />
           <Navbar />
           <main className="flex-1 flex flex-col">{children}</main>

@@ -10,23 +10,10 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
-  const { theme, toggleTheme, mounted } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   const isDark = theme === "dark";
   const label = isDark ? "Switch to light mode" : "Switch to dark mode";
-
-  if (!mounted) {
-    // SSR / pre-hydration placeholder with identical dimensions to prevent layout shift
-    return (
-      <div
-        aria-hidden="true"
-        className={cn(
-          "h-8.5 w-8.5 rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 shadow-2xs shrink-0",
-          className
-        )}
-      />
-    );
-  }
 
   return (
     <button
