@@ -37,6 +37,7 @@ Return: "Jurisdiction required for reliable legal verification."`;
 /**
  * Converts a finding and clause into a precise, issue-specific research question.
  * Never generates vague searches like "Is this clause legal?".
+ * Directly tailored to the governing jurisdiction (e.g. India/Maharashtra vs US/Delaware).
  */
 export function buildPreciseResearchQuestion(
   findingTitle: string,
@@ -47,28 +48,44 @@ export function buildPreciseResearchQuestion(
   const jur = jurisdiction?.trim() || "the designated governing law jurisdiction";
   const lowerTitle = findingTitle.toLowerCase();
   const lowerCat = category.toLowerCase();
+  const isIndia = /india|maharashtra|mumbai|pune/i.test(jur);
 
   if (lowerTitle.includes("non-compete") || lowerTitle.includes("post-employment") || lowerCat.includes("restriction")) {
+    if (isIndia) {
+      return `Under Indian law (Section 27 of the Indian Contract Act, 1872 and Supreme Court jurisprudence such as Percept D'Mark and Niranjan Shankar Golikari), what legal standards govern the validity of post-employment non-compete covenants, and why are post-termination restraints void ab initio?`;
+    }
     return `What legal standards, statutes, or judicial precedents govern the enforceability and geographic/temporal reasonableness of post-employment non-compete restrictions for employees under ${jur}?`;
   }
 
   if (lowerTitle.includes("training") || lowerTitle.includes("reimbursement") || lowerTitle.includes("clawback") || lowerCat.includes("payment")) {
+    if (isIndia) {
+      return `Under Section 74 of the Indian Contract Act, 1872 and Indian judicial precedents (Fateh Chand, Kailash Nath Associates), what requirements govern the enforceability of employee training bonds and liquidated damages, and why is actual reasonable loss required?`;
+    }
     return `What statutory provisions or wage deduction rules govern the enforceability of employee training expense reimbursement agreements and wage offsets upon early departure under ${jur}?`;
   }
 
   if (lowerTitle.includes("invention") || lowerTitle.includes("intellectual property") || lowerTitle.includes("ip assignment")) {
+    if (isIndia) {
+      return `Under the Indian Copyright Act, 1957 (Section 17(c)) and Indian IP principles, what are the statutory limits of employer ownership for works created in the course of employment versus independent personal projects developed without company resources?`;
+    }
     return `What legal principles and statutory limits govern employee invention assignments, particularly regarding off-duty creations and carve-outs for prior works under ${jur}?`;
   }
 
   if (lowerTitle.includes("arbitration") || lowerTitle.includes("dispute") || lowerTitle.includes("fee")) {
+    if (isIndia) {
+      return `Under the Indian Arbitration and Conciliation Act, 1996 and Supreme Court decisions (Perkins Eastman Architects DVM), is a clause granting one party the unilateral right to appoint a sole arbitrator legally valid?`;
+    }
     return `What statutory rules, forum fee-shifting restrictions, or unconscionability standards apply to mandatory employment arbitration provisions under ${jur}?`;
   }
 
   if (lowerTitle.includes("notice") || lowerTitle.includes("termination")) {
+    if (isIndia) {
+      return `Under Indian employment law and the Maharashtra Shops and Establishments Act, 2017, what legal standards govern employee resignation notice periods and salary deductions for unserved notice?`;
+    }
     return `Under ${jur}, how do notice of resignation obligations interact with employment-at-will principles and mutuality requirements?`;
   }
 
-  return `What specific statutory, regulatory, or common-law authorities govern ${findingTitle} under ${jur}?`;
+  return `What specific statutory, regulatory, or judicial authorities govern ${findingTitle} under ${jur}?`;
 }
 
 /**

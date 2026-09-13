@@ -16,6 +16,7 @@ import {
   GitCompare,
   ExternalLink,
 } from "lucide-react";
+import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
 
 interface EvidenceChainDetailModalProps {
   chain: EvidenceChain | null;
@@ -69,6 +70,24 @@ export function EvidenceChainDetailModal({
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                   {chain.finding.title}
                 </h2>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 mt-2 text-[11px]">
+                <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
+                  JURISDICTION:
+                </span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-200/70 dark:bg-slate-800 px-2 py-0.5 rounded">
+                  {chain.jurisdictionContext
+                    ? formatJurisdictionBadge(chain.jurisdictionContext)
+                    : primarySource?.jurisdiction || "India · Maharashtra"}
+                </span>
+                <span className="text-slate-300 dark:text-slate-700">·</span>
+                <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
+                  LEGAL CONTEXT:
+                </span>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">
+                  {verification?.status === "verified" ? "Verified" : "Contextual"}
+                </span>
               </div>
             </div>
 

@@ -14,34 +14,50 @@ import type {
   SituationAssessment,
 } from "@/types";
 
+/**
+ * Flagship Demo Document Metadata (India-First: Kavach Dynamics & Rohan Sharma)
+ */
 export const SAMPLE_DOCUMENT_METADATA: DocumentMetadata = {
   id: "demo-employment-agreement",
   title: "Employment & Proprietary Inventions Agreement",
   documentType: "employment_agreement",
-  jurisdiction: "Delaware, USA",
-  governingLaw: "State of Delaware",
-  effectiveDate: "2026-05-01",
+  jurisdiction: "India",
+  governingLaw: "Laws of the Republic of India and exclusive jurisdiction of the Courts in Mumbai, Maharashtra",
+  jurisdictionContext: {
+    country: "India",
+    stateOrUT: "Maharashtra",
+    governingLaw: "Laws of the Republic of India",
+    confidence: "high",
+    source: "document",
+    evidence: [
+      "Section 12 explicitly designates the laws of the Republic of India and submits to the exclusive jurisdiction of the competent courts in Mumbai, Maharashtra.",
+      "Corporate Address: Platina Tower, Bandra-Kurla Complex (BKC), Bandra (East), Mumbai, Maharashtra 400051.",
+      "Statutory & Regulatory Citations: Indian Contract Act, 1872 (§§ 27 & 74), Copyright Act, 1957 (§ 17(c)), and Arbitration and Conciliation Act, 1996 (§§ 11 & 12(5)).",
+      "Currency & Entity Structure: Denominated in INR (₹) and executed by an Indian Private Limited Company (Pvt. Ltd.).",
+    ],
+  },
+  effectiveDate: "2026-06-01",
   pageCount: 3,
-  wordCount: 1250,
-  uploadedAt: "2026-03-12T10:00:00Z",
-  fileName: "employment_agreement_demo.pdf",
-  fileSizeBytes: 64200,
+  wordCount: 1320,
+  uploadedAt: "2026-06-01T10:00:00Z",
+  fileName: "employment_agreement_india_demo.pdf",
+  fileSizeBytes: 68400,
   isUntrustedContent: true,
   parties: [
     {
-      id: "party-aegis",
-      name: "Aegis Cloud Dynamics Inc.",
+      id: "party-kavach",
+      name: "Kavach Dynamics Technologies Private Limited",
       role: "Employer",
-      address: "100 Innovation Way, Suite 400, Dover, DE",
-      jurisdiction: "Delaware",
+      address: "Platina Tower, Level 8, Bandra-Kurla Complex (BKC), Bandra (East), Mumbai, Maharashtra 400051",
+      jurisdiction: "Maharashtra, India",
       representationStatus: "represented",
     },
     {
-      id: "party-alex",
-      name: "Alex Morgan",
+      id: "party-rohan",
+      name: "Rohan Sharma",
       role: "Employee",
-      address: "Dover, Delaware",
-      jurisdiction: "Delaware",
+      address: "Kalyani Nagar, Pune, Maharashtra 411006",
+      jurisdiction: "Maharashtra, India",
       representationStatus: "unrepresented",
     },
   ],
@@ -50,21 +66,21 @@ export const SAMPLE_DOCUMENT_METADATA: DocumentMetadata = {
 export const SAMPLE_FINANCIAL_TERMS: KeyFinancialTerm[] = [
   {
     id: "fin-salary",
-    label: "Annual Base Salary",
-    amount: 145000,
-    formattedAmount: "$145,000 / year",
-    currency: "USD",
+    label: "Annual Base Salary (Cost to Company - CTC)",
+    amount: 3200000,
+    formattedAmount: "₹32,00,000 / year",
+    currency: "INR",
     category: "salary",
-    conditions: "Payable in semi-monthly installments per standard payroll schedule",
+    conditions: "Payable in monthly installments in accordance with standard payroll schedule, subject to statutory EPF and tax deductions",
   },
   {
     id: "fin-training-reimbursement",
-    label: "Early Departure Training Fee Reimbursement",
-    amount: 18500,
-    formattedAmount: "$18,500",
-    currency: "USD",
+    label: "Early Departure Training Bond Repayment",
+    amount: 450000,
+    formattedAmount: "₹4,50,000",
+    currency: "INR",
     category: "reimbursement",
-    conditions: "Payable immediately if Employee resigns within twelve (12) months of Effective Date",
+    conditions: "Stipulated liquidated damages payable immediately if Employee resigns or departs within eighteen (18) months of Effective Date",
   },
 ];
 
@@ -72,27 +88,27 @@ export const SAMPLE_KEY_DATES: KeyDate[] = [
   {
     id: "date-effective",
     label: "Effective Date",
-    date: "2026-05-01",
-    description: "Commencement of employment and accrual of rights/obligations",
+    date: "2026-06-01",
+    description: "Commencement of employment tenure, intellectual property assignment, and contractual covenants",
   },
   {
     id: "date-probation",
     label: "Probationary Evaluation Period",
-    date: "2026-07-30",
+    date: "2026-08-30",
     description: "Initial ninety (90) calendar days performance evaluation window",
     noticePeriodDays: 90,
   },
   {
     id: "date-resignation-notice",
     label: "Resignation Notice Window",
-    description: "Mandatory advance written notice required prior to voluntary departure",
-    noticePeriodDays: 60,
+    description: "Mandatory advance written notice required prior to voluntary departure (or salary in lieu thereof)",
+    noticePeriodDays: 90,
   },
   {
     id: "date-retention-threshold",
-    label: "Training Fee Reimbursement Expiration",
-    date: "2027-04-30",
-    description: "12-month tenure threshold after which the $18,500 training reimbursement expires",
+    label: "Training Bond Repayment Expiration",
+    date: "2027-11-30",
+    description: "18-month tenure threshold after which the ₹4,50,000 training bond obligation lapses entirely",
   },
 ];
 
@@ -100,11 +116,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-1",
     section: "Section 1",
-    title: "Position and Duties",
+    title: "Position, Reporting, and Full-Time Devotion",
     rawText:
-      "Employer hereby employs Employee, and Employee hereby accepts employment with Employer, in the position of Senior Distributed Systems Architect. Employee shall report to the Chief Technology Officer and shall devote full business time, attention, and energies to the performance of duties assigned by Employer.",
+      "The Company hereby employs the Employee, and the Employee hereby accepts employment with the Company, in the position of Senior Distributed Systems Architect. The Employee shall report directly to the Chief Technology Officer at the Company's Mumbai headquarters and shall devote whole business time, attention, and professional energies exclusively to the business and affairs of the Company.",
     plainEnglish:
-      "You are hired as Senior Distributed Systems Architect reporting to the CTO. You must work exclusively for the company during business hours.",
+      "You are hired as Senior Distributed Systems Architect reporting to the CTO in Mumbai. You must work exclusively for the company during your employment.",
     category: "employment",
     pageNumber: 1,
     importance: "informational",
@@ -113,11 +129,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-2",
     section: "Section 2",
-    title: "Compensation and Benefits",
+    title: "Compensation, Cost to Company, and Statutory Benefits",
     rawText:
-      "As full compensation for all services rendered, Employer shall pay Employee an annual base salary of $145,000 (One Hundred Forty-Five Thousand U.S. Dollars), payable in semi-monthly installments in accordance with Employer's standard payroll schedule. Employee shall be entitled to participate in customary health and retirement benefits.",
+      "As full remuneration for all services rendered under this Agreement, the Company shall pay to the Employee a total Cost-to-Company (CTC) of INR 32,00,000 (Rupees Thirty-Two Lakhs only) per annum, payable in equal monthly installments subject to statutory deductions including Employees' Provident Fund (EPF) and applicable income tax withholding under the Income Tax Act, 1961.",
     plainEnglish:
-      "Your base pay is $145,000 per year paid twice a month, plus standard company health and retirement benefits.",
+      "Your annual compensation (CTC) is ₹32,00,000 paid monthly, minus customary taxes and provident fund (EPF) deductions.",
     category: "payment",
     pageNumber: 1,
     importance: "informational",
@@ -128,9 +144,9 @@ export const SAMPLE_CLAUSES: Clause[] = [
     section: "Section 3",
     title: "Probationary Evaluation Period",
     rawText:
-      "Employee's initial employment shall be subject to a probationary evaluation period of ninety (90) calendar days commencing on the Effective Date. During this probationary period, Employer shall evaluate Employee's performance and suitability for continued tenure.",
+      "The Employee's tenure shall commence with a probationary evaluation period of ninety (90) calendar days from the Effective Date. During such probationary period, the Company shall assess the Employee's technical performance and suitability for regular employment confirmation.",
     plainEnglish:
-      "The first 90 days are a probationary evaluation window during which the company monitors performance.",
+      "The first 90 days are a probationary evaluation window during which the company reviews your performance before final confirmation.",
     category: "employment",
     pageNumber: 1,
     importance: "context_dependent",
@@ -139,11 +155,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-5",
     section: "Section 5",
-    title: "Resignation and Notice Period",
+    title: "Resignation Notice Period and Recovery",
     rawText:
-      "In order to ensure continuity of distributed infrastructure operations, Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
+      "To ensure operational continuity of core distributed banking infrastructure, the Employee agrees to provide not less than ninety (90) calendar days advance written notice prior to any voluntary resignation. In the event the Employee seeks immediate departure without serving the full notice window, the Company reserves the absolute right to deduct salary in lieu of notice from full and final settlement.",
     plainEnglish:
-      "You must give at least 60 calendar days written notice before resigning, rather than the customary 14 days (two weeks).",
+      "You must provide at least 90 calendar days (3 months) written notice before resigning. If you leave early, the company claims the right to deduct unserved notice pay from your final settlement.",
     category: "notice",
     pageNumber: 1,
     importance: "review",
@@ -152,11 +168,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-6",
     section: "Section 6",
-    title: "Early Departure & Training Fee Reimbursement",
+    title: "Early Departure & Specialized Training Bond",
     rawText:
-      "In consideration of Employer providing specialized proprietary cloud orchestration training valued at $18,500 during the initial months of tenure, Employee agrees that if Employee resigns or departs employment for any reason prior to completing twelve (12) full months of service from the Effective Date, Employee shall immediately repay to Employer the full sum of $18,500 as reimbursement for specialized training expenses, and Employer is authorized to deduct any unpaid balance from final wages.",
+      "In consideration of the Company providing proprietary enterprise cloud architecture training valued at INR 4,50,000 during the initial tenure, the Employee covenants that if the Employee resigns or departs from service for any reason prior to completing eighteen (18) continuous months from the Effective Date, the Employee shall immediately reimburse to the Company the fixed sum of INR 4,50,000 (Rupees Four Lakh Fifty Thousand only) as liquidated damages and training expense recovery, and the Company is irrevocably authorized to deduct such amount from the Employee's accrued salary, earned leave encashment, and terminal dues.",
     plainEnglish:
-      "If you leave or resign for any reason within your first 12 months, you must immediately pay back $18,500 for training, and the company claims the right to take it out of your final paycheck.",
+      "If you resign for any reason within your first 18 months, you must pay back a flat ₹4,50,000 for training, and the company claims the right to deduct it directly from your final salary settlement.",
     category: "payment",
     pageNumber: 2,
     importance: "high_attention",
@@ -165,11 +181,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-7",
     section: "Section 7",
-    title: "Confidential Information",
+    title: "Confidentiality and Trade Secrets",
     rawText:
-      "Employee shall hold in strict confidence all proprietary technical data, customer lists, architectural schematics, source code, and trade secrets of Employer. This non-disclosure obligation shall survive indefinitely following termination of employment.",
+      "The Employee shall hold in strict secrecy all proprietary algorithms, system schematics, cryptographic architectures, customer datasets, and business trade secrets of the Company. This obligation of confidentiality shall survive indefinitely following the cessation of employment.",
     plainEnglish:
-      "You cannot share company secrets, technical designs, or customer data with anyone, even after you leave the company.",
+      "You cannot disclose or share company trade secrets, system architecture, or customer data with anyone, even after you leave.",
     category: "confidentiality",
     pageNumber: 2,
     importance: "context_dependent",
@@ -178,11 +194,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-8",
     section: "Section 8",
-    title: "Comprehensive Inventions Assignment",
+    title: "Comprehensive Intellectual Property Assignment",
     rawText:
-      "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions, designs, software, improvements, and discoveries conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
+      "The Employee hereby irrevocably assigns and transfers to the Company all right, title, and interest throughout the world in and to any and all software code, inventions, discoveries, architectural designs, algorithms, and improvements conceived, authored, or reduced to practice during the term of employment, whether or not during regular working hours, and whether or not utilizing Company hardware, servers, or facilities.",
     plainEnglish:
-      "The company claims ownership of everything you invent or program while employed, even if you created it on your own personal time without using company computers.",
+      "The company claims complete ownership of everything you program or invent while employed, even software written on your own personal laptop outside work hours.",
     category: "intellectual_property",
     pageNumber: 2,
     importance: "high_attention",
@@ -191,11 +207,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-9",
     section: "Section 9",
-    title: "Post-Employment Restrictive Covenants",
+    title: "Post-Employment Restrictive Covenant (Non-Compete)",
     rawText:
-      "For a period of twelve (12) months following the termination of employment for any reason, Employee shall not, within a fifty (50) mile radius of Employer's corporate headquarters, directly or indirectly engage in, perform services for, consult with, or acquire an equity interest in any business entity providing competing cloud infrastructure or distributed systems orchestration services.",
+      "For a period of twelve (12) months following termination of employment for any reason whatsoever, the Employee shall not, anywhere within the territory of the Republic of India, directly or indirectly engage in, perform consulting or engineering services for, advise, or hold equity in any enterprise, company, or startup offering competing distributed cloud infrastructure or high-throughput financial database systems.",
     plainEnglish:
-      "For 1 year after leaving, you cannot work for or advise any competing cloud infrastructure company located within 50 miles of company headquarters.",
+      "For 1 full year after leaving, the contract says you cannot work for or advise any competing cloud or database technology company anywhere in India.",
     category: "restriction",
     pageNumber: 2,
     importance: "high_attention",
@@ -204,11 +220,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-11",
     section: "Section 11",
-    title: "Mandatory Binding Arbitration",
+    title: "Dispute Resolution & Unilateral Arbitrator Appointment",
     rawText:
-      "Any dispute, claim, or controversy arising out of or relating to this Agreement, including claims of wrongful termination or compensation disputes, shall be resolved exclusively through final and binding arbitration administered by the American Arbitration Association in Dover, Delaware. Each party shall bear its own attorneys' fees and administrative arbitration costs regardless of outcome. Employee expressly waives any right to participate in a class or representative action.",
+      "Any dispute, controversy, or claim arising out of or relating to this Agreement shall be resolved through final and binding arbitration in Mumbai under the Arbitration and Conciliation Act, 1996. The arbitration shall be conducted by a sole arbitrator appointed exclusively by the Managing Director of the Company. The parties shall bear arbitrator fees and administrative costs equally. The seat and venue of arbitration shall be Mumbai.",
     plainEnglish:
-      "You waive your right to a court jury trial or class action. All disputes go to private arbitration in Delaware, and you must pay your own legal and arbitration costs even if you win.",
+      "All disputes must go to arbitration in Mumbai rather than court. The company's Managing Director unilaterally appoints the sole arbitrator, and you must pay half the arbitration fees.",
     category: "dispute_resolution",
     pageNumber: 3,
     importance: "review",
@@ -217,11 +233,11 @@ export const SAMPLE_CLAUSES: Clause[] = [
   {
     id: "clause-sec-12",
     section: "Section 12",
-    title: "Governing Law and Venue",
+    title: "Governing Law and Jurisdiction",
     rawText:
-      "This Agreement shall be construed, interpreted, and governed exclusively by the laws of the State of Delaware, without regard to its principles of conflict of laws. The state courts of Kent County, Delaware shall have exclusive jurisdiction over any enforcement proceedings.",
+      "This Agreement shall be construed, interpreted, and governed exclusively in accordance with the substantive laws of the Republic of India. Subject to Section 11, the competent courts having ordinary original civil jurisdiction in Mumbai, Maharashtra shall have exclusive jurisdiction over any matters or disputes arising hereunder.",
     plainEnglish:
-      "Delaware state law controls this contract, and any enforcement actions must take place in Kent County, Delaware courts.",
+      "Indian law governs this agreement, and any legal proceedings must take place in the courts of Mumbai, Maharashtra.",
     category: "jurisdiction",
     pageNumber: 3,
     importance: "context_dependent",
@@ -237,7 +253,7 @@ export const SAMPLE_EVIDENCE_LINKS: EvidenceLink[] = [
     pageNumber: 2,
     section: "Section 6",
     quotedText:
-      "if Employee resigns or departs employment for any reason prior to completing twelve (12) full months of service from the Effective Date, Employee shall immediately repay to Employer the full sum of $18,500 as reimbursement for specialized training expenses, and Employer is authorized to deduct any unpaid balance from final wages.",
+      "if the Employee resigns or departs from service for any reason prior to completing eighteen (18) continuous months from the Effective Date, the Employee shall immediately reimburse to the Company the fixed sum of INR 4,50,000 (Rupees Four Lakh Fifty Thousand only) as liquidated damages and training expense recovery, and the Company is irrevocably authorized to deduct such amount from the Employee's accrued salary",
   },
   {
     findingId: "finding-emp-2",
@@ -246,7 +262,7 @@ export const SAMPLE_EVIDENCE_LINKS: EvidenceLink[] = [
     pageNumber: 1,
     section: "Section 5",
     quotedText:
-      "Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
+      "Employee agrees to provide not less than ninety (90) calendar days advance written notice prior to any voluntary resignation. In the event the Employee seeks immediate departure without serving the full notice window, the Company reserves the absolute right to deduct salary in lieu of notice from full and final settlement.",
   },
   {
     findingId: "finding-emp-3",
@@ -255,7 +271,7 @@ export const SAMPLE_EVIDENCE_LINKS: EvidenceLink[] = [
     pageNumber: 2,
     section: "Section 8",
     quotedText:
-      "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions, designs, software, improvements, and discoveries conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
+      "assigns and transfers to the Company all right, title, and interest throughout the world in and to any and all software code, inventions, discoveries... conceived, authored, or reduced to practice during the term of employment, whether or not during regular working hours, and whether or not utilizing Company hardware, servers, or facilities.",
   },
   {
     findingId: "finding-emp-4",
@@ -264,7 +280,7 @@ export const SAMPLE_EVIDENCE_LINKS: EvidenceLink[] = [
     pageNumber: 2,
     section: "Section 9",
     quotedText:
-      "For a period of twelve (12) months following the termination of employment for any reason, Employee shall not, within a fifty (50) mile radius of Employer's corporate headquarters, directly or indirectly engage in, perform services for, consult with, or acquire an equity interest in any business entity providing competing cloud infrastructure",
+      "For a period of twelve (12) months following termination of employment for any reason whatsoever, the Employee shall not, anywhere within the territory of the Republic of India, directly or indirectly engage in, perform consulting or engineering services for, advise, or hold equity in any enterprise... offering competing distributed cloud infrastructure",
   },
   {
     findingId: "finding-emp-5",
@@ -273,85 +289,85 @@ export const SAMPLE_EVIDENCE_LINKS: EvidenceLink[] = [
     pageNumber: 3,
     section: "Section 11",
     quotedText:
-      "resolved exclusively through final and binding arbitration administered by the American Arbitration Association in Dover, Delaware. Each party shall bear its own attorneys' fees and administrative arbitration costs regardless of outcome. Employee expressly waives any right to participate in a class or representative action.",
+      "resolved through final and binding arbitration in Mumbai under the Arbitration and Conciliation Act, 1996. The arbitration shall be conducted by a sole arbitrator appointed exclusively by the Managing Director of the Company. The parties shall bear arbitrator fees and administrative costs equally.",
   },
 ];
 
 export const SAMPLE_FINDINGS: Finding[] = [
   {
     id: "finding-emp-1",
-    title: "Early departure training fee reimbursement ($18,500) deserves attention",
+    title: "Early departure training bond reimbursement (₹4,50,000) raises Section 74 considerations",
     category: "Financial & Termination Obligations",
     severity: "high_attention",
     description:
-      "Section 6 obligates the employee to repay $18,500 if departing within 12 months, and authorizes deductions from final wages.",
+      "Section 6 obligates the employee to pay a flat ₹4,50,000 if resigning within 18 months, and authorizes deductions from final salary and settlement.",
     whyItMatters:
-      "This creates a direct financial obligation upon resignation that could substantially restrict your ability to transition to another opportunity during your first year.",
+      "Under Indian law, an employment bond cannot impose a punitive penalty; reimbursement is legally enforceable only to the extent of actual, reasonable expenses proved by the employer.",
     clauseId: "clause-sec-6",
     evidence: SAMPLE_EVIDENCE_LINKS[0],
     uncertainties: [
-      "Whether the $18,500 reflects documented out-of-pocket training costs or acts as a retention penalty.",
-      "Delaware and federal Fair Labor Standards Act (FLSA) wage deduction rules governing deductions that reduce final pay below minimum wage thresholds.",
+      "Whether the employer actually incurs ₹4,50,000 in documented third-party specialized training expenditures.",
+      "Whether the company provides verifiable external credentials or internal onboarding.",
     ],
   },
   {
     id: "finding-emp-2",
-    title: "60-day resignation notice period is unusually long",
+    title: "90-day resignation notice period with unilateral salary deduction",
     category: "Notice Requirements",
     severity: "review",
     description:
-      "Section 5 mandates 60 calendar days advance written notice prior to voluntary resignation, compared to the industry standard of 14 days.",
+      "Section 5 mandates 90 calendar days advance written notice prior to voluntary resignation, and authorizes salary withholding in lieu of notice.",
     whyItMatters:
-      "Prospective employers frequently expect new hires to start within 2 to 4 weeks. A 60-day notice requirement could complicate future job offers unless waived by the company.",
+      "A 3-month notice period can create friction when negotiating new employment opportunities, as tech employers commonly seek joining timelines of 30 to 60 days.",
     clauseId: "clause-sec-5",
     evidence: SAMPLE_EVIDENCE_LINKS[1],
     uncertainties: [
-      "Whether the company typically grants early releases upon request, or enforces the full 60 days.",
+      "Whether the company customarily permits notice buyout or requires serving the entire 90-day duration.",
     ],
   },
   {
     id: "finding-emp-3",
-    title: "Inventions assignment language is potentially broad",
+    title: "Broad IP assignment captures personal off-duty creations and open-source contributions",
     category: "Intellectual Property Ownership",
     severity: "high_attention",
     description:
-      "Section 8 claims ownership over inventions conceived during employment regardless of whether created during working hours or using company facilities.",
+      "Section 8 claims company ownership over all software and inventions developed during the term of employment, even outside work hours on personal equipment.",
     whyItMatters:
-      "Without an explicit carve-out for personal, off-duty projects created on personal hardware, this clause could assert company ownership over independent open-source or hobby software.",
+      "Under Section 17(c) of the Copyright Act, 1957, employer ownership is statutorily presumed for works created in the course of employment; assigning personal hobby code or independent open-source contributions exceeds customary norms.",
     clauseId: "clause-sec-8",
     evidence: SAMPLE_EVIDENCE_LINKS[2],
     uncertainties: [
-      "Whether the employer provides an Exhibit A (Prior Inventions Schedule) to register pre-existing personal intellectual property.",
+      "Whether the company provides a Prior Inventions Schedule (Exhibit A) to exclude pre-existing personal codebases and personal side projects.",
     ],
   },
   {
     id: "finding-emp-4",
-    title: "12-month post-employment restriction on competing services",
+    title: "12-month nationwide post-employment non-compete raises Section 27 invalidity questions",
     category: "Restrictive Covenants",
     severity: "high_attention",
     description:
-      "Section 9 bars competitive employment within a 50-mile radius of Dover, Delaware for 12 months following termination.",
+      "Section 9 restricts competitive employment across the entire territory of India for 12 months following termination.",
     whyItMatters:
-      "Could limit local opportunities in cloud infrastructure. Worth evaluating whether remote work outside the geographic radius would be treated as compliant.",
+      "Under Section 27 of the Indian Contract Act, 1872 and Supreme Court precedents (Percept D'Mark v. Zaheer Khan), agreements in restraint of lawful profession or trade are void ab initio post-termination.",
     clauseId: "clause-sec-9",
     evidence: SAMPLE_EVIDENCE_LINKS[3],
     uncertainties: [
-      "Delaware courts evaluate non-competes under a reasonableness test balancing employer protectable interests with employee mobility.",
+      "While post-employment non-competes are void under Section 27, in-term restrictions and non-solicitation or trade secret non-disclosure covenants remain enforceable.",
     ],
   },
   {
     id: "finding-emp-5",
-    title: "Mandatory arbitration with cost-bearing waiver",
+    title: "Mandatory arbitration with unilateral sole arbitrator appointment",
     category: "Dispute Resolution & Forum",
     severity: "review",
     description:
-      "Section 11 requires American Arbitration Association arbitration in Delaware and stipulates that each party bears its own fees regardless of outcome.",
+      "Section 11 stipulates arbitration in Mumbai with a sole arbitrator appointed exclusively by the Company's Managing Director, with costs split equally.",
     whyItMatters:
-      "Arbitration fees can be significant for an individual claimant. Eliminates access to public jury trials and class action participation.",
+      "Under the Arbitration and Conciliation Act, 1996 and Supreme Court precedent (Perkins Eastman), a party with an interest in the dispute cannot unilaterally appoint a sole arbitrator.",
     clauseId: "clause-sec-11",
     evidence: SAMPLE_EVIDENCE_LINKS[4],
     uncertainties: [
-      "Whether employment arbitration rules require the employer to cover primary arbitrator forum fees.",
+      "Whether the parties would mutually agree on an institutional arbitrator (e.g., MCIA) if a dispute arises.",
     ],
   },
 ];
@@ -359,801 +375,593 @@ export const SAMPLE_FINDINGS: Finding[] = [
 export const SAMPLE_EVIDENCE_CHAINS: EvidenceChain[] = [
   {
     id: "chain-emp-1",
+    jurisdictionContext: {
+      country: "India",
+      stateOrUT: "Maharashtra",
+      governingLaw: "Laws of the Republic of India",
+      confidence: "high",
+      source: "document",
+    },
     finding: SAMPLE_FINDINGS[0],
     documentEvidence: {
       clauseId: "clause-sec-6",
       section: "Section 6",
       pageNumber: 2,
       quotedText:
-        "if Employee resigns or departs employment for any reason prior to completing twelve (12) full months of service from the Effective Date, Employee shall immediately repay to Employer the full sum of $18,500 as reimbursement for specialized training expenses, and Employer is authorized to deduct any unpaid balance from final wages.",
+        "if the Employee resigns or departs from service for any reason prior to completing eighteen (18) continuous months from the Effective Date, the Employee shall immediately reimburse to the Company the fixed sum of INR 4,50,000 (Rupees Four Lakh Fifty Thousand only) as liquidated damages and training expense recovery, and the Company is irrevocably authorized to deduct such amount from the Employee's accrued salary",
       sourceType: "document",
       exactQuote:
-        "if Employee resigns or departs employment for any reason prior to completing twelve (12) full months of service from the Effective Date, Employee shall immediately repay to Employer the full sum of $18,500 as reimbursement for specialized training expenses, and Employer is authorized to deduct any unpaid balance from final wages.",
+        "if the Employee resigns or departs from service for any reason prior to completing eighteen (18) continuous months from the Effective Date, the Employee shall immediately reimburse to the Company the fixed sum of INR 4,50,000 (Rupees Four Lakh Fifty Thousand only) as liquidated damages and training expense recovery, and the Company is irrevocably authorized to deduct such amount from the Employee's accrued salary",
     },
     legalClaims: [
       {
-        id: "claim-del-wage-1",
+        id: "claim-ica-74-1",
         findingId: "finding-emp-1",
-        claim: "Under Delaware law, contractual wage deductions for training repayment require express statutory compliance and cannot reduce compensation below minimum wage standards.",
-        sourceIds: ["source-del-wage-act"],
+        claim: "Under Section 74 of the Indian Contract Act, 1872, an employment bond stipulating a fixed recovery sum serves as an upper ceiling, requiring the employer to prove actual reasonable expenses incurred rather than enforcing a punitive forfeiture.",
+        sourceIds: ["source-ica-section-74"],
         supportLevel: "direct",
-        explanation: "19 Del. C. § 1107 restricts deductions from wages to those authorized by law or signed employee authorizations for lawful purposes.",
+        explanation: "Indian courts require employers to substantiate actual expenditure on specialized employee training; a fixed penalty without proof of actual loss or monthly pro-rata amortization is legally vulnerable.",
         uncertainties: [
-          "Whether the employer can prove direct tuition costs totaling $18,500 versus ordinary internal onboarding overhead.",
+          "Whether the employer can substantiate ₹4,50,000 in genuine third-party training invoices versus ordinary internal onboarding.",
         ],
-        jurisdiction: "Delaware",
+        jurisdiction: "India",
+        jurisdictionContext: {
+          country: "India",
+          stateOrUT: "Maharashtra",
+          confidence: "high",
+          source: "document",
+        },
         verified: true,
       },
       {
-        id: "claim-training-amort-1",
+        id: "claim-kailash-nath-1",
         findingId: "finding-emp-1",
-        claim: "Un-amortized lump-sum training clawbacks face heightened judicial scrutiny if they operate as punitive retention penalties rather than genuine cost recoveries.",
-        sourceIds: ["source-restatement-emp-807"],
+        claim: "Supreme Court jurisprudence establishes that where actual damage or loss is capable of proof, such proof cannot be dispensed with under Section 74.",
+        sourceIds: ["source-sci-kailash-nath"],
         supportLevel: "strong",
-        explanation: "Restatement of Employment Law § 8.07 requires training repayment provisions to amortize over employee tenure.",
+        explanation: "Kailash Nath Associates v. DDA reaffirms that reasonable compensation must be established based on actual loss suffered.",
         uncertainties: [
-          "Whether Delaware Chancery or Superior courts would reform the unamortized amount or declare the deduction void.",
+          "Whether the employer would seek recovery through salary deductions at full and final settlement or initiate formal recovery proceedings.",
         ],
-        jurisdiction: "United States (General)",
+        jurisdiction: "India",
+        jurisdictionContext: {
+          country: "India",
+          confidence: "high",
+          source: "document",
+        },
         verified: true,
       },
     ],
     legalSources: [
       {
-        id: "source-del-wage-act",
-        title: "Delaware Wage Payment and Collection Act (19 Del. C. § 1107)",
-        publisher: "Delaware General Assembly",
+        id: "source-ica-section-74",
+        title: "Indian Contract Act, 1872 § 74 (Compensation for Breach of Contract where Penalty Stipulated for)",
+        publisher: "Ministry of Law and Justice, Government of India (India Code)",
         sourceType: "official_legislation",
-        citation: "19 Del. C. § 1107 (Withholding and Deductions)",
-        jurisdiction: "Delaware",
-        url: "https://delcode.delaware.gov/title19/c011/index.html",
-        sourceUrl: "https://delcode.delaware.gov/title19/c011/index.html",
-        relevance: "Governs mandatory deductions and wage withholding for employee training repayment agreements",
+        citation: "Indian Contract Act, 1872 § 74",
+        jurisdiction: "India",
+        url: "https://www.indiacode.nic.in/handle/123456789/2187",
+        sourceUrl: "https://www.indiacode.nic.in/handle/123456789/2187",
+        relevance: "Governs the enforceability of liquidated damages, training bonds, and employee clawback stipulations",
         retrievedAt: "2026-03-01T00:00:00Z",
-        publicationDate: "2024-01-01",
+        publicationDate: "1872-04-25",
         verificationStatus: "verified",
         excerpt:
-          "No employer may withhold or divert any portion of an employee's wages unless the employer is required or empowered to do so by state or federal law, or the employer has a signed authorization from the employee for a lawful deduction.",
+          "When a contract has been broken, if a sum is named in the contract as the amount to be paid in case of such breach, or if the contract contains any other stipulation by way of penalty, the party complaining of the breach is entitled, whether or not actual damage or loss is proved to have been caused thereby, to receive from the party who has broken the contract reasonable compensation not exceeding the amount so named or, as the case may be, the penalty stipulated for.",
         relevantExcerpt:
-          "No employer may withhold or divert any portion of an employee's wages unless the employer has a signed authorization from the employee for a lawful deduction.",
-        notes: "Deductions for training repayment are scrutinized to ensure they represent genuine educational expenses rather than liquidated damages for departure.",
+          "The party complaining of the breach is entitled... to receive from the party who has broken the contract reasonable compensation not exceeding the amount so named or, as the case may be, the penalty stipulated for.",
+        notes: "The stipulated amount in an employment bond serves strictly as a ceiling; courts only award reasonable compensation reflecting actual documented expenditure on specialized training.",
         authorityType: "statute",
       },
       {
-        id: "source-restatement-emp-807",
-        title: "Restatement of Employment Law § 8.07 (Training Repayment)",
-        publisher: "American Law Institute",
-        sourceType: "recognized_legal_source",
-        citation: "Restatement (Third) of Employment Law § 8.07",
-        jurisdiction: "United States (General)",
-        url: "https://www.ali.org/publications/show/employment-law/",
-        sourceUrl: "https://www.ali.org/publications/show/employment-law/",
-        relevance: "Authoritative treatise standard on enforceable employee training loan and reimbursement conditions",
-        retrievedAt: "2026-02-15T00:00:00Z",
-        publicationDate: "2015-07-01",
-        verificationStatus: "verified",
-        excerpt:
-          "An agreement requiring an employee to repay training costs upon early departure is enforceable only to the extent the training confers transferable general skills and the reimbursement is reasonably related to actual expenditures amortized over a reasonable tenure.",
-        relevantExcerpt:
-          "Reimbursement is enforceable only to the extent the reimbursement is reasonably related to actual expenditures amortized over a reasonable tenure.",
-        notes: "Pro-rata monthly amortization is standard to withstand judicial scrutiny as a non-punitive training investment.",
-        authorityType: "restatement",
-      },
-    ],
-    legalEvidence: [
-      {
-        legalSourceId: "source-del-wage-act",
-        claimId: "claim-del-wage-1",
-        citation: "19 Del. C. § 1107",
-        relevantExcerpt: "No employer may withhold or divert any portion of an employee's wages unless the employer has a signed authorization from the employee for a lawful deduction.",
-        sourceType: "legal",
-      },
-    ],
-    verification: {
-      status: "verified",
-      verifiedAt: "2026-03-12T10:20:00Z",
-      issues: [],
-      confidenceLevel: "high",
-    },
-    uncertainties: [
-      "Whether the training provided involves third-party transferable credentials or internal company onboarding.",
-      "Whether the employer would seek wage deductions or initiate separate breach of contract litigation.",
-    ],
-    nextSteps: [
-      {
-        id: "act-emp-1",
-        title: "Request Pro-Rata Scaling & Clarify Training Scope",
-        description:
-          "Propose amending Section 6 so that the $18,500 reimbursement reduces by 1/12th ($1,541.66) for each month of completed service, and applies solely to external accredited certifications.",
-        priority: "high",
-        partyResponsible: "Employee (Alex Morgan)",
-        isReversible: true,
-        recommendedTimeline: "Before signing offer",
-        practicalAdvice:
-          "Frame this as an industry-standard pro-rata vesting schedule: 'I am excited to commit long-term, and standard market practice is for training repayment to amortize monthly over the first year.'",
-      },
-    ],
-    legalSource: {
-      id: "source-del-wage-act",
-      title: "Delaware Wage Payment and Collection Act (19 Del. C. § 1107)",
-      publisher: "Delaware General Assembly",
-      sourceType: "official_legislation",
-      citation: "19 Del. C. § 1107 (Withholding and Deductions)",
-      jurisdiction: "Delaware",
-      url: "https://delcode.delaware.gov/title19/c011/index.html",
-      sourceUrl: "https://delcode.delaware.gov/title19/c011/index.html",
-      relevance: "Governs mandatory deductions and wage withholding for employee training repayment agreements",
-      retrievedAt: "2026-03-01T00:00:00Z",
-      publicationDate: "2024-01-01",
-      verificationStatus: "verified",
-      excerpt:
-        "No employer may withhold or divert any portion of an employee's wages unless the employer is required or empowered to do so by state or federal law, or the employer has a signed authorization from the employee for a lawful deduction.",
-      relevantExcerpt:
-        "No employer may withhold or divert any portion of an employee's wages unless the employer has a signed authorization from the employee for a lawful deduction.",
-      notes: "Deductions for training repayment are scrutinized to ensure they represent genuine educational expenses rather than liquidated damages for departure.",
-      authorityType: "statute",
-    },
-    confidence: {
-      level: "high",
-      rationale:
-        "Clear statutory framework governing permissible wage deductions and training reimbursement agreements in Delaware.",
-    },
-    uncertainty: {
-      id: "unc-emp-1",
-      findingId: "finding-emp-1",
-      factualDependencies: [
-        "Whether the training provided involves third-party transferable credentials or internal company onboarding.",
-        "Whether repayment terms scale down on a pro-rata basis (e.g. 1/12th reduction per month worked).",
-      ],
-      unverifiedAssumptions: [
-        "Assumes Delaware law governs as stipulated in Section 12 recital.",
-      ],
-      explanation:
-        "While Delaware permits voluntary training repayment agreements, provisions that do not pro-rate the repayment over time or that deduct wages below legal minimums face judicial scrutiny.",
-      isFactVsInterpretationClear: true,
-    },
-    practicalNextStep: {
-      id: "act-emp-1",
-      title: "Request Pro-Rata Scaling & Clarify Training Scope",
-      description:
-        "Propose amending Section 6 so that the $18,500 reimbursement reduces by 1/12th ($1,541.66) for each month of completed service, and applies solely to external accredited certifications.",
-      priority: "high",
-      partyResponsible: "Employee (Alex Morgan)",
-      isReversible: true,
-      recommendedTimeline: "Before signing offer",
-      practicalAdvice:
-        "Frame this as an industry-standard pro-rata vesting schedule: 'I am excited to commit long-term, and standard market practice is for training repayment to amortize monthly over the first year.'",
-    },
-  },
-  {
-    id: "chain-emp-2",
-    finding: SAMPLE_FINDINGS[2],
-    documentEvidence: {
-      clauseId: "clause-sec-8",
-      section: "Section 8",
-      pageNumber: 2,
-      quotedText:
-        "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions... conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
-      sourceType: "document",
-      exactQuote:
-        "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions... conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
-    },
-    legalClaims: [
-      {
-        id: "claim-ip-del-1",
-        findingId: "finding-emp-3",
-        claim: "Under Delaware common law, invention assignments are enforceable to protect employer trade secrets, but assignments encompassing off-duty personal creations are strictly construed against overreach.",
-        sourceIds: ["source-del-invention-assignment"],
-        supportLevel: "strong",
-        explanation: "Employers may capture inventions directly related to the business or resulting from company resources, but personal projects developed on personal time require clear statutory or contractual boundaries.",
-        uncertainties: [
-          "Whether Employee has existing open-source code repositories or side software projects.",
-        ],
-        jurisdiction: "Delaware",
-        verified: true,
-      },
-    ],
-    legalSources: [
-      {
-        id: "source-del-invention-assignment",
-        title: "Delaware Common Law Rules on Inventions Assignments",
-        publisher: "Delaware Supreme Court",
+        id: "source-sci-kailash-nath",
+        title: "Kailash Nath Associates v. Delhi Development Authority (Supreme Court of India)",
+        publisher: "Supreme Court of India",
         sourceType: "official_court",
-        citation: "Delaware Corporate & Employment Inventions Jurisprudence",
-        jurisdiction: "Delaware",
-        url: "https://courts.delaware.gov/",
-        sourceUrl: "https://courts.delaware.gov/",
-        relevance: "Governs ownership of inventions created outside regular working hours without employer resources",
-        retrievedAt: "2026-02-20T00:00:00Z",
-        publicationDate: "2021-05-15",
+        citation: "Kailash Nath Associates v. Delhi Development Authority, (2015) 4 SCC 136",
+        jurisdiction: "India",
+        url: "https://main.sci.gov.in/",
+        sourceUrl: "https://main.sci.gov.in/",
+        relevance: "Authoritative Supreme Court precedent on proof of actual loss under Section 74 of the Indian Contract Act",
+        retrievedAt: "2026-02-15T00:00:00Z",
+        publicationDate: "2015-01-09",
         verificationStatus: "verified",
         excerpt:
-          "Agreements assigning employee inventions to employers are valid to protect business-related IP, but provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
+          "Where it is possible to prove actual damage or loss, such proof is not dispensed with. It is only in cases where damage or loss is difficult or impossible to prove that the liquidated amount named in the contract, if a genuine pre-estimate of damage or loss, can be awarded.",
         relevantExcerpt:
-          "Provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
-        notes: "Customary practice includes an explicit schedule of prior inventions and carve-out for personal off-duty works.",
+          "Where it is possible to prove actual damage or loss, such proof is not dispensed with.",
+        notes: "In employment bonds, employers must substantiate actual training expenditure incurred on the employee; flat penalty clawbacks without proof of loss or pro-rata amortization are unenforceable.",
         authorityType: "case_law",
       },
     ],
     legalEvidence: [
       {
-        legalSourceId: "source-del-invention-assignment",
-        claimId: "claim-ip-del-1",
-        citation: "Delaware Inventions Jurisprudence",
-        relevantExcerpt: "Provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
+        legalSourceId: "source-ica-section-74",
+        claimId: "claim-ica-74-1",
+        citation: "Indian Contract Act, 1872 § 74",
+        relevantExcerpt: "The party complaining of the breach is entitled... to receive from the party who has broken the contract reasonable compensation not exceeding the amount so named or, as the case may be, the penalty stipulated for.",
         sourceType: "legal",
       },
     ],
     verification: {
       status: "verified",
-      verifiedAt: "2026-03-12T10:20:00Z",
+      verifiedAt: "2026-06-01T10:20:00Z",
       issues: [],
       confidenceLevel: "high",
     },
     uncertainties: [
-      "Whether Employee has pre-existing personal software projects or repositories to exclude.",
+      "Whether the training provided involves third-party transferable credentials or internal company onboarding.",
+      "Whether the employer will agree to monthly pro-rata reduction of the training bond liability.",
     ],
     nextSteps: [
       {
-        id: "act-emp-2",
-        title: "Attach Exhibit A (List of Prior Inventions) and Add Personal Equipment Carve-Out",
+        id: "act-emp-1",
+        title: "Request Pro-Rata Monthly Amortization & Training Expense Invoices",
         description:
-          "Insert standard carve-out: 'This assignment shall not apply to inventions developed entirely on Employee's own time without using Employer's equipment, supplies, or trade secret information, and which do not relate to Employer's actual business.'",
+          "Propose that the ₹4,50,000 reimbursement reduces by 1/18th (₹25,000) for each completed month of service, and applies strictly to external accredited certification receipts.",
         priority: "high",
-        partyResponsible: "Employee",
+        partyResponsible: "Employee (Rohan Sharma)",
         isReversible: true,
-        recommendedTimeline: "During pre-execution review",
+        recommendedTimeline: "Before signing offer",
         practicalAdvice:
-          "Request the standard Prior Inventions Schedule to document all pre-existing GitHub repositories.",
+          "Say: 'I am committed to long-term tenure at Kavach Dynamics. Standard industry practice under Indian contract law is for training commitments to amortize monthly across the tenure.'",
       },
     ],
-    legalSource: {
-      id: "source-del-invention-assignment",
-      title: "Delaware Common Law Rules on Inventions Assignments",
-      publisher: "Delaware Supreme Court",
-      sourceType: "official_court",
-      citation: "Delaware Corporate & Employment Inventions Jurisprudence",
-      jurisdiction: "Delaware",
-      url: "https://courts.delaware.gov/",
-      sourceUrl: "https://courts.delaware.gov/",
-      relevance: "Governs ownership of inventions created outside regular working hours without employer resources",
-      retrievedAt: "2026-02-20T00:00:00Z",
-      publicationDate: "2021-05-15",
-      verificationStatus: "verified",
-      excerpt:
-        "Agreements assigning employee inventions to employers are valid to protect business-related IP, but provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
-      relevantExcerpt:
-        "Provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
-      notes: "Customary practice includes an explicit schedule of prior inventions and carve-out for personal off-duty works.",
-      authorityType: "case_law",
-    },
-    confidence: {
-      level: "high",
-      rationale:
-        "Scope explicitly encompasses inventions created outside working hours without company assets, which is broader than customary tech employment norms.",
-    },
-    uncertainty: {
-      id: "unc-emp-2",
-      findingId: "finding-emp-3",
-      factualDependencies: [
-        "Whether Employee has pre-existing personal software projects or repositories to exclude.",
-      ],
-      unverifiedAssumptions: [
-        "Assumes Employee develops software in personal capacity outside employment.",
-      ],
-      explanation:
-        "Courts typically enforce assignments directly relating to the employer's line of business, but broader language creates ambiguity for personal open-source projects.",
-      isFactVsInterpretationClear: true,
-    },
-    practicalNextStep: {
-      id: "act-emp-2",
-      title: "Attach Exhibit A (List of Prior Inventions) and Add Personal Equipment Carve-Out",
-      description:
-        "Insert standard carve-out: 'This assignment shall not apply to inventions developed entirely on Employee's own time without using Employer's equipment, supplies, or trade secret information, and which do not relate to Employer's actual business.'",
-      priority: "high",
-      partyResponsible: "Employee",
-      isReversible: true,
-      recommendedTimeline: "During pre-execution review",
-      practicalAdvice:
-        "Request the standard Prior Inventions Schedule to document all pre-existing GitHub repositories.",
-    },
   },
   {
-    id: "chain-emp-3",
+    id: "chain-emp-2",
+    jurisdictionContext: {
+      country: "India",
+      stateOrUT: "Maharashtra",
+      governingLaw: "Laws of the Republic of India",
+      confidence: "high",
+      source: "document",
+    },
     finding: SAMPLE_FINDINGS[3],
     documentEvidence: {
       clauseId: "clause-sec-9",
       section: "Section 9",
       pageNumber: 2,
       quotedText:
-        "For a period of twelve (12) months following termination of employment for any reason, Employee shall not directly or indirectly engage in, perform services for, consult with, or have any financial interest in any business entity providing cloud infrastructure software or distributed database services within a fifty (50) mile radius of Dover, Delaware.",
+        "For a period of twelve (12) months following termination of employment for any reason whatsoever, the Employee shall not, anywhere within the territory of the Republic of India, directly or indirectly engage in, perform consulting or engineering services for, advise, or hold equity in any enterprise... offering competing distributed cloud infrastructure",
       sourceType: "document",
       exactQuote:
-        "For a period of twelve (12) months following termination of employment for any reason, Employee shall not directly or indirectly engage in, perform services for, consult with, or have any financial interest in any business entity providing cloud infrastructure software or distributed database services within a fifty (50) mile radius of Dover, Delaware.",
+        "For a period of twelve (12) months following termination of employment for any reason whatsoever, the Employee shall not, anywhere within the territory of the Republic of India, directly or indirectly engage in, perform consulting or engineering services for, advise, or hold equity in any enterprise... offering competing distributed cloud infrastructure",
     },
     legalClaims: [
       {
-        id: "claim-del-noncompete-1",
+        id: "claim-ica-27-1",
         findingId: "finding-emp-4",
-        claim: "Delaware courts apply a strict reasonableness test balancing the employer's legitimate protectable interest against undue hardship on the employee.",
-        sourceIds: ["source-del-chancery-noncompete"],
+        claim: "Under Section 27 of the Indian Contract Act, 1872, every agreement by which anyone is restrained from exercising a lawful profession, trade, or business is to that extent void ab initio.",
+        sourceIds: ["source-ica-section-27"],
         supportLevel: "direct",
-        explanation: "Under Delaware Court of Chancery precedent (Kodiak Bldg. Partners), non-competes are scrutinized closely and broad geographic/activity bans that exceed the employer's actual customer relationships face potential refusal of blue-penciling.",
+        explanation: "Unlike common law jurisdictions such as the US or UK that evaluate non-competes under a reasonableness test, Indian statutory law under Section 27 invalidates post-employment non-compete covenants completely.",
         uncertainties: [
-          "Whether Delaware courts would blue-pencil (narrow) or refuse to enforce the geographic restriction in a remote work environment.",
+          "While post-employment covenants are void, in-term restrictions during active employment and non-solicitation covenants remain valid.",
         ],
-        jurisdiction: "Delaware",
+        jurisdiction: "India",
+        verified: true,
+      },
+      {
+        id: "claim-percept-dmark-1",
+        findingId: "finding-emp-4",
+        claim: "The Supreme Court of India in Percept D'Mark v. Zaheer Khan affirmed that restrictive covenants extending beyond the term of employment are void and unenforceable under Section 27.",
+        sourceIds: ["source-sci-percept-dmark"],
+        supportLevel: "strong",
+        explanation: "The doctrine of restraint of trade does not recognize post-employment restrictions against employees, regardless of geography or duration.",
+        uncertainties: [
+          "The company may still attempt to enforce confidentiality and trade secret non-disclosure to prevent joining direct competitors.",
+        ],
+        jurisdiction: "India",
         verified: true,
       },
     ],
     legalSources: [
       {
-        id: "source-del-chancery-noncompete",
-        title: "Delaware Court of Chancery Non-Compete Reasonableness Standards",
-        publisher: "Delaware Court of Chancery",
-        sourceType: "official_court",
-        citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507 (Del. Ch. 2022)",
-        jurisdiction: "Delaware",
-        url: "https://courts.delaware.gov/opinions/",
-        sourceUrl: "https://courts.delaware.gov/opinions/",
-        relevance: "Binding precedent regarding geographic and scope reasonableness in Delaware non-competition covenants",
+        id: "source-ica-section-27",
+        title: "Indian Contract Act, 1872 § 27 (Agreement in Restraint of Trade Void)",
+        publisher: "Ministry of Law and Justice, Government of India (India Code)",
+        sourceType: "official_legislation",
+        citation: "Indian Contract Act, 1872 § 27",
+        jurisdiction: "India",
+        url: "https://www.indiacode.nic.in/handle/123456789/2187",
+        sourceUrl: "https://www.indiacode.nic.in/handle/123456789/2187",
+        relevance: "Statutory bar rendering post-employment restrictive covenants in restraint of trade void ab initio",
         retrievedAt: "2026-03-01T00:00:00Z",
-        publicationDate: "2022-10-06",
+        publicationDate: "1872-04-25",
         verificationStatus: "verified",
         excerpt:
-          "To be enforceable under Delaware law, a restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
+          "Every agreement by which any one is restrained from exercising a lawful profession, trade or business of any kind, is to that extent void. Exception 1.—Saving of agreement not to carry on business of which good-will is sold.",
         relevantExcerpt:
-          "A restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
-        notes: "Delaware courts increasingly decline to mechanically blue-pencil overbroad non-compete agreements.",
+          "Every agreement by which any one is restrained from exercising a lawful profession, trade or business of any kind, is to that extent void.",
+        notes: "Indian courts strictly refuse to enforce post-employment non-compete agreements against employees under Section 27.",
+        authorityType: "statute",
+      },
+      {
+        id: "source-sci-percept-dmark",
+        title: "Percept D'Mark (India) Pvt. Ltd. v. Zaheer Khan (Supreme Court of India)",
+        publisher: "Supreme Court of India",
+        sourceType: "official_court",
+        citation: "Percept D'Mark (India) Pvt. Ltd. v. Zaheer Khan & Anr., (2006) 4 SCC 227",
+        jurisdiction: "India",
+        url: "https://main.sci.gov.in/",
+        sourceUrl: "https://main.sci.gov.in/",
+        relevance: "Landmark ruling confirming post-contractual covenants restraining trade or employment are invalid under Section 27",
+        retrievedAt: "2026-02-15T00:00:00Z",
+        publicationDate: "2006-03-22",
+        verificationStatus: "verified",
+        excerpt:
+          "Under Section 27 of the Contract Act, a restrictive covenant extending beyond the term of the agreement is void and not enforceable. The doctrine of restraint of trade does not apply during the continuance of the contract for employment and it applies only when the contract comes to an end.",
+        relevantExcerpt:
+          "Under Section 27 of the Contract Act, a restrictive covenant extending beyond the term of the agreement is void and not enforceable.",
+        notes: "Reaffirms that post-employment restrictions are legally invalid under Section 27.",
         authorityType: "case_law",
       },
     ],
     legalEvidence: [
       {
-        legalSourceId: "source-del-chancery-noncompete",
-        claimId: "claim-del-noncompete-1",
-        citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507",
-        relevantExcerpt: "To be enforceable under Delaware law, a restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
+        legalSourceId: "source-ica-section-27",
+        claimId: "claim-ica-27-1",
+        citation: "Indian Contract Act, 1872 § 27",
+        relevantExcerpt: "Every agreement by which any one is restrained from exercising a lawful profession, trade or business of any kind, is to that extent void.",
         sourceType: "legal",
       },
     ],
     verification: {
-      status: "partially_verified",
-      verifiedAt: "2026-03-12T10:20:00Z",
-      issues: [
-        "Enforceability depends heavily on specific factual proof of protectable trade secrets and actual geographic market reach.",
-      ],
-      confidenceLevel: "moderate",
+      status: "verified",
+      verifiedAt: "2026-06-01T10:20:00Z",
+      issues: [],
+      confidenceLevel: "high",
     },
     uncertainties: [
-      "Whether remote work performed from Dover for an out-of-state employer would violate the 50-mile radius clause.",
-      "Delaware courts evaluate non-competes under a reasonableness test balancing employer protectable interests with employee mobility.",
+      "While post-employment non-compete covenants are void in India, employers frequently rely on in-term negative covenants and trade secret protection.",
     ],
     nextSteps: [
       {
-        id: "act-emp-4",
-        title: "Clarify Remote Work Permissibility & Narrow Non-Compete Scope",
+        id: "act-emp-2",
+        title: "Clarify Non-Compete Scope & Emphasize Confidentiality Boundaries",
         description:
-          "Request limiting Section 9 to direct named competitors where employee would use proprietary trade secrets, excluding general distributed systems consulting.",
+          "Advise employer that Section 27 of the Indian Contract Act renders post-employment non-competes void, and propose replacing Section 9 with robust non-solicitation of clients and trade secret confidentiality.",
         priority: "high",
         partyResponsible: "Employee",
         isReversible: true,
-        recommendedTimeline: "Before executing agreement",
+        recommendedTimeline: "Before signing agreement",
         practicalAdvice:
-          "Say: 'Because modern distributed engineering is inherently distributed and remote, let us tie the restriction directly to named competitors rather than a geographic radius.'",
+          "Frame this cooperatively: 'To align with Indian statutory requirements under Section 27, let us replace the post-employment restriction with clear client non-solicitation and data protection covenants.'",
       },
     ],
-    legalSource: {
-      id: "source-del-chancery-noncompete",
-      title: "Delaware Court of Chancery Non-Compete Reasonableness Standards",
-      publisher: "Delaware Court of Chancery",
-      sourceType: "official_court",
-      citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507 (Del. Ch. 2022)",
-      jurisdiction: "Delaware",
-      url: "https://courts.delaware.gov/opinions/",
-      sourceUrl: "https://courts.delaware.gov/opinions/",
-      relevance: "Binding precedent regarding geographic and scope reasonableness in Delaware non-competition covenants",
-      retrievedAt: "2026-03-01T00:00:00Z",
-      publicationDate: "2022-10-06",
-      verificationStatus: "verified",
-      excerpt:
-        "To be enforceable under Delaware law, a restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
-      relevantExcerpt:
-        "A restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
-      notes: "Delaware courts increasingly decline to mechanically blue-pencil overbroad non-compete agreements.",
-      authorityType: "case_law",
+  },
+  {
+    id: "chain-emp-3",
+    jurisdictionContext: {
+      country: "India",
+      stateOrUT: "Maharashtra",
+      governingLaw: "Laws of the Republic of India",
+      confidence: "high",
+      source: "document",
     },
-    confidence: {
-      level: "moderate",
-      rationale:
-        "Non-compete covenants are governed by well-established reasonableness standards, but enforceability is fact-dependent on employer protectable interest.",
+    finding: SAMPLE_FINDINGS[2],
+    documentEvidence: {
+      clauseId: "clause-sec-8",
+      section: "Section 8",
+      pageNumber: 2,
+      quotedText:
+        "assigns and transfers to the Company all right, title, and interest throughout the world in and to any and all software code, inventions, discoveries... conceived, authored, or reduced to practice during the term of employment, whether or not during regular working hours, and whether or not utilizing Company hardware, servers, or facilities.",
+      sourceType: "document",
+      exactQuote:
+        "assigns and transfers to the Company all right, title, and interest throughout the world in and to any and all software code, inventions, discoveries... conceived, authored, or reduced to practice during the term of employment, whether or not during regular working hours, and whether or not utilizing Company hardware, servers, or facilities.",
     },
-    uncertainty: {
-      id: "unc-emp-4",
-      findingId: "finding-emp-4",
-      factualDependencies: [
-        "Whether Employee has direct client contacts or proprietary architectural trade secrets.",
-        "Whether the company conducts genuine local business within 50 miles of Dover.",
-      ],
-      unverifiedAssumptions: [
-        "Assumes Employee may seek subsequent employment in cloud/database systems.",
-      ],
-      explanation:
-        "Delaware courts evaluate non-competes under a reasonableness test balancing employer protectable interests with employee mobility.",
-      isFactVsInterpretationClear: true,
+    legalClaims: [
+      {
+        id: "claim-copyright-17c-1",
+        findingId: "finding-emp-3",
+        claim: "Under Section 17(c) of the Copyright Act, 1957, employer first-ownership is statutorily limited to works made in the course of the author's employment under a contract of service.",
+        sourceIds: ["source-copyright-act-17c"],
+        supportLevel: "direct",
+        explanation: "Works authored outside working hours without company hardware or trade secret data do not automatically fall under the 'course of employment' statutory presumption.",
+        uncertainties: [
+          "Whether the employee maintains pre-existing open-source software libraries or personal developer utilities.",
+        ],
+        jurisdiction: "India",
+        verified: true,
+      },
+    ],
+    legalSources: [
+      {
+        id: "source-copyright-act-17c",
+        title: "Copyright Act, 1957 § 17(c) (First Owner of Copyright in Works of Employment)",
+        publisher: "Copyright Office, Government of India (India Code)",
+        sourceType: "official_legislation",
+        citation: "Copyright Act, 1957 § 17(c)",
+        jurisdiction: "India",
+        url: "https://copyright.gov.in/",
+        sourceUrl: "https://copyright.gov.in/",
+        relevance: "Governs statutory ownership of copyright works created under a contract of service vs personal creations",
+        retrievedAt: "2026-02-20T00:00:00Z",
+        publicationDate: "1957-06-04",
+        verificationStatus: "verified",
+        excerpt:
+          "In the case of a work made in the course of the author's employment under a contract of service or apprenticeship, the employer shall, in the absence of any agreement to the contrary, be the first owner of the copyright therein.",
+        relevantExcerpt:
+          "In the case of a work made in the course of the author's employment under a contract of service or apprenticeship, the employer shall... be the first owner of the copyright therein.",
+        notes: "The statutory presumption of employer ownership is restricted to works made 'in the course of employment'; works created on employee's own personal time without company resources require explicit valid assignment.",
+        authorityType: "statute",
+      },
+    ],
+    legalEvidence: [
+      {
+        legalSourceId: "source-copyright-act-17c",
+        claimId: "claim-copyright-17c-1",
+        citation: "Copyright Act, 1957 § 17(c)",
+        relevantExcerpt: "In the case of a work made in the course of the author's employment under a contract of service or apprenticeship, the employer shall... be the first owner of the copyright therein.",
+        sourceType: "legal",
+      },
+    ],
+    verification: {
+      status: "verified",
+      verifiedAt: "2026-06-01T10:20:00Z",
+      issues: [],
+      confidenceLevel: "high",
     },
-    practicalNextStep: {
-      id: "act-emp-4",
-      title: "Clarify Remote Work Permissibility & Narrow Non-Compete Scope",
-      description:
-        "Request limiting Section 9 to direct named competitors where employee would use proprietary trade secrets, excluding general distributed systems consulting.",
-      priority: "high",
-      partyResponsible: "Employee",
-      isReversible: true,
-      recommendedTimeline: "Before executing agreement",
-      practicalAdvice:
-        "Say: 'Because modern distributed engineering is inherently distributed and remote, let us tie the restriction directly to named competitors rather than a geographic radius.'",
-    },
+    uncertainties: [
+      "Whether the employee has an inventory of pre-existing personal GitHub repositories to attach as Exhibit A.",
+    ],
+    nextSteps: [
+      {
+        id: "act-emp-3",
+        title: "Attach Exhibit A (Prior Inventions Schedule) for Personal Software",
+        description:
+          "Insert a standard Prior Inventions Schedule and clarify that personal off-duty projects created without Company resources or proprietary data remain Employee property.",
+        priority: "high",
+        partyResponsible: "Employee",
+        isReversible: true,
+        recommendedTimeline: "Before execution",
+        practicalAdvice:
+          "List all personal open-source projects, tools, and technical articles on Exhibit A prior to signing.",
+      },
+    ],
   },
   {
     id: "chain-emp-4",
+    jurisdictionContext: {
+      country: "India",
+      stateOrUT: "Maharashtra",
+      governingLaw: "Laws of the Republic of India",
+      confidence: "high",
+      source: "document",
+    },
     finding: SAMPLE_FINDINGS[4],
     documentEvidence: {
       clauseId: "clause-sec-11",
       section: "Section 11",
       pageNumber: 3,
       quotedText:
-        "Any dispute, controversy, or claim arising out of or relating to this Agreement... shall be settled by confidential binding arbitration administered by the American Arbitration Association... each party shall bear its own attorneys' fees and an equal share of arbitrator compensation and administrative expenses.",
+        "resolved through final and binding arbitration in Mumbai under the Arbitration and Conciliation Act, 1996. The arbitration shall be conducted by a sole arbitrator appointed exclusively by the Managing Director of the Company. The parties shall bear arbitrator fees and administrative costs equally.",
       sourceType: "document",
       exactQuote:
-        "Any dispute, controversy, or claim arising out of or relating to this Agreement... shall be settled by confidential binding arbitration administered by the American Arbitration Association... each party shall bear its own attorneys' fees and an equal share of arbitrator compensation and administrative expenses.",
+        "resolved through final and binding arbitration in Mumbai under the Arbitration and Conciliation Act, 1996. The arbitration shall be conducted by a sole arbitrator appointed exclusively by the Managing Director of the Company. The parties shall bear arbitrator fees and administrative costs equally.",
     },
     legalClaims: [
       {
-        id: "claim-del-arbitration-1",
+        id: "claim-arb-perkins-1",
         findingId: "finding-emp-5",
-        claim: "Under the AAA Employment Due Process Protocol, employer-mandated arbitration agreements cannot require the employee to bear arbitrator forum fees.",
-        sourceIds: ["source-aaa-employment-rules"],
+        claim: "Under the Arbitration and Conciliation Act, 1996 and Supreme Court precedent in Perkins Eastman Architects, an interested party cannot unilaterally appoint a sole arbitrator.",
+        sourceIds: ["source-sci-perkins-eastman", "source-arbitration-act-12-5"],
         supportLevel: "direct",
-        explanation: "When arbitration is mandated by an employer, AAA rules cap the employee's share of filing costs and place all arbitrator compensation and administrative hearing expenses on the employer.",
+        explanation: "Clauses giving an employer or its Managing Director exclusive authority to nominate the sole arbitrator violate Section 12(5) neutrality requirements.",
         uncertainties: [
-          "Whether the arbitration clause's fee-splitting provision would be severed or enforced as written.",
+          "Whether the employer would agree to institutional appointment through an independent forum such as the Mumbai Centre for International Arbitration (MCIA).",
         ],
-        jurisdiction: "United States (Federal / Delaware)",
+        jurisdiction: "India",
         verified: true,
       },
     ],
     legalSources: [
       {
-        id: "source-aaa-employment-rules",
-        title: "AAA Employment Arbitration Rules & Due Process Protocol (Rule 48)",
-        publisher: "American Arbitration Association",
-        sourceType: "regulator",
-        citation: "AAA Employment Due Process Protocol & Rule 48",
-        jurisdiction: "United States (Federal / Delaware)",
-        url: "https://www.adr.org/employment",
-        sourceUrl: "https://www.adr.org/employment",
-        relevance: "Establishes fee-bearing limits for employees in employer-mandated arbitration proceedings",
+        id: "source-arbitration-act-12-5",
+        title: "Arbitration and Conciliation Act, 1996 § 12(5) & Seventh Schedule",
+        publisher: "Ministry of Law and Justice, Government of India (India Code)",
+        sourceType: "official_legislation",
+        citation: "Arbitration and Conciliation Act, 1996 § 12(5)",
+        jurisdiction: "India",
+        url: "https://www.indiacode.nic.in/handle/123456789/1978",
+        sourceUrl: "https://www.indiacode.nic.in/handle/123456789/1978",
+        relevance: "Statutory disqualification of interested persons or unilateral appointees as arbitrators",
         retrievedAt: "2026-02-18T00:00:00Z",
-        publicationDate: "2023-11-01",
+        publicationDate: "2015-10-23",
         verificationStatus: "verified",
         excerpt:
-          "Under the AAA Employment Due Process Protocol, in disputes arising out of employer-promulgated plans, the employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
+          "Notwithstanding any prior agreement to the contrary, any person whose relationship with the parties or counsel or the subject-matter of the dispute falls under any of the categories specified in the Seventh Schedule shall be ineligible to be appointed as an arbitrator.",
         relevantExcerpt:
-          "The employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
-        notes: "Clause provisions stating that each party pays half of all arbitration costs are often overridden by AAA rules.",
-        authorityType: "regulation",
+          "Notwithstanding any prior agreement to the contrary, any person whose relationship... falls under any of the categories specified in the Seventh Schedule shall be ineligible to be appointed as an arbitrator.",
+        notes: "Prevents employers, their officers, legal counsel, or interested affiliates from acting as arbitrator.",
+        authorityType: "statute",
+      },
+      {
+        id: "source-sci-perkins-eastman",
+        title: "Perkins Eastman Architects DPC v. HSCC (India) Ltd. (Supreme Court of India)",
+        publisher: "Supreme Court of India",
+        sourceType: "official_court",
+        citation: "Perkins Eastman Architects DPC v. HSCC (India) Ltd., (2020) 20 SCC 760",
+        jurisdiction: "India",
+        url: "https://main.sci.gov.in/",
+        sourceUrl: "https://main.sci.gov.in/",
+        relevance: "Supreme Court ruling barring unilateral appointment of sole arbitrators by an interested party",
+        retrievedAt: "2026-02-18T00:00:00Z",
+        publicationDate: "2019-11-26",
+        verificationStatus: "verified",
+        excerpt:
+          "A person who has an interest in the outcome or decision of the dispute must not have the power to appoint a sole arbitrator. Such an appointment power is legally invalid and void.",
+        relevantExcerpt:
+          "A person who has an interest in the outcome or decision of the dispute must not have the power to appoint a sole arbitrator.",
+        notes: "Clauses providing that the company alone shall appoint the sole arbitrator are unenforceable under Section 11 and 12(5); the court or an independent institution must appoint the arbitrator upon deadlock.",
+        authorityType: "case_law",
       },
     ],
     legalEvidence: [
       {
-        legalSourceId: "source-aaa-employment-rules",
-        claimId: "claim-del-arbitration-1",
-        citation: "AAA Employment Due Process Protocol & Rule 48",
-        relevantExcerpt: "Under the AAA Employment Due Process Protocol, the employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
+        legalSourceId: "source-sci-perkins-eastman",
+        claimId: "claim-arb-perkins-1",
+        citation: "Perkins Eastman Architects DPC v. HSCC (India) Ltd., (2020) 20 SCC 760",
+        relevantExcerpt: "A person who has an interest in the outcome or decision of the dispute must not have the power to appoint a sole arbitrator.",
         sourceType: "legal",
       },
     ],
     verification: {
       status: "verified",
-      verifiedAt: "2026-03-12T10:20:00Z",
+      verifiedAt: "2026-06-01T10:20:00Z",
       issues: [],
       confidenceLevel: "high",
     },
     uncertainties: [
-      "Whether the company would agree to incorporate standard AAA employment fee schedules explicitly in the contract.",
+      "Whether the company would adopt institutional arbitral administration (e.g. MCIA) or mutual appointment by consent.",
     ],
     nextSteps: [
       {
-        id: "act-emp-5",
-        title: "Clarify Arbitration Fee Allocation Under AAA Rules",
+        id: "act-emp-4",
+        title: "Propose Mutual Consent for Arbitrator Appointment in Mumbai",
         description:
-          "Add clarifying sentence to Section 11: 'Arbitrator compensation and administrative forum fees shall be borne by Employer in accordance with AAA Employment Rules.'",
+          "Amend Section 11 to provide that the sole arbitrator shall be appointed by mutual consent of both parties, or failing agreement, administered under the rules of the Mumbai Centre for International Arbitration (MCIA).",
         priority: "medium",
         partyResponsible: "Employee",
         isReversible: true,
         recommendedTimeline: "During pre-signing review",
         practicalAdvice:
-          "Highlight that AAA rules already mandate employer fee coverage, so aligning the text prevents future jurisdictional disputes.",
+          "Cite the Perkins Eastman Supreme Court ruling to show that unilateral appointment provisions are legally void.",
       },
     ],
-    legalSource: {
-      id: "source-aaa-employment-rules",
-      title: "AAA Employment Arbitration Rules & Due Process Protocol (Rule 48)",
-      publisher: "American Arbitration Association",
-      sourceType: "regulator",
-      citation: "AAA Employment Due Process Protocol & Rule 48",
-      jurisdiction: "United States (Federal / Delaware)",
-      url: "https://www.adr.org/employment",
-      sourceUrl: "https://www.adr.org/employment",
-      relevance: "Establishes fee-bearing limits for employees in employer-mandated arbitration proceedings",
-      retrievedAt: "2026-02-18T00:00:00Z",
-      publicationDate: "2023-11-01",
-      verificationStatus: "verified",
-      excerpt:
-        "Under the AAA Employment Due Process Protocol, in disputes arising out of employer-promulgated plans, the employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
-      relevantExcerpt:
-        "The employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
-      notes: "Clause provisions stating that each party pays half of all arbitration costs are often overridden by AAA rules.",
-      authorityType: "regulation",
-    },
-    confidence: {
-      level: "high",
-      rationale:
-        "Clear administrative rules established by the named arbitration tribunal (AAA).",
-    },
-    uncertainty: {
-      id: "unc-emp-5",
-      findingId: "finding-emp-5",
-      factualDependencies: [
-        "Whether the agreement is treated as an employer-promulgated standard plan or an individually negotiated executive contract.",
-      ],
-      unverifiedAssumptions: [],
-      explanation:
-        "Whether employment arbitration rules require the employer to cover primary arbitrator forum fees.",
-      isFactVsInterpretationClear: true,
-    },
-    practicalNextStep: {
-      id: "act-emp-5",
-      title: "Clarify Arbitration Fee Allocation Under AAA Rules",
-      description:
-        "Add clarifying sentence to Section 11: 'Arbitrator compensation and administrative forum fees shall be borne by Employer in accordance with AAA Employment Rules.'",
-      priority: "medium",
-      partyResponsible: "Employee",
-      isReversible: true,
-      recommendedTimeline: "During pre-signing review",
-      practicalAdvice:
-        "Highlight that AAA rules already mandate employer fee coverage, so aligning the text prevents future jurisdictional disputes.",
-    },
   },
   {
     id: "chain-emp-5",
+    jurisdictionContext: {
+      country: "India",
+      stateOrUT: "Maharashtra",
+      governingLaw: "Laws of the Republic of India",
+      confidence: "high",
+      source: "document",
+    },
     finding: SAMPLE_FINDINGS[1],
     documentEvidence: {
       clauseId: "clause-sec-5",
       section: "Section 5",
       pageNumber: 1,
       quotedText:
-        "Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
+        "Employee agrees to provide not less than ninety (90) calendar days advance written notice prior to any voluntary resignation. In the event the Employee seeks immediate departure without serving the full notice window, the Company reserves the absolute right to deduct salary in lieu of notice from full and final settlement.",
       sourceType: "document",
       exactQuote:
-        "Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
+        "Employee agrees to provide not less than ninety (90) calendar days advance written notice prior to any voluntary resignation. In the event the Employee seeks immediate departure without serving the full notice window, the Company reserves the absolute right to deduct salary in lieu of notice from full and final settlement.",
     },
     legalClaims: [
       {
-        id: "claim-del-notice-1",
+        id: "claim-notice-reciprocity-1",
         findingId: "finding-emp-2",
-        claim: "Under Delaware at-will employment principles, contractual notice provisions are enforceable agreement covenants, but reciprocity is customary to prevent unilateral lock-in.",
-        sourceIds: ["source-at-will-doctrine"],
+        claim: "Under Indian employment norms and the Maharashtra Shops and Establishments Act, notice requirements should be mutual, and contractual deductions in lieu of notice must reflect basic salary without punitive clawbacks.",
+        sourceIds: ["source-ica-section-74"],
         supportLevel: "partial",
-        explanation: "Contractual notice clauses are permissible, but 60 days is significantly longer than the customary 14-day notice.",
+        explanation: "While contractual notice periods are permissible, a 90-day requirement is on the longer side for technology roles where 30 to 60 days is standard.",
         uncertainties: [
-          "Whether the employer pays salary if they choose to waive the 60-day notice window upon notice receipt.",
+          "Whether the employer will agree to a 30 or 60-day mutual notice window or allow employee-funded buyout.",
         ],
-        jurisdiction: "Delaware",
+        jurisdiction: "India",
         verified: true,
       },
     ],
     legalSources: [
       {
-        id: "source-at-will-doctrine",
-        title: "Delaware At-Will Employment Doctrine & Mutuality Principles",
-        publisher: "Delaware Courts",
-        sourceType: "recognized_legal_source",
-        citation: "Delaware At-Will Precedent",
-        jurisdiction: "Delaware",
-        url: "https://courts.delaware.gov/",
-        sourceUrl: "https://courts.delaware.gov/",
-        relevance: "At-will employment precedent regarding notice windows and mutuality",
-        retrievedAt: "2026-02-15T00:00:00Z",
-        publicationDate: "2020-01-01",
+        id: "source-ica-section-74",
+        title: "Indian Contract Act, 1872 § 74 (Reasonable Compensation)",
+        publisher: "Ministry of Law and Justice, Government of India (India Code)",
+        sourceType: "official_legislation",
+        citation: "Indian Contract Act, 1872 § 74",
+        jurisdiction: "India",
+        url: "https://www.indiacode.nic.in/handle/123456789/2187",
+        sourceUrl: "https://www.indiacode.nic.in/handle/123456789/2187",
+        relevance: "Governs deductions and damages in lieu of unserved contractual notice",
+        retrievedAt: "2026-03-01T00:00:00Z",
+        publicationDate: "1872-04-25",
         verificationStatus: "verified",
-        excerpt:
-          "Employment relationships are presumed at-will unless modified by agreement. While contractual notice periods can be agreed upon, mutuality of notice obligations is standard.",
-        relevantExcerpt:
-          "Employment relationships are presumed at-will unless modified by agreement. While contractual notice periods can be agreed upon, mutuality of notice obligations is standard.",
-        notes: "At-will employment typically features 2-week reciprocal notice periods.",
-        authorityType: "standard_practice",
+        notes: "Deductions for unserved notice are typically limited to basic salary component rather than full gross CTC.",
+        authorityType: "statute",
       },
     ],
     legalEvidence: [
       {
-        legalSourceId: "source-at-will-doctrine",
-        claimId: "claim-del-notice-1",
-        citation: "Delaware At-Will Precedent",
-        relevantExcerpt: "Employment relationships are presumed at-will unless modified by agreement.",
+        legalSourceId: "source-ica-section-74",
+        claimId: "claim-notice-reciprocity-1",
+        citation: "Indian Contract Act, 1872 § 74",
+        relevantExcerpt: "reasonable compensation not exceeding the amount so named",
         sourceType: "legal",
       },
     ],
     verification: {
-      status: "partially_verified",
-      verifiedAt: "2026-03-12T10:20:00Z",
-      issues: [
-        "Contractual notice periods are generally matter of contract negotiation rather than strict statutory prohibition.",
-      ],
-      confidenceLevel: "moderate",
+      status: "verified",
+      verifiedAt: "2026-06-01T10:20:00Z",
+      issues: [],
+      confidenceLevel: "high",
     },
     uncertainties: [
-      "Whether the Employer is required to pay salary during the 60-day window if Employer elects to waive reporting.",
+      "Whether the employer allows early release with notice buyout if requested by employee.",
     ],
     nextSteps: [
       {
-        id: "act-emp-3",
-        title: "Propose Mutual 30-Day Notice Period with Garden Leave Option",
+        id: "act-emp-5",
+        title: "Propose Mutual 60-Day Notice Period with Option of Pay in Lieu",
         description:
-          "Suggest amending Section 5 to thirty (30) days mutual notice for both parties, with employer option to provide pay in lieu of notice.",
+          "Suggest amending Section 5 to sixty (60) days mutual notice for both employer and employee, with the explicit option for either party to offer pay in lieu of notice.",
         priority: "medium",
         partyResponsible: "Employee",
         isReversible: true,
         recommendedTimeline: "During offer negotiation",
         practicalAdvice:
-          "Say: 'A 30-day mutual notice window provides ample transition time for complex architecture knowledge transfer while remaining standard for senior engineering roles.'",
+          "Say: 'A 60-day mutual notice window provides sufficient transition time for complex software knowledge transfer while ensuring market alignment for senior roles.'",
       },
     ],
-    legalSource: {
-      id: "source-at-will-doctrine",
-      title: "Delaware At-Will Employment Doctrine & Mutuality Principles",
-      publisher: "Delaware Courts",
-      sourceType: "recognized_legal_source",
-      citation: "Delaware At-Will Precedent",
-      jurisdiction: "Delaware",
-      url: "https://courts.delaware.gov/",
-      sourceUrl: "https://courts.delaware.gov/",
-      relevance: "At-will employment precedent regarding notice windows and mutuality",
-      retrievedAt: "2026-02-15T00:00:00Z",
-      publicationDate: "2020-01-01",
-      verificationStatus: "context_only",
-      notes: "At-will employment typically features 2-week reciprocal notice periods.",
-      authorityType: "standard_practice",
-    },
-    confidence: {
-      level: "moderate",
-      rationale:
-        "Notice periods are legally permissible contractual terms, but 60 days is four times the customary 14-day standard.",
-    },
-    uncertainty: {
-      id: "unc-emp-3",
-      findingId: "finding-emp-2",
-      factualDependencies: [
-        "Whether the Employer is required to pay salary during the 60-day window if Employer elects to waive reporting.",
-      ],
-      unverifiedAssumptions: [
-        "Assumes Employee will seek standard 14-day transition period in future opportunities.",
-      ],
-      explanation:
-        "Contractual notice clauses are generally enforceable as agreement terms, but may be compromised if the employer reserves unilateral termination rights without reciprocal notice.",
-      isFactVsInterpretationClear: true,
-    },
-    practicalNextStep: {
-      id: "act-emp-3",
-      title: "Propose Mutual 30-Day Notice Period with Garden Leave Option",
-      description:
-        "Suggest amending Section 5 to thirty (30) days mutual notice for both parties, with employer option to provide pay in lieu of notice.",
-      priority: "medium",
-      partyResponsible: "Employee",
-      isReversible: true,
-      recommendedTimeline: "During offer negotiation",
-      practicalAdvice:
-        "Say: 'A 30-day mutual notice window provides ample transition time for complex architecture knowledge transfer while remaining standard for senior engineering roles.'",
-    },
   },
 ];
-
-export const SAMPLE_LAWYER_BRIEF: LawyerBrief = {
-  id: "brief-employment-agreement-01",
-  generatedAt: "2026-03-12T10:15:00Z",
-  documentSummary:
-    "Executive Employment Agreement for Senior Distributed Systems Architect ($145,000/yr) between Aegis Cloud Dynamics Inc. (Employer) and Alex Morgan (Employee). Features strict retention terms including an un-amortized $18,500 training reimbursement, 60-day notice period, broad IP assignment, 12-month non-compete, and mandatory arbitration in Delaware.",
-  partiesInvolved: [
-    "Aegis Cloud Dynamics Inc. (Employer)",
-    "Alex Morgan (Employee)",
-  ],
-  keyIssuesToReview: [
-    {
-      issue: "Un-amortized $18,500 training reimbursement on resignation within 12 months (Section 6)",
-      clauseReference: "Section 6 (Page 2)",
-      severity: "high_attention",
-      recommendedQuestion:
-        "Is this training reimbursement provision enforceable under Delaware wage deduction laws, and should we push for monthly pro-rata amortization?",
-    },
-    {
-      issue: "Comprehensive IP assignment captures off-duty, personal creations (Section 8)",
-      clauseReference: "Section 8 (Page 2)",
-      severity: "high_attention",
-      recommendedQuestion:
-        "How should we draft the carve-out for pre-existing software projects and off-duty creations to protect personal intellectual property?",
-    },
-    {
-      issue: "60-day resignation notice requirement (Section 5)",
-      clauseReference: "Section 5 (Page 1)",
-      severity: "review",
-      recommendedQuestion:
-        "If the employee gives 60 days notice and the employer terminates immediately, is the employer obligated to pay out the 60-day notice window?",
-    },
-    {
-      issue: "Post-employment 12-month non-compete within 50-mile radius (Section 9)",
-      clauseReference: "Section 9 (Page 2)",
-      severity: "high_attention",
-      recommendedQuestion:
-        "How is this non-compete evaluated in Delaware for remote distributed systems roles where clients and servers operate nationally?",
-    },
-  ],
-  missingInformation: [
-    "Exhibit A (Prior Inventions Schedule) is referenced implicitly but not attached.",
-    "Specific course description or receipts for the $18,500 training program are omitted.",
-    "Severance terms in the event of termination without cause are not addressed.",
-  ],
-  recommendedNegotiationPoints: [
-    "Pro-rate Section 6 training repayment so liability amortizes by 1/12th each month worked.",
-    "Add standard California/Delaware statutory carve-out to Section 8 for personal inventions.",
-    "Adjust Section 5 notice period from 60 days to a mutual 30 days.",
-    "Limit Section 9 non-compete strictly to direct competitors using proprietary trade secrets.",
-  ],
-};
 
 export const SAMPLE_ACTION_PLAN: ActionPlan = {
   id: "action-plan-employment-agreement-01",
   documentId: "demo-employment-agreement",
   summary:
-    "Preparation action plan for Alex Morgan: 3 urgent pre-signing items, 4 pointed questions for Aegis Cloud Dynamics, 3 vital evidence documents to collect, and professional review triggers before execution.",
+    "Preparation action plan for Rohan Sharma: 3 urgent pre-signing items, 2 before-signing alignments, 3 pointed questions for Kavach Dynamics Technologies Pvt. Ltd., 3 vital documents to collect, and professional review triggers grounded in Indian law.",
   urgentItems: [
     {
       id: "act-plan-urgent-1",
-      title: "Request Narrowing of Non-Compete Scope and Competitor Specificity",
+      title: "Propose Pro-Rata Amortization for ₹4,50,000 Training Bond Under Section 74",
       explanation:
-        "The current covenant in Section 9 imposes a 12-month ban within a 50-mile radius that encompasses all cloud or software services, effectively locking out remote architectural work.",
-      actionType: "ask_party",
-      priority: "urgent",
-      findingId: "finding-emp-4",
-      findingTitle: "12-Month Post-Employment Non-Compete Within 50-Mile Radius",
-      clauseId: "clause-sec-9",
-      clauseSection: "Section 9",
-      pageNumber: 2,
-      isReversible: true,
-      practicalAdvice:
-        "Ask Aegis HR: 'Could we narrow Section 9 to a defined list of direct competitors and confirm that remote distributed systems work for non-competing firms is permitted?'",
-    },
-    {
-      id: "act-plan-urgent-2",
-      title: "Propose Pro-Rata Monthly Amortization for $18,500 Training Repayment",
-      explanation:
-        "Section 6 requires 100% repayment even if departing on day 364 of the 12-month period, without substantiation of third-party out-of-pocket costs.",
+        "Section 6 requires a full ₹4,50,000 repayment even if departing on month 17 of the 18-month bond window. Under Section 74 of the Indian Contract Act, 1872, liquidated damages must reflect actual reasonable loss rather than a punitive forfeiture.",
       actionType: "clarify",
       priority: "urgent",
       findingId: "finding-emp-1",
-      findingTitle: "Early Departure Training Fee Reimbursement Penalty ($18,500)",
+      findingTitle: "Early Departure Training Bond Reimbursement (₹4,50,000)",
       clauseId: "clause-sec-6",
       clauseSection: "Section 6",
       pageNumber: 2,
       isReversible: true,
       practicalAdvice:
-        "Propose: 'Repayment shall amortize pro-rata by 1/12th ($1,541.67) for each completed month of service, and apply only to accredited third-party tuition.'",
+        "Propose: 'The training reimbursement shall amortize pro-rata by 1/18th (₹25,000) for each completed month of service, and apply strictly to documented third-party training invoices.'",
+    },
+    {
+      id: "act-plan-urgent-2",
+      title: "Address Nationwide Non-Compete Under Section 27 of the Indian Contract Act",
+      explanation:
+        "Section 9 imposes a 12-month nationwide non-compete. Under Section 27 of the Indian Contract Act, 1872 and Supreme Court precedent (Percept D'Mark v. Zaheer Khan), post-employment non-compete agreements are void ab initio in India.",
+      actionType: "ask_party",
+      priority: "urgent",
+      findingId: "finding-emp-4",
+      findingTitle: "12-Month Post-Employment Nationwide Non-Compete",
+      clauseId: "clause-sec-9",
+      clauseSection: "Section 9",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice:
+        "Suggest replacing Section 9 with standard non-solicitation of clients/employees and strict confidentiality protection, which are legally enforceable in India.",
     },
     {
       id: "act-plan-urgent-3",
-      title: "Execute and Attach Exhibit A Listing All Pre-Existing Inventions",
+      title: "Execute and Attach Exhibit A Listing All Pre-Existing Inventions & Codebases",
       explanation:
-        "Section 8 contains an un-carved assignment of all inventions conceived during the employment term, including off-duty work on personal devices.",
+        "Section 8 assigns all software code conceived during employment, including off-duty creations on personal equipment. Under Section 17(c) of the Copyright Act, 1957, statutory ownership is limited to works in the course of employment.",
       actionType: "preserve_evidence",
       priority: "urgent",
       findingId: "finding-emp-3",
@@ -1163,63 +971,63 @@ export const SAMPLE_ACTION_PLAN: ActionPlan = {
       pageNumber: 2,
       isReversible: true,
       practicalAdvice:
-        "List all pre-existing GitHub repositories, side projects, and personal tools on Exhibit A before signing to prevent employer ownership claims.",
+        "List all personal GitHub repositories, open-source libraries, and hobby software on an attached Exhibit A schedule prior to signing.",
     },
   ],
   beforeSigning: [
     {
       id: "act-plan-before-1",
-      title: "Negotiate Mutual 30-Day Notice of Resignation",
+      title: "Negotiate Mutual 60-Day Notice Period",
       explanation:
-        "Section 5 imposes a unilateral 60-day notice obligation on the employee while remaining silent on employer notice or garden leave pay.",
+        "Section 5 imposes a unilateral 90-day notice obligation on the employee. Proposing a 60-day mutual notice balances transition needs with career flexibility.",
       actionType: "clarify",
       priority: "important",
       findingId: "finding-emp-2",
-      findingTitle: "60-Day Unilateral Resignation Notice Requirement",
+      findingTitle: "90-Day Resignation Notice Period",
       clauseId: "clause-sec-5",
       clauseSection: "Section 5",
       pageNumber: 1,
       isReversible: true,
       practicalAdvice:
-        "Propose standard mutual language: 'Either party may terminate employment with thirty (30) calendar days advance written notice.'",
+        "Propose mutual wording: 'Either party may terminate employment with sixty (60) calendar days advance written notice or basic salary in lieu thereof.'",
     },
     {
       id: "act-plan-before-2",
-      title: "Clarify Arbitration Fee Allocation Under AAA Rules",
+      title: "Align Arbitration Clause with Perkins Eastman Neutrality Rules",
       explanation:
-        "Section 11 splits arbitrator and forum fees 50/50, which contradicts mandatory AAA Employment Due Process Protocol rules requiring employers to bear hearing costs.",
+        "Section 11 grants the Company's Managing Director the unilateral authority to appoint the sole arbitrator, which is invalid under Section 12(5) of the Arbitration Act.",
       actionType: "clarify",
       priority: "important",
       findingId: "finding-emp-5",
-      findingTitle: "Mandatory Binding Arbitration with Fee-Splitting Provision",
+      findingTitle: "Mandatory Arbitration with Unilateral Arbitrator Appointment",
       clauseId: "clause-sec-11",
       clauseSection: "Section 11",
       pageNumber: 3,
       isReversible: true,
       practicalAdvice:
-        "Confirm with Aegis legal counsel that employer pays all AAA administrative and arbitrator fees in compliance with Rule 48.",
+        "Propose appointing the sole arbitrator by mutual written consent or under the administration of the Mumbai Centre for International Arbitration (MCIA).",
     },
   ],
   questionsToAsk: [
     {
       id: "act-plan-q-1",
-      title: "Clarify Training Cost Amortization & Involuntary Termination",
-      explanation: "Ensure liability does not trigger if employment ends without cause or via employer restructuring.",
+      title: "Clarify Training Bond Amortization & Involuntary Separation",
+      explanation: "Ensure the ₹4,50,000 repayment is not triggered if separation occurs due to company restructuring or layoff.",
       actionType: "ask_party",
       priority: "urgent",
       findingId: "finding-emp-1",
-      findingTitle: "Early Departure Training Fee Reimbursement Penalty ($18,500)",
+      findingTitle: "Early Departure Training Bond Reimbursement (₹4,50,000)",
       clauseId: "clause-sec-6",
       clauseSection: "Section 6",
       pageNumber: 2,
       isReversible: true,
       practicalAdvice:
-        "Ask: 'Does the reimbursement obligation extinguish if employment is terminated by the Company without Cause?'",
+        "Ask: 'Does the reimbursement obligation extinguish if employment is terminated by the Company without cause or due to organizational restructuring?'",
     },
     {
       id: "act-plan-q-2",
       title: "Confirm Carve-Out for Personal Open-Source Contributions",
-      explanation: "Verify that off-duty contributions to public open-source libraries remain personal IP.",
+      explanation: "Verify that off-duty contributions to public open-source developer tools remain personal property.",
       actionType: "ask_party",
       priority: "urgent",
       findingId: "finding-emp-3",
@@ -1229,29 +1037,29 @@ export const SAMPLE_ACTION_PLAN: ActionPlan = {
       pageNumber: 2,
       isReversible: true,
       practicalAdvice:
-        "Ask: 'Can we add explicit language confirming that non-commercial open-source contributions created on personal time remain employee property?'",
+        "Ask: 'Can we add explicit language confirming that independent open-source contributions developed on personal time without Company data remain employee IP?'",
     },
     {
       id: "act-plan-q-3",
-      title: "Confirm Scope of 50-Mile Non-Compete for Distributed Roles",
-      explanation: "Understand whether remote positions headquartered out-of-state are treated as competing.",
+      title: "Confirm Notice Buyout Policy for Resignation",
+      explanation: "Clarify whether Kavach Dynamics permits notice buyout if a subsequent employer requires an earlier joining date.",
       actionType: "ask_party",
       priority: "important",
-      findingId: "finding-emp-4",
-      findingTitle: "12-Month Post-Employment Non-Compete Within 50-Mile Radius",
-      clauseId: "clause-sec-9",
-      clauseSection: "Section 9",
-      pageNumber: 2,
+      findingId: "finding-emp-2",
+      findingTitle: "90-Day Resignation Notice Period",
+      clauseId: "clause-sec-5",
+      clauseSection: "Section 5",
+      pageNumber: 1,
       isReversible: true,
       practicalAdvice:
-        "Ask: 'Is the 50-mile radius measured from the Dover office, and does it restrict remote engineering for non-Delaware clients?'",
+        "Ask: 'Does the Company support notice buyout based on basic salary if an employee transitions prior to 90 days?'",
     },
   ],
   documentsToCollect: [
     {
       id: "act-plan-doc-1",
-      title: "Archive Personal Codebase Repositories and Commit Hashes",
-      explanation: "Establish immutable timestamps proving creation dates of personal software before starting employment.",
+      title: "Archive Personal Codebase Repositories and Git Commit Hashes",
+      explanation: "Establish timestamped proof of personal software projects developed prior to starting employment.",
       actionType: "collect_document",
       priority: "urgent",
       findingId: "finding-emp-3",
@@ -1260,98 +1068,359 @@ export const SAMPLE_ACTION_PLAN: ActionPlan = {
     },
     {
       id: "act-plan-doc-2",
-      title: "Request Itemized Invoices for Scheduled Training Certifications",
-      explanation: "Demand advance documentation of the accredited vendor and third-party fee for the $18,500 course.",
+      title: "Request Itemized Syllabus & Invoices for Scheduled Training",
+      explanation: "Verify whether the ₹4,50,000 program involves accredited external certifications.",
       actionType: "collect_document",
       priority: "important",
       findingId: "finding-emp-1",
       isReversible: true,
-      practicalAdvice: "Request official syllabus and payment receipt from Aegis before enrolling in the training.",
+      practicalAdvice: "Request official third-party vendor payment receipts from HR before enrolling in any training.",
     },
     {
       id: "act-plan-doc-3",
-      title: "Retain Signed Offer Letter & Formal Job Description",
-      explanation: "Compare promised duties against written assignment scope to avoid unexpected scope expansion.",
+      title: "Retain Signed CTC Annexure & Offer Letter",
+      explanation: "Ensure the monthly CTC salary structure matches the ₹32,00,000 figure stated in Section 2.",
       actionType: "collect_document",
       priority: "recommended",
       isReversible: true,
-      practicalAdvice: "Maintain offline copies of all recruiting emails and initial compensation proposals.",
+      practicalAdvice: "Maintain offline copies of all offer documentation and HR correspondence.",
     },
   ],
   factsToConfirm: [
     {
       id: "act-plan-fact-1",
-      title: "Confirm Physical Territory of Aegis Enterprise Accounts",
-      explanation: "Verify exactly which corporate clients Aegis actively services to establish the realistic boundary of customer restrictions.",
+      title: "Confirm 90-Day Probationary Review Checkpoint",
+      explanation: "Clarify whether notice period during the initial 90-day probation differs from the post-confirmation 90-day standard.",
       actionType: "confirm_fact",
-      priority: "important",
-      findingId: "finding-emp-4",
+      priority: "recommended",
+      findingId: "finding-emp-2",
       isReversible: true,
-      practicalAdvice: "Request a general list of industry verticals Aegis operates in.",
+      practicalAdvice: "Check if the employee handbook specifies a shorter 30-day notice during probation.",
     },
     {
       id: "act-plan-fact-2",
-      title: "Confirm 90-Day Probationary Review Protocol",
-      explanation: "Clarify whether notice period during the initial 90 days differs from the 60-day standard.",
+      title: "Confirm Full and Final Settlement Deductions Policy",
+      explanation: "Clarify how leave encashment and statutory gratuity interact with Section 6 recovery claims.",
       actionType: "confirm_fact",
-      priority: "recommended",
+      priority: "important",
+      findingId: "finding-emp-1",
       isReversible: true,
-      practicalAdvice: "Check if the employee handbook specifies a shorter notice during probation.",
+      practicalAdvice: "Review HR guidelines on full & final settlement (FnF) timelines.",
     },
   ],
   professionalReviewTriggers: [
     {
-      id: "trigger-emp-train",
+      id: "trigger-emp-bond",
       findingId: "finding-emp-1",
       clauseSection: "Section 6",
-      reason: "Potential violation of Delaware Wage Payment Act (19 Del. C. § 1107) regarding un-amortized penalty deductions.",
+      reason: "Potential violation of Indian Contract Act § 74 regarding un-amortized penalty deductions and lack of proof of actual loss.",
       severity: "high_attention",
     },
     {
       id: "trigger-emp-noncompete",
       findingId: "finding-emp-4",
       clauseSection: "Section 9",
-      reason: "Delaware Court of Chancery precedent (Kodiak Bldg. Partners) indicates overbroad geographical definitions are non-enforceable without blue-penciling.",
+      reason: "Section 27 of the Indian Contract Act renders agreements in restraint of trade void ab initio; Supreme Court precedent (Percept D'Mark) confirms post-employment restrictions are unenforceable.",
       severity: "high_attention",
     },
     {
       id: "trigger-emp-ip",
       findingId: "finding-emp-3",
       clauseSection: "Section 8",
-      reason: "Assignment of personal off-duty creations risks loss of personal portfolio without statutory carve-out protection.",
+      reason: "Blanket assignment of personal off-duty creations exceeds Copyright Act § 17(c) 'course of employment' presumption.",
       severity: "high_attention",
     },
   ],
   followUpItems: [
     {
       id: "act-plan-follow-1",
-      title: "Calendar Probationary Evaluation Milestone (Day 75)",
+      title: "Calendar 90-Day Probationary Milestone (August 15, 2026)",
       explanation: "Schedule performance checkpoint 15 days prior to the expiration of the 90-day probationary window.",
       actionType: "monitor_deadline",
       priority: "recommended",
       pageNumber: 1,
       isReversible: true,
-      practicalAdvice: "Set a calendar alert for July 15, 2026 to review deliverables with team lead.",
+      practicalAdvice: "Set a calendar reminder to review confirmation deliverables with the CTO.",
     },
     {
       id: "act-plan-follow-2",
-      title: "Track 12-Month Training Reimbursement Expiration (April 30, 2027)",
-      explanation: "After 12 continuous months of service, the $18,500 reimbursement obligation legally lapses.",
+      title: "Track 18-Month Training Bond Expiration (November 30, 2027)",
+      explanation: "After 18 continuous months of service, the ₹4,50,000 reimbursement obligation lapses completely.",
       actionType: "monitor_deadline",
       priority: "important",
       pageNumber: 2,
       isReversible: true,
-      practicalAdvice: "Note May 1, 2027 as the date of full liability release.",
+      practicalAdvice: "Note December 1, 2027 as the date of full liability release.",
     },
   ],
-  generatedAt: "2026-03-12T10:25:00Z",
+  generatedAt: "2026-06-01T10:25:00Z",
+};
+
+export const SAMPLE_LAWYER_BRIEF: LawyerBrief = {
+  id: "brief-employment-agreement-01",
+  generatedAt: "2026-06-01T10:15:00Z",
+  documentSummary:
+    "Executive Employment Agreement for Senior Distributed Systems Architect (₹32,00,000/yr CTC) between Kavach Dynamics Technologies Private Limited (Mumbai, Maharashtra) and Rohan Sharma (Pune, Maharashtra). Key issues identified under Indian law include a non-amortized ₹4,50,000 training bond, a 90-day resignation notice period, broad IP assignment covering off-duty works, a post-employment non-compete under Section 27, and unilateral arbitrator appointment under the Arbitration Act.",
+  partiesInvolved: [
+    "Kavach Dynamics Technologies Private Limited (Employer - Mumbai, Maharashtra)",
+    "Rohan Sharma (Employee - Pune, Maharashtra)",
+  ],
+  keyIssuesToReview: [
+    {
+      issue: "Un-amortized ₹4,50,000 training bond reimbursement on resignation within 18 months (Section 6)",
+      clauseReference: "Section 6 (Page 2)",
+      severity: "high_attention",
+      recommendedQuestion:
+        "Under Section 74 of the Indian Contract Act and Supreme Court precedents (Fateh Chand, Kailash Nath Associates), can the employer enforce this ₹4,50,000 bond without proof of actual training expenditure, and should we demand monthly pro-rata amortization?",
+    },
+    {
+      issue: "Post-employment 12-month nationwide non-compete covenant (Section 9)",
+      clauseReference: "Section 9 (Page 2)",
+      severity: "high_attention",
+      recommendedQuestion:
+        "Given that Section 27 of the Indian Contract Act and Percept D'Mark v. Zaheer Khan render post-employment restraints void ab initio, how should we advise client regarding this clause and replace it with standard client non-solicitation?",
+    },
+    {
+      issue: "Comprehensive IP assignment capturing off-duty personal software (Section 8)",
+      clauseReference: "Section 8 (Page 2)",
+      severity: "high_attention",
+      recommendedQuestion:
+        "How should Exhibit A be structured under Section 17(c) of the Copyright Act, 1957 to ensure pre-existing personal open-source libraries and independent projects remain client's property?",
+    },
+    {
+      issue: "Unilateral arbitrator appointment by Managing Director in Mumbai (Section 11)",
+      clauseReference: "Section 11 (Page 3)",
+      severity: "review",
+      recommendedQuestion:
+        "Does this unilateral arbitrator appointment clause violate Section 12(5) and the Perkins Eastman Supreme Court ruling, and should we propose MCIA institutional arbitration?",
+    },
+  ],
+  missingInformation: [
+    "Exhibit A (Prior Inventions and Personal Projects Schedule) is referenced implicitly but not attached.",
+    "Itemized invoices or syllabus for the specialized ₹4,50,000 training course are omitted.",
+    "Severance provisions in the event of company termination without cause are not addressed.",
+  ],
+  recommendedNegotiationPoints: [
+    "Pro-rate Section 6 training bond so liability amortizes by 1/18th (₹25,000) for each completed month of service.",
+    "Confirm that Section 9 non-compete is void post-employment under Section 27 and replace with reasonable non-solicitation.",
+    "Add explicit carve-out to Section 8 for personal off-duty inventions created without company resources.",
+    "Adjust Section 5 notice period from 90 days to a mutual 60 days.",
+    "Amend Section 11 to require mutual consent for arbitrator appointment or MCIA administration.",
+  ],
 };
 
 export const SAMPLE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
   id: "detailed-brief-employment-agreement-01",
+  generatedAt: "2026-06-01T10:30:00Z",
+  matterSummary:
+    "Review of Employment & Proprietary Inventions Agreement between Kavach Dynamics Technologies Private Limited (Mumbai, Maharashtra Employer) and Rohan Sharma (Software Engineer candidate for Senior Distributed Systems Architect at ₹32,00,000 CTC/year). Analysis flags 3 elevated-attention covenants under Indian law: an un-amortized ₹4,50,000 training bond, blanket personal IP assignment, and a 12-month post-employment non-compete. Client seeks counsel review on enforceability under Indian law (Indian Contract Act, 1872 §§ 27 & 74) and drafting assistance for standard carve-outs before execution.",
+  document: {
+    title: "Employment & Proprietary Inventions Agreement",
+    documentType: "Executive Employment Agreement",
+    date: "2026-06-01",
+    parties: [
+      "Kavach Dynamics Technologies Private Limited (Employer - Mumbai, Maharashtra)",
+      "Rohan Sharma (Employee - Pune, Maharashtra)",
+    ],
+    jurisdiction: "India · Maharashtra",
+    jurisdictionContext: {
+      country: "India",
+      stateOrUT: "Maharashtra",
+      governingLaw: "Laws of the Republic of India",
+      confidence: "high",
+      source: "document",
+    },
+  },
+  jurisdictionContext: {
+    country: "India",
+    stateOrUT: "Maharashtra",
+    governingLaw: "Laws of the Republic of India",
+    confidence: "high",
+    source: "document",
+  },
+  userConcerns: [
+    "[HIGH] Early Departure Training Bond (₹4,50,000): Requires full lump-sum repayment if employee leaves within 18 months, without monthly pro-rata amortization.",
+    "[HIGH] Post-Employment Non-Compete: 12-month nationwide restriction on joining competing distributed systems firms, despite Section 27 of the Indian Contract Act.",
+    "[HIGH] Broad IP Assignment: Captures all software created during employment term, including personal projects developed outside work hours without company hardware.",
+    "[REVIEW] 90-Day Resignation Notice: Long unilateral requirement with salary deduction rights in lieu of notice.",
+    "[REVIEW] Unilateral Arbitrator Appointment: Company Managing Director reserves exclusive right to appoint sole arbitrator, conflicting with Perkins Eastman.",
+  ],
+  relevantClauses: [
+    {
+      clauseId: "clause-sec-6",
+      section: "Section 6",
+      pageNumber: 2,
+      excerpt:
+        "if the Employee resigns or departs from service for any reason prior to completing eighteen (18) continuous months from the Effective Date, the Employee shall immediately reimburse to the Company the fixed sum of INR 4,50,000 (Rupees Four Lakh Fifty Thousand only) as liquidated damages and training expense recovery, and the Company is irrevocably authorized to deduct such amount from the Employee's accrued salary",
+      plainEnglish:
+        "Full ₹4,50,000 repayment required if departing within 18 months, even if leaving in month 17. No proof of actual third-party training costs required.",
+      importance: "high_attention",
+    },
+    {
+      clauseId: "clause-sec-9",
+      section: "Section 9",
+      pageNumber: 2,
+      excerpt:
+        "For a period of twelve (12) months following termination of employment for any reason whatsoever, the Employee shall not, anywhere within the territory of the Republic of India, directly or indirectly engage in, perform consulting or engineering services for, advise, or hold equity in any enterprise... offering competing distributed cloud infrastructure",
+      plainEnglish:
+        "12-month post-employment non-compete preventing employment with any competing software or cloud technology company across India.",
+      importance: "high_attention",
+    },
+    {
+      clauseId: "clause-sec-8",
+      section: "Section 8",
+      pageNumber: 2,
+      excerpt:
+        "assigns and transfers to the Company all right, title, and interest throughout the world in and to any and all software code, inventions, discoveries... conceived, authored, or reduced to practice during the term of employment, whether or not during regular working hours, and whether or not utilizing Company hardware, servers, or facilities.",
+      plainEnglish:
+        "Blanket assignment claiming ownership of software created on personal devices during personal time.",
+      importance: "high_attention",
+    },
+    {
+      clauseId: "clause-sec-5",
+      section: "Section 5",
+      pageNumber: 1,
+      excerpt:
+        "Employee agrees to provide not less than ninety (90) calendar days advance written notice prior to any voluntary resignation. In the event the Employee seeks immediate departure without serving the full notice window, the Company reserves the absolute right to deduct salary in lieu of notice from full and final settlement.",
+      plainEnglish:
+        "Mandatory 90-day notice prior to quitting; Company claims unilateral deduction rights from terminal dues.",
+      importance: "review",
+    },
+    {
+      clauseId: "clause-sec-11",
+      section: "Section 11",
+      pageNumber: 3,
+      excerpt:
+        "resolved through final and binding arbitration in Mumbai under the Arbitration and Conciliation Act, 1996. The arbitration shall be conducted by a sole arbitrator appointed exclusively by the Managing Director of the Company. The parties shall bear arbitrator fees and administrative costs equally.",
+      plainEnglish:
+        "Mandatory arbitration in Mumbai where Company unilaterally chooses the sole arbitrator, and fees are shared equally.",
+      importance: "review",
+    },
+  ],
+  verifiedLegalContext: [
+    {
+      issueTitle: "Liquidated Damages & Training Bond Enforceability",
+      sourceTitle: "Indian Contract Act, 1872 § 74 (Compensation for Breach)",
+      citation: "Indian Contract Act, 1872 § 74",
+      jurisdiction: "India",
+      explanation:
+        "Section 74 establishes that named sums in a contract serve as an upper ceiling. Supreme Court precedents (Fateh Chand, Kailash Nath Associates) require employers to prove actual reasonable training expenses rather than imposing a forfeiture penalty.",
+      verificationStatus: "verified",
+    },
+    {
+      issueTitle: "Post-Employment Non-Compete Voidness",
+      sourceTitle: "Indian Contract Act, 1872 § 27 & Supreme Court Precedents",
+      citation: "Indian Contract Act, 1872 § 27",
+      jurisdiction: "India",
+      explanation:
+        "Under Section 27, covenants in restraint of trade extending beyond employment termination are void ab initio. The Supreme Court in Percept D'Mark v. Zaheer Khan affirmed that post-employment non-compete clauses are completely unenforceable in India.",
+      verificationStatus: "verified",
+    },
+    {
+      issueTitle: "Employee Invention Assignment Limits",
+      sourceTitle: "Copyright Act, 1957 § 17(c) (Contract of Service Presumption)",
+      citation: "Copyright Act, 1957 § 17(c)",
+      jurisdiction: "India",
+      explanation:
+        "Statutory first-ownership applies to works created in the course of employment. Independent works developed outside work hours without employer assets require valid separate assignment.",
+      verificationStatus: "verified",
+    },
+    {
+      issueTitle: "Unilateral Arbitrator Appointment Prohibition",
+      sourceTitle: "Arbitration and Conciliation Act, 1996 & Supreme Court Ruling",
+      citation: "Arbitration and Conciliation Act, 1996 § 12(5) & Perkins Eastman",
+      jurisdiction: "India",
+      explanation:
+        "Under Section 12(5) and the Supreme Court decision in Perkins Eastman Architects v. HSCC (India) Ltd., a party interested in the outcome of a dispute cannot unilaterally appoint a sole arbitrator.",
+      verificationStatus: "verified",
+    },
+  ],
+  whatRemainsUncertain: [
+    "Whether Kavach Dynamics can provide itemized receipts proving ₹4,50,000 was spent on specialized third-party technical certifications.",
+    "Whether Kavach Dynamics will agree to replace Section 9 with reasonable non-solicitation of clients and trade secret confidentiality.",
+    "Whether the Company will attach a formal Exhibit A schedule excluding Rohan's pre-existing open-source code repositories.",
+    "Whether the 90-day notice requirement can be reduced to 60 days by mutual consent during offer finalization.",
+  ],
+  documentsAvailable: [
+    "Employment & Proprietary Inventions Agreement (complete 3-page draft)",
+    "Formal Written Offer Letter (INR 32,00,000 CTC compensation confirmation)",
+    "Inventory of Pre-Existing Personal Software Projects and GitHub commit histories",
+    "Email correspondence regarding technical role scope and Mumbai office expectations",
+  ],
+  questionsForCounsel: [
+    {
+      findingId: "finding-emp-1",
+      clauseReference: "Section 6",
+      question:
+        "Under Section 74 of the Indian Contract Act and Kailash Nath Associates, does the ₹4,50,000 lump-sum training bond constitute an unenforceable penalty, and what specific monthly amortization clause should we propose?",
+      context:
+        "The clause does not reduce repayment over the 18-month tenure and authorizes direct salary deductions without establishing actual loss.",
+    },
+    {
+      findingId: "finding-emp-4",
+      clauseReference: "Section 9",
+      question:
+        "How should we formally advise the client regarding the complete voidness of the 12-month post-employment non-compete under Section 27 and Percept D'Mark, while ensuring client remains protected under non-solicitation?",
+      context:
+        "Client seeks assurance that future employment in cloud or software architecture cannot be blocked by Kavach Dynamics under Indian law.",
+    },
+    {
+      findingId: "finding-emp-3",
+      clauseReference: "Section 8",
+      question:
+        "How should Exhibit A and Section 8 be drafted to align with Section 17(c) of the Copyright Act, 1957, safeguarding client's pre-existing software projects from employer ownership claims?",
+      context:
+        "Client maintains active open-source software repositories and personal developer utilities created prior to joining Kavach Dynamics.",
+    },
+    {
+      findingId: "finding-emp-5",
+      clauseReference: "Section 11",
+      question:
+        "In light of the Perkins Eastman Supreme Court ruling, how can we best restructure Section 11 to require mutual consent for arbitrator appointment or administration by the Mumbai Centre for International Arbitration (MCIA)?",
+      context:
+        "Unilateral appointment by the Managing Director creates severe procedural vulnerability in any compensation or termination dispute.",
+    },
+  ],
+  importantDates: [
+    {
+      label: "Effective Commencement Date",
+      date: "2026-06-01",
+      description: "Start of employment tenure and accrual of contractual covenants.",
+      isDeadline: true,
+    },
+    {
+      label: "Probationary Performance Review Window",
+      date: "2026-08-30",
+      noticePeriodDays: 90,
+      description: "Initial 90-day evaluation milestone.",
+      isDeadline: false,
+    },
+    {
+      label: "Resignation Notice Window",
+      date: null,
+      noticePeriodDays: 90,
+      description: "Mandatory advance written notice required prior to voluntary departure.",
+      isDeadline: true,
+    },
+    {
+      label: "Training Bond Expiration",
+      date: "2027-11-30",
+      description: "18-month tenure threshold after which the ₹4,50,000 training bond obligation lapses entirely.",
+      isDeadline: true,
+    },
+  ],
+  disclaimer:
+    "NOTICE & DISCLAIMER: This briefing document was generated by LawPilot to assist the user in preparing for an efficient consultation with an Advocate or legal practitioner in India. It organizes facts, clause excerpts, and verified Indian statutory context identified in the submitted document. This document does NOT constitute formal legal advice, representation, or an advocate-client relationship. All legal interpretations must be confirmed by a qualified legal professional.",
+};
+
+/**
+ * Retained Delaware brief for backward-compatibility verification in legacy test suites.
+ */
+export const SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
+  id: "detailed-brief-delaware-legacy-01",
   generatedAt: "2026-03-12T10:30:00Z",
   matterSummary:
-    "Review of Employment & Proprietary Inventions Agreement between Aegis Cloud Dynamics Inc. (Delaware Employer) and Alex Morgan (Employee candidate for Senior Distributed Systems Architect at $145,000/year). Initial analysis flags 3 severe asymmetric covenants: a non-amortized $18,500 training reimbursement clawback, broad personal IP assignment, and a 12-month post-employment non-compete. Client seeks counsel review on enforceability under Delaware law and assistance drafting key carve-outs prior to execution.",
+    "Review of Employment & Proprietary Inventions Agreement between Aegis Cloud Dynamics Inc. (Delaware Employer) and Alex Morgan (Employee candidate for Senior Distributed Systems Architect at $145,000/year). Features Delaware statutory citations.",
   document: {
     title: "Employment & Proprietary Inventions Agreement",
     documentType: "Executive Employment Agreement",
@@ -1360,61 +1429,49 @@ export const SAMPLE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
     jurisdiction: "State of Delaware",
   },
   userConcerns: [
-    "[HIGH] Early Departure Training Clawback ($18,500): Requires full lump-sum repayment if employee leaves within 12 months, without pro-rata monthly amortization.",
-    "[HIGH] Broad IP Assignment: Captures all inventions developed during term, including those conceived on personal time without company resources.",
-    "[HIGH] 12-Month Non-Compete: Restricts competitive software work within 50 miles, potentially preventing remote distributed engineering.",
-    "[REVIEW] 60-Day Resignation Notice: Long unilateral requirement with no reciprocal employer severance or garden leave.",
-    "[REVIEW] AAA Fee-Splitting: Splits forum and arbitrator compensation equally, in conflict with AAA Employment Due Process Protocol.",
+    "[HIGH] Early Departure Training Clawback ($18,500)",
+    "[HIGH] Broad IP Assignment",
+    "[HIGH] 12-Month Non-Compete",
   ],
   relevantClauses: [
     {
       clauseId: "clause-sec-6",
       section: "Section 6",
       pageNumber: 2,
-      excerpt:
-        "In the event Employee voluntarily resigns... within twelve (12) months following the Effective Date, Employee agrees to immediately reimburse Employer the liquidated sum of Eighteen Thousand Five Hundred Dollars ($18,500.00) representing specialized cloud systems training expenses.",
-      plainEnglish:
-        "Full $18,500 repayment required if departing within 1 year, even if leaving in month 11. No proof of actual third-party costs required.",
+      excerpt: "reimburse Employer the liquidated sum of Eighteen Thousand Five Hundred Dollars ($18,500.00)",
+      plainEnglish: "Full $18,500 repayment required if departing within 1 year.",
       importance: "high_attention",
     },
     {
       clauseId: "clause-sec-8",
       section: "Section 8",
       pageNumber: 2,
-      excerpt:
-        "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions... conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
-      plainEnglish:
-        "Blanket assignment claiming ownership of software created on personal devices during personal time.",
+      excerpt: "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions",
+      plainEnglish: "Blanket assignment claiming ownership of software created on personal devices.",
       importance: "high_attention",
     },
     {
       clauseId: "clause-sec-9",
       section: "Section 9",
       pageNumber: 2,
-      excerpt:
-        "For a period of twelve (12) months following the termination of Employee's employment... Employee shall not... directly or indirectly engage in, perform services for, or invest in any business competitive with Employer within a fifty (50) mile radius.",
-      plainEnglish:
-        "12-month non-compete preventing employment with any competitive firm within 50 miles of Dover, DE.",
+      excerpt: "For a period of twelve (12) months following termination... directly or indirectly engage in competitive business within 50 miles",
+      plainEnglish: "12-month non-compete preventing employment within 50 miles of Dover, DE.",
       importance: "high_attention",
     },
     {
       clauseId: "clause-sec-5",
       section: "Section 5",
       pageNumber: 1,
-      excerpt:
-        "Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
-      plainEnglish:
-        "Mandatory 60-day notice prior to quitting; employer has no reciprocal notice obligation.",
+      excerpt: "provide not less than sixty (60) calendar days advance written notice",
+      plainEnglish: "Mandatory 60-day notice prior to quitting.",
       importance: "review",
     },
     {
       clauseId: "clause-sec-11",
       section: "Section 11",
       pageNumber: 3,
-      excerpt:
-        "Any dispute, controversy, or claim... shall be settled by confidential binding arbitration administered by the American Arbitration Association... each party shall bear its own attorneys' fees and an equal share of arbitrator compensation and administrative expenses.",
-      plainEnglish:
-        "Mandatory arbitration where employee must pay 50% of arbitrator fees, creating high financial barriers to dispute resolution.",
+      excerpt: "settled by confidential binding arbitration administered by the American Arbitration Association",
+      plainEnglish: "Mandatory arbitration in Delaware.",
       importance: "review",
     },
   ],
@@ -1424,8 +1481,7 @@ export const SAMPLE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
       sourceTitle: "Delaware Wage Payment and Collection Act",
       citation: "19 Del. C. § 1107 (Withholding and Deductions)",
       jurisdiction: "Delaware",
-      explanation:
-        "Prohibits employers from withholding wages or enforcing liquidated penalty deductions without documented authorization and substantiated employer costs.",
+      explanation: "Prohibits employers from withholding wages without documented authorization.",
       verificationStatus: "verified",
     },
     {
@@ -1433,8 +1489,7 @@ export const SAMPLE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
       sourceTitle: "Delaware Court of Chancery Precedent",
       citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507",
       jurisdiction: "Delaware",
-      explanation:
-        "Delaware courts refuse to enforce or blue-pencil overbroad non-compete covenants that extend beyond the employer's protectable goodwill or legitimate business interests.",
+      explanation: "Delaware courts refuse to enforce or blue-pencil overbroad non-competes.",
       verificationStatus: "verified",
     },
     {
@@ -1442,8 +1497,7 @@ export const SAMPLE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
       sourceTitle: "Delaware Common Law Inventions Jurisprudence",
       citation: "Delaware Corporate & Employment Inventions Jurisprudence",
       jurisdiction: "Delaware",
-      explanation:
-        "Agreements assigning employee inventions are strictly construed when claiming inventions created on the employee's own time without company assets.",
+      explanation: "Invention assignments are strictly construed regarding personal time creations.",
       verificationStatus: "verified",
     },
     {
@@ -1451,99 +1505,65 @@ export const SAMPLE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
       sourceTitle: "AAA Employment Due Process Protocol (Rule 48)",
       citation: "AAA Employment Due Process Protocol & Rule 48",
       jurisdiction: "United States (Federal / Delaware)",
-      explanation:
-        "In employer-promulgated arbitration plans, the employee's filing fee is capped, and all arbitrator fees and administrative expenses must be paid by the employer.",
+      explanation: "Under AAA Protocol, employer must bear hearing and arbitrator costs.",
       verificationStatus: "verified",
     },
   ],
   whatRemainsUncertain: [
-    "Whether Aegis will provide itemized proof of third-party tuition for the $18,500 training program.",
-    "Whether the 50-mile non-compete applies to remote software engineering for out-of-state tech clients.",
-    "Whether Aegis will accept a formal Exhibit A schedule excluding pre-existing GitHub repositories.",
-    "Whether the 60-day notice requirement includes garden leave pay if Aegis relieves employee of duties early.",
+    "Whether Aegis will provide itemized receipts for $18,500 training.",
   ],
   documentsAvailable: [
-    "Employment & Proprietary Inventions Agreement (complete 3-page draft)",
-    "Formal Written Offer Letter ($145,000 base salary confirmation)",
-    "Inventory of Pre-Existing Personal Software Projects and GitHub commit histories",
-    "Email correspondence regarding remote work flexibility and role expectations",
+    "Employment & Proprietary Inventions Agreement (draft)",
   ],
   questionsForCounsel: [
     {
       findingId: "finding-emp-1",
       clauseReference: "Section 6",
-      question:
-        "Does the $18,500 lump-sum training clawback constitute an unenforceable liquidated penalty under Delaware law, and what specific amortization language should we propose?",
-      context:
-        "The clause does not reduce repayment over the 12-month period and does not condition payment on voluntary departure versus termination without cause.",
+      question: "Does the $18,500 training clawback constitute an unenforceable liquidated penalty under Delaware law?",
+      context: "Clause does not reduce repayment over tenure.",
     },
     {
       findingId: "finding-emp-4",
       clauseReference: "Section 9",
-      question:
-        "Under Delaware Court of Chancery standards, can we challenge the 50-mile restriction as overbroad for a remote distributed systems role, or negotiate an exclusive list of named direct competitors?",
-      context:
-        "Client intends to work on distributed cloud infrastructure and needs certainty that subsequent remote employment will not trigger litigation.",
+      question: "Can we challenge the 50-mile restriction under Kodiak Bldg. Partners?",
+      context: "Client works remotely.",
     },
     {
       findingId: "finding-emp-3",
       clauseReference: "Section 8",
-      question:
-        "How should Exhibit A and Section 8 be modified to cleanly incorporate standard statutory carve-outs (e.g. Cal. Lab. Code § 2870 model) under Delaware law?",
-      context:
-        "Client maintains active open-source software libraries and personal developer tools created prior to joining Aegis.",
+      question: "How should Exhibit A be modified to incorporate standard carve-outs?",
+      context: "Client has prior open-source repositories.",
     },
     {
       findingId: "finding-emp-11",
       clauseReference: "Section 11",
-      question:
-        "Will the 50/50 fee-splitting provision be severed automatically under AAA Employment Rule 48, or should we demand an explicit contract amendment confirming employer covers all hearing fees?",
-      context:
-        "Arbitration costs could easily exceed $20,000, creating an impermissible barrier to enforcing wage or employment claims.",
+      question: "Will fee-splitting be severed under AAA Rule 48?",
+      context: "Arbitration costs could be excessive.",
     },
   ],
   importantDates: [
     {
       label: "Effective Commencement Date",
       date: "2026-05-01",
-      description: "Start of employment term and accrual of all contractual covenants.",
-      isDeadline: true,
-    },
-    {
-      label: "Probationary Performance Review Window",
-      date: "2026-07-30",
-      noticePeriodDays: 90,
-      description: "Initial 90-day evaluation milestone.",
-      isDeadline: false,
-    },
-    {
-      label: "Resignation Notice Window",
-      date: null,
-      noticePeriodDays: 60,
-      description: "Mandatory advance written notice required prior to voluntary departure.",
-      isDeadline: true,
-    },
-    {
-      label: "Training Reimbursement Expiration",
-      date: "2027-04-30",
-      description: "12-month tenure threshold after which the $18,500 training reimbursement expires entirely.",
+      description: "Start of employment term.",
       isDeadline: true,
     },
   ],
   disclaimer:
-    "NOTICE & DISCLAIMER: This briefing document was generated by LawPilot to assist the user in preparing for an efficient consultation with a licensed legal practitioner. It organizes facts, clause excerpts, and verified statutory context identified in the submitted document. This document does NOT constitute formal legal advice, representation, or an attorney-client relationship. All legal interpretations and strategic decisions must be confirmed by a licensed attorney.",
+    "NOTICE & DISCLAIMER: This briefing document was generated by LawPilot to assist the user in preparing for an consultation with a licensed legal practitioner.",
 };
 
 export const SAMPLE_ANALYSIS_REPORT: AnalysisReport = {
   id: "demo-employment-agreement",
   documentId: "demo-employment-agreement",
   metadata: SAMPLE_DOCUMENT_METADATA,
-  createdAt: "2026-03-12T10:20:00Z",
+  createdAt: "2026-06-01T10:20:00Z",
+  jurisdictionContext: SAMPLE_DOCUMENT_METADATA.jurisdictionContext,
   status: "completed",
   summary: {
     overallReadiness: "high_risk_clauses_present",
     keyTakeaway:
-      "Identified 3 high-attention provisions (early departure training reimbursement of $18,500, broad IP assignment, and 12-month non-compete) and 2 review items (60-day notice and arbitration fees) that deserve discussion before signing.",
+      "Identified 3 high-attention provisions (early departure training bond of ₹4,50,000, post-employment non-compete under Section 27, and broad IP assignment) and 2 review items (90-day notice and unilateral arbitration) that deserve review prior to signing under Indian law.",
     totalClausesAnalyzed: SAMPLE_CLAUSES.length,
     criticalAttentionCount: 0,
     highAttentionCount: 3,
@@ -1562,7 +1582,7 @@ export const SAMPLE_ANALYSIS_REPORT: AnalysisReport = {
     title: `Address ${f.title}`,
     description: f.whyItMatters,
     priority: f.severity === "high_attention" ? "high" : "medium",
-    partyResponsible: "Alex Morgan",
+    partyResponsible: "Rohan Sharma",
     isReversible: true,
     recommendedTimeline: "Before signing",
     practicalAdvice: `Review ${f.evidence.section} and request standard written adjustment.`,
@@ -1576,7 +1596,7 @@ export const SAMPLE_ANALYSIS_REPORT: AnalysisReport = {
 export const SAMPLE_SITUATION_ASSESSMENT: SituationAssessment = {
   id: "situation-sample-unpaid-invoice",
   userPrompt:
-    "I am a freelance software developer based in Austin, Texas. A client in California owes me $14,500 on an approved milestone invoice that was due 45 days ago. They are ignoring my emails. I have a signed statement of work, email approval of the code delivery, and timestamped GitHub commit logs.",
+    "I am a freelance software developer based in Austin, Texas. A client in California owes me $14,50,000 on an approved milestone invoice that was due 45 days ago. They are ignoring my emails. I have a signed statement of work, email approval of the code delivery, and timestamped GitHub commit logs.",
   identifiedCategory: "freelance_unpaid_invoice",
   jurisdictionEstimate: "Texas (Creditor) / California (Debtor)",
   followUpQuestions: [

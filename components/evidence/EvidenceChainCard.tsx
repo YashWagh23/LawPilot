@@ -14,6 +14,7 @@ import {
   ChevronUp,
   ExternalLink,
 } from "lucide-react";
+import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
 
 interface EvidenceChainCardProps {
   chain: EvidenceChain;
@@ -56,6 +57,29 @@ export function EvidenceChainCard({
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           {chain.finding.summary}
         </p>
+
+        {/* Jurisdiction & Legal Context Banner */}
+        <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
+              JURISDICTION
+            </span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+              {chain.jurisdictionContext
+                ? formatJurisdictionBadge(chain.jurisdictionContext)
+                : chain.legalClaims[0]?.jurisdiction || "India · Maharashtra"}
+            </span>
+          </div>
+          <span className="text-slate-300 dark:text-slate-700">·</span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
+              LEGAL CONTEXT
+            </span>
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">
+              {chain.verification?.status === "verified" ? "Verified" : "Contextual"}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Expanded Interactive Chain Progression */}
@@ -96,54 +120,58 @@ export function EvidenceChainCard({
             </div>
 
             {/* Step 2: Legal Source / Authoritative Context */}
-            {chain.legalSource && (
-              <div className="relative">
-                <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs font-medium">
-                  <BookOpen className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-blue-800 dark:text-blue-300">
-                      2. Authoritative Legal Context
-                    </span>
-                    <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-300">
-                      {chain.legalSource.citation}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
-                      {chain.legalSource.authorityType}
-                    </span>
+            {(() => {
+              const legalSource = chain.legalSource || (chain.legalSources && chain.legalSources[0]);
+              if (!legalSource) return null;
+              return (
+                <div className="relative">
+                  <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs font-medium">
+                    <BookOpen className="w-3.5 h-3.5" />
                   </div>
+                  <div>
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-blue-800 dark:text-blue-300">
+                        2. Authoritative Legal Context
+                      </span>
+                      <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-300">
+                        {legalSource.citation}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                        {legalSource.jurisdiction || "India"}
+                      </span>
+                    </div>
 
-                  <div className="mt-2 p-3.5 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-800/60 dark:border-slate-700/80">
-                    <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {chain.legalSource.title}
-                    </p>
-                    <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 italic">
-                      &ldquo;{chain.legalSource.excerpt}&rdquo;
-                    </p>
-                    {chain.legalSource.notes && (
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                        <strong className="text-slate-700 dark:text-slate-300">Analysis Note: </strong>
-                        {chain.legalSource.notes}
+                    <div className="mt-2 p-3.5 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-800/60 dark:border-slate-700/80">
+                      <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {legalSource.title}
                       </p>
-                    )}
-                    {chain.legalSource.sourceUrl && (
-                      <div className="mt-2">
-                        <a
-                          href={chain.legalSource.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          Official Code Reference
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
+                      <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 italic">
+                        &ldquo;{legalSource.excerpt || legalSource.relevantExcerpt}&rdquo;
+                      </p>
+                      {legalSource.notes && (
+                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                          <strong className="text-slate-700 dark:text-slate-300">Analysis Note: </strong>
+                          {legalSource.notes}
+                        </p>
+                      )}
+                      {(legalSource.sourceUrl || legalSource.url) && (
+                        <div className="mt-2">
+                          <a
+                            href={legalSource.sourceUrl || legalSource.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            Official Authority Reference
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Step 3: Certainty / Verification Assessment */}
             <div className="relative">

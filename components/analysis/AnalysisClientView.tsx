@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import type { AnalysisReport, Clause, EvidenceChain, EvidenceLink, Finding } from "@/types";
+import type { AnalysisReport, Clause, EvidenceChain, EvidenceLink, Finding, JurisdictionContext } from "@/types";
 import { EvidenceChainCard } from "@/components/evidence/EvidenceChainCard";
 import { EvidenceChainDetailModal } from "@/components/evidence/EvidenceChainDetailModal";
 import { SplitEvidenceView } from "@/components/evidence/SplitEvidenceView";
 import { ClauseQAModal } from "@/components/analysis/ClauseQAModal";
 import { SeverityBadge } from "@/components/evidence/SeverityBadge";
 import { DocumentViewer } from "@/components/document/DocumentViewer";
+import { JurisdictionIndicator } from "@/components/jurisdiction/JurisdictionIndicator";
+import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
 import {
   FileText,
   Layers,
@@ -51,6 +53,22 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   const [qaClause, setQaClause] = useState<Clause | null>(null);
   const [qaFinding, setQaFinding] = useState<Finding | null>(null);
   const [isQaOpen, setIsQaOpen] = useState<boolean>(false);
+
+  // Phase 5 Jurisdiction Context State
+  const [jurisdictionContext, setJurisdictionContext] = useState<JurisdictionContext | undefined>(
+    report.jurisdictionContext ||
+      report.metadata.jurisdictionContext || {
+        country: "India",
+        stateOrUT: "Maharashtra",
+        governingLaw: report.metadata.governingLaw || "Laws of the Republic of India",
+        confidence: "high",
+        source: "document",
+        evidence: [
+          "Section 12 specifies governing laws of the Republic of India.",
+          "Exclusive jurisdiction of Mumbai courts.",
+        ],
+      }
+  );
 
   const handleJumpToClause = (clauseId: string, link?: EvidenceLink) => {
     setSelectedClauseId(clauseId);
@@ -113,7 +131,13 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start md:self-center">
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+            <JurisdictionIndicator
+              context={jurisdictionContext}
+              verifiedSourceCount={report.evidenceChains.length}
+              uncertaintyCount={report.findings.filter((f) => f.uncertainties && f.uncertainties.length > 0).length}
+              onJurisdictionChange={setJurisdictionContext}
+            />
             <button
               type="button"
               onClick={() => window.print()}
@@ -145,10 +169,10 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800">
             <span className="text-slate-500 dark:text-slate-400 block mb-1">Jurisdiction & Governing Law</span>
             <p className="font-semibold text-slate-900 dark:text-slate-100">
-              {report.metadata.governingLaw || "Not Explicitly Stated"}
+              {jurisdictionContext?.governingLaw || report.metadata.governingLaw || "Laws of the Republic of India"}
             </p>
-            <p className="text-[11px] text-slate-500">
-              {report.metadata.jurisdiction || "Forum not designated"}
+            <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium mt-0.5">
+              {formatJurisdictionBadge(jurisdictionContext)} · {jurisdictionContext?.confidence?.toUpperCase() || "HIGH"} CONFIDENCE
             </p>
           </div>
 

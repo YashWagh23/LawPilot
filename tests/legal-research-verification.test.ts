@@ -216,7 +216,7 @@ describe("Phase 3: Legal Research & Verified Evidence Chain", () => {
     expect(chain.documentEvidence.clauseId).toBe("clause-sec-6");
     expect(chain.documentEvidence.section).toBe("Section 6");
     expect(chain.documentEvidence.pageNumber).toBe(2);
-    expect(chain.documentEvidence.quotedText).toContain("$18,500");
+    expect(chain.documentEvidence.quotedText).toMatch(/4,50,000|\$18,500/);
   });
 
   // Test 12: Evidence Chain contains all 7 required layers

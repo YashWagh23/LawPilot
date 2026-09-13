@@ -15,6 +15,7 @@ import { DetailedLawyerBriefSchema } from "@/lib/ai/prompts/lawyerBrief";
 import {
   SAMPLE_ACTION_PLAN,
   SAMPLE_DETAILED_LAWYER_BRIEF,
+  SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF,
   SAMPLE_FINDINGS,
   SAMPLE_CLAUSES,
   SAMPLE_EVIDENCE_CHAINS,
@@ -330,13 +331,13 @@ describe("Phase 4: Action Plan & Lawyer Brief Test Suite", () => {
     SAMPLE_ACTION_PLAN.urgentItems.forEach((item) => expect(item.isReversible).toBe(true));
   });
 
-  // Test 21: Flagship Employment Agreement Demo SAMPLE_DETAILED_LAWYER_BRIEF
-  it("21. validates SAMPLE_DETAILED_LAWYER_BRIEF with Delaware statutory authorities", () => {
-    expect(SAMPLE_DETAILED_LAWYER_BRIEF.relevantClauses).toHaveLength(5);
-    expect(SAMPLE_DETAILED_LAWYER_BRIEF.verifiedLegalContext).toHaveLength(4);
-    expect(SAMPLE_DETAILED_LAWYER_BRIEF.questionsForCounsel).toHaveLength(4);
+  // Test 21: Flagship Employment Agreement Demo SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF
+  it("21. validates SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF with Delaware statutory authorities", () => {
+    expect(SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF.relevantClauses).toHaveLength(5);
+    expect(SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF.verifiedLegalContext).toHaveLength(4);
+    expect(SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF.questionsForCounsel).toHaveLength(4);
 
-    const citations = SAMPLE_DETAILED_LAWYER_BRIEF.verifiedLegalContext.map((c) => c.citation);
+    const citations = SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF.verifiedLegalContext.map((c) => c.citation);
     expect(citations.some((c) => c.includes("19 Del. C. § 1107"))).toBe(true);
     expect(citations.some((c) => c.includes("Kodiak Bldg. Partners"))).toBe(true);
     expect(citations.some((c) => c.includes("AAA Employment Due Process Protocol"))).toBe(true);

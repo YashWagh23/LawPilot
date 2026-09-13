@@ -14,6 +14,19 @@ export type ImportanceLevel = SeverityLevel;
 
 export type ConfidenceLevel = "high" | "moderate" | "limited" | "insufficient" | "low";
 
+export type JurisdictionConfidence = "high" | "medium" | "low" | "unknown";
+export type JurisdictionSource = "document" | "user" | "inferred";
+
+export interface JurisdictionContext {
+  country: string;
+  stateOrUT?: string;
+  governingLaw?: string;
+  confidence: JurisdictionConfidence;
+  source: JurisdictionSource;
+  evidence?: string[];
+  ambiguityWarnings?: string[];
+}
+
 export type VerificationStatus =
   | "verified"
   | "partially_verified"
@@ -112,6 +125,7 @@ export interface DocumentMetadata {
     | "general_contract";
   jurisdiction?: string | null;
   governingLaw?: string | null;
+  jurisdictionContext?: JurisdictionContext;
   effectiveDate?: string | null;
   executionDate?: string | null;
   expirationDate?: string | null;
@@ -181,6 +195,7 @@ export interface LegalSource {
   publisher?: string;
   sourceType: SourceType;
   jurisdiction: string;
+  jurisdictionContext?: JurisdictionContext;
   citation: string;
   url?: string;
   sourceUrl?: string; // backward compatibility
@@ -204,6 +219,7 @@ export interface LegalClaim {
   explanation: string;
   uncertainties: string[];
   jurisdiction: string;
+  jurisdictionContext?: JurisdictionContext;
   verified: boolean;
 }
 
@@ -253,6 +269,7 @@ export interface ActionItem {
 
 export interface EvidenceChain {
   id: string;
+  jurisdictionContext?: JurisdictionContext;
   finding: Finding;
   documentEvidence: DocumentEvidence;
   legalClaims: LegalClaim[];
@@ -391,7 +408,9 @@ export interface DetailedLawyerBrief {
     date: string;
     parties: string[];
     jurisdiction?: string;
+    jurisdictionContext?: JurisdictionContext;
   };
+  jurisdictionContext?: JurisdictionContext;
   userConcerns: string[];
   relevantClauses: LawyerBriefClause[];
   verifiedLegalContext: LawyerBriefLegalContext[];
@@ -422,6 +441,7 @@ export interface AnalysisReport {
   documentId: string;
   metadata: DocumentMetadata;
   createdAt: string;
+  jurisdictionContext?: JurisdictionContext;
   status: "completed" | "processing" | "needs_clarification" | "error";
   summary: {
     overallReadiness: "high_risk_clauses_present" | "review_recommended" | "standard_terms";
