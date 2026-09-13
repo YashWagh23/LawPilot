@@ -365,8 +365,8 @@ export function AskLawPilotView({
         </div>
       )}
 
-      {/* Input Box */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 shadow-xs focus-within:border-indigo-500 transition-colors">
+      {/* Input Box — Sticky above mobile virtual keyboards */}
+      <div className="sticky bottom-3 z-10 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 dark:border-slate-800 dark:bg-slate-900/95 shadow-md focus-within:border-indigo-500 transition-colors">
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -375,13 +375,13 @@ export function AskLawPilotView({
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask anything about your document (e.g., 'What happens if I resign early?')"
-            className="flex-1 resize-none bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden"
+            className="flex-1 resize-none bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden py-1"
           />
           <button
             type="button"
             disabled={!inputText.trim() || isLoading}
             onClick={() => handleSend()}
-            className="p-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer shrink-0"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer shrink-0 shadow-xs"
             aria-label="Send question"
           >
             <Send className="w-4 h-4" />

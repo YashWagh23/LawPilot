@@ -56,7 +56,7 @@ export function DocumentViewer({
   });
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col h-[640px] overflow-hidden">
+    <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col h-[520px] sm:h-[640px] overflow-hidden">
       {/* Viewer Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/70 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -75,7 +75,7 @@ export function DocumentViewer({
             type="button"
             disabled={currentPage <= 1}
             onClick={() => handlePageChange(currentPage - 1)}
-            className="p-1 rounded border border-slate-300 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer disabled:cursor-not-allowed"
+            className="p-1.5 rounded border border-slate-300 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer disabled:cursor-not-allowed min-h-[36px] min-w-[36px] flex items-center justify-center"
             aria-label="Previous page"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -87,7 +87,7 @@ export function DocumentViewer({
             type="button"
             disabled={currentPage >= maxPages}
             onClick={() => handlePageChange(currentPage + 1)}
-            className="p-1 rounded border border-slate-300 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer disabled:cursor-not-allowed"
+            className="p-1.5 rounded border border-slate-300 dark:border-slate-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer disabled:cursor-not-allowed min-h-[36px] min-w-[36px] flex items-center justify-center"
             aria-label="Next page"
           >
             <ChevronRight className="w-3.5 h-3.5" />
@@ -98,7 +98,7 @@ export function DocumentViewer({
       {/* Main split: Clause Index sidebar + Source Text Document Canvas */}
       <div className="grid grid-cols-1 md:grid-cols-12 flex-1 min-h-0 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
         {/* Left: Clause Quick Jump List (4 cols) */}
-        <div className="md:col-span-4 flex flex-col min-h-0 bg-slate-50/40 dark:bg-slate-950/40">
+        <div className="md:col-span-4 flex flex-col min-h-0 max-h-[170px] md:max-h-none bg-slate-50/40 dark:bg-slate-950/40">
           <div className="p-2.5 border-b border-slate-200 dark:border-slate-800">
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />

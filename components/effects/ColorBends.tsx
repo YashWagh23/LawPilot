@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useSyncExternalStore } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import "./ColorBends.css";
-
-const emptySubscribe = () => () => {};
 
 const MAX_COLORS = 8;
 
@@ -200,11 +198,17 @@ export default function ColorBends({
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      powerPreference: "high-performance",
-      alpha: true,
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        powerPreference: "high-performance",
+        alpha: true,
+      });
+    } catch {
+      container.classList.add("color-bends-fallback");
+      return;
+    }
     rendererRef.current = renderer;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -218,8 +222,8 @@ export default function ColorBends({
 
     const handleResize = () => {
       if (!container) return;
-      const w = container.clientWidth || 1;
-      const h = container.clientHeight || 1;
+      const w = container.clientWidth || window.innerWidth || 1;
+      const h = container.clientHeight || window.innerHeight || 1;
       renderer.setSize(w, h, false);
       material.uniforms.uCanvas.value.set(w, h);
     };
@@ -293,6 +297,9 @@ export default function ColorBends({
         isIntersecting = entry.isIntersecting;
         if (isIntersecting) {
           resumeLoopIfNeeded();
+        } else if (rafRef.current !== null) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
         }
       });
       intersectionObserver.observe(container);
@@ -420,21 +427,6 @@ export default function ColorBends({
       window.removeEventListener("pointermove", handlePointerMove);
     };
   }, []);
-
-  const mounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
-
-  if (!mounted) {
-    return (
-      <div
-        className={`color-bends-container ${className}`}
-        style={style}
-      />
-    );
-  }
 
   return (
     <div

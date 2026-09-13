@@ -4,3 +4,14 @@
   height: 100%;
   overflow: hidden;
 }
+
+.color-bends-fallback {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(255, 92, 122, 0.35), transparent 70%),
+    radial-gradient(ellipse 70% 70% at 80% 40%, rgba(138, 92, 255, 0.4), transparent 70%),
+    radial-gradient(ellipse 60% 80% at 40% 80%, rgba(0, 255, 209, 0.25), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 75% 85%, rgba(168, 85, 247, 0.3), transparent 70%);
+  filter: blur(48px);
+  transform: scale(1.1);
+  pointer-events: none;
+}

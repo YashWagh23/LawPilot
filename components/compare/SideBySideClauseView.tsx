@@ -32,6 +32,7 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
 }) => {
   const [hasAddedAction, setHasAddedAction] = useState(false);
   const [isEvidenceExpanded, setIsEvidenceExpanded] = useState(true);
+  const [mobileView, setMobileView] = useState<"stacked" | "previous" | "current">("stacked");
 
   const handleAddToActionPlan = () => {
     addCompareActionItem(change.suggestedActionItem);
@@ -59,7 +60,7 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden space-y-6">
       {/* Clause Detail Header */}
-      <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
+      <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -72,17 +73,17 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
                   : change.currentSection || change.previousSection}
               </span>
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
               {change.clauseTitle}
             </h2>
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={handleAddToActionPlan}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[40px] flex-1 sm:flex-none ${
                 hasAddedAction
                   ? "bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300"
                   : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs"
@@ -104,7 +105,7 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
             <button
               type="button"
               onClick={() => onAskLawPilot(change.suggestedAskQuestion)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[40px] flex-1 sm:flex-none"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               <span>Ask LawPilot</span>
@@ -113,15 +114,59 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
         </div>
       </div>
 
-      <div className="px-5 space-y-6">
+      <div className="px-4 sm:px-5 space-y-6">
         {/* SIDE-BY-SIDE VIEW */}
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
-            Side-by-Side Clause Language
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Clause Language Comparison
+            </h3>
+
+            {/* Mobile View Selector (Previous | Revised | Both Stacked) */}
+            <div className="flex md:hidden items-center rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold">
+              <button
+                type="button"
+                onClick={() => setMobileView("stacked")}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  mobileView === "stacked"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Stacked
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileView("previous")}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  mobileView === "previous"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileView("current")}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  mobileView === "current"
+                    ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Revised
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
             {/* PREVIOUS VERSION */}
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 space-y-2">
+            <div
+              className={`rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 space-y-2 ${
+                mobileView === "current" ? "hidden md:block" : "block"
+              }`}
+            >
               <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                 <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   PREVIOUS VERSION
@@ -130,14 +175,25 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
                   {change.previousSection || "Omitted"}
                 </span>
               </div>
-              <p className="leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
+              <p className="leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
                 {change.whatChanged.original}
               </p>
             </div>
 
+            {/* Mobile Stacked Flow Arrow */}
+            {mobileView === "stacked" && (
+              <div className="flex md:hidden items-center justify-center -my-2 text-slate-400">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-sans font-bold uppercase tracking-wider text-slate-500">
+                  ↓ Revised Redline Below
+                </span>
+              </div>
+            )}
+
             {/* CURRENT VERSION */}
             <div
               className={`rounded-xl border p-4 space-y-2 ${
+                mobileView === "previous" ? "hidden md:block" : "block"
+              } ${
                 change.changeType === "ADDED"
                   ? "border-purple-200 bg-purple-50/30 dark:border-purple-900/60 dark:bg-purple-950/20"
                   : change.changeType === "REMOVED"
@@ -153,7 +209,7 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
                   {change.currentSection || "Omitted"}
                 </span>
               </div>
-              <p className="leading-relaxed text-slate-900 dark:text-slate-100 whitespace-pre-wrap">
+              <p className="leading-relaxed text-slate-900 dark:text-slate-100 whitespace-pre-wrap break-words">
                 {change.whatChanged.revised}
               </p>
             </div>

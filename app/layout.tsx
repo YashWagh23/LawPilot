@@ -34,10 +34,7 @@ const themeInitializerScript = `
 (function() {
   try {
     var saved = localStorage.getItem('lawpilot-theme');
-    var theme = saved;
-    if (!theme || (theme !== 'light' && theme !== 'dark')) {
-      theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    }
+    var theme = (saved === 'dark' || saved === 'light') ? saved : 'light';
     var root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
@@ -59,7 +56,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased light`}
     >
       <head>
         <script

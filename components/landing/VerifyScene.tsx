@@ -6,27 +6,28 @@ import { ShieldCheck, BookOpen, FileCode, CheckCircle2, ArrowRight } from "lucid
 import { useSceneScroll, subProgress } from "@/lib/hooks/useSceneScroll";
 
 export function VerifyScene() {
-  const [containerRef, progress, reducedMotion] = useSceneScroll();
+  const [containerRef, progress, reducedMotion, isDesktop] = useSceneScroll();
 
-  // Horizontal connection choreography
-  const node1Progress = reducedMotion ? 1 : subProgress(progress, 0.05, 0.3);
-  const line1Progress = reducedMotion ? 1 : subProgress(progress, 0.25, 0.5);
-  const node2Progress = reducedMotion ? 1 : subProgress(progress, 0.35, 0.6);
-  const line2Progress = reducedMotion ? 1 : subProgress(progress, 0.55, 0.75);
-  const node3Progress = reducedMotion ? 1 : subProgress(progress, 0.65, 0.9);
-  const stampProgress = reducedMotion ? 1 : subProgress(progress, 0.8, 1.0);
+  const isAnimated = isDesktop && !reducedMotion;
+  // Horizontal connection choreography (desktop only)
+  const node1Progress = isAnimated ? subProgress(progress, 0.05, 0.3) : 1;
+  const line1Progress = isAnimated ? subProgress(progress, 0.25, 0.5) : 1;
+  const node2Progress = isAnimated ? subProgress(progress, 0.35, 0.6) : 1;
+  const line2Progress = isAnimated ? subProgress(progress, 0.55, 0.75) : 1;
+  const node3Progress = isAnimated ? subProgress(progress, 0.65, 0.9) : 1;
+  const stampProgress = isAnimated ? subProgress(progress, 0.8, 1.0) : 1;
 
   // Horizontal slide offsets
-  const node1Slide = reducedMotion ? 0 : (1 - node1Progress) * -40; // px
-  const node2Slide = reducedMotion ? 0 : (1 - node2Progress) * 40;
-  const node3Slide = reducedMotion ? 0 : (1 - node3Progress) * 60;
+  const node1Slide = isAnimated ? (1 - node1Progress) * -40 : 0; // px
+  const node2Slide = isAnimated ? (1 - node2Progress) * 40 : 0;
+  const node3Slide = isAnimated ? (1 - node3Progress) * 60 : 0;
 
   return (
     <div
       ref={containerRef}
-      className={`relative ${reducedMotion ? "h-auto py-20" : "h-[240vh]"}`}
+      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[240vh]"}`}
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-violet-50 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80 mb-4">

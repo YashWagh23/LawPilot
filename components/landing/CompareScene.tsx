@@ -6,26 +6,27 @@ import { GitCompare, AlertCircle, FileCheck, ArrowUpRight } from "lucide-react";
 import { useSceneScroll, subProgress } from "@/lib/hooks/useSceneScroll";
 
 export function CompareScene() {
-  const [containerRef, progress, reducedMotion] = useSceneScroll();
+  const [containerRef, progress, reducedMotion, isDesktop] = useSceneScroll();
 
-  // Two documents sliding against each other
-  const slideProgress = reducedMotion ? 1 : subProgress(progress, 0.05, 0.45);
-  const leftDocOffset = reducedMotion ? 0 : (1 - slideProgress) * -40; // px
-  const rightDocOffset = reducedMotion ? 0 : (1 - slideProgress) * 40; // px
+  const isAnimated = isDesktop && !reducedMotion;
+  // Two documents sliding against each other (desktop only)
+  const slideProgress = isAnimated ? subProgress(progress, 0.05, 0.45) : 1;
+  const leftDocOffset = isAnimated ? (1 - slideProgress) * -40 : 0; // px
+  const rightDocOffset = isAnimated ? (1 - slideProgress) * 40 : 0; // px
 
   // Redline highlighting progress
-  const redlineProgress = reducedMotion ? 1 : subProgress(progress, 0.35, 0.7);
+  const redlineProgress = isAnimated ? subProgress(progress, 0.35, 0.7) : 1;
 
   // Material shift chips slide in
-  const chipsProgress = reducedMotion ? 1 : subProgress(progress, 0.6, 0.95);
-  const chipsSlide = reducedMotion ? 0 : (1 - chipsProgress) * 30; // px
+  const chipsProgress = isAnimated ? subProgress(progress, 0.6, 0.95) : 1;
+  const chipsSlide = isAnimated ? (1 - chipsProgress) * 30 : 0; // px
 
   return (
     <div
       ref={containerRef}
-      className={`relative ${reducedMotion ? "h-auto py-20" : "h-[200vh]"}`}
+      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[200vh]"}`}
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-violet-50 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80 mb-4">

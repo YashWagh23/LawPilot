@@ -6,25 +6,23 @@ import { ArrowRight, AlertTriangle, Sparkles, FileText, CheckCircle2 } from "luc
 import { useSceneScroll, subProgress } from "@/lib/hooks/useSceneScroll";
 
 export function UnderstandScene() {
-  const [containerRef, progress, reducedMotion] = useSceneScroll();
+  const [containerRef, progress, reducedMotion, isDesktop] = useSceneScroll();
 
-  // Choreography keyframes
-  // 0.0 -> 0.3: Document is centered
-  // 0.25 -> 0.65: Document slides left, Clause 8.1 highlights, financial badge slides in
-  // 0.60 -> 0.95: Plain-English card slides in from right, practical implication reveals
-  const docShift = reducedMotion ? 0 : subProgress(progress, 0.2, 0.6) * -18; // percent
-  const highlightProgress = reducedMotion ? 1 : subProgress(progress, 0.25, 0.55);
-  const metricSlide = reducedMotion ? 0 : (1 - subProgress(progress, 0.35, 0.65)) * 60; // px
-  const metricOpacity = reducedMotion ? 1 : subProgress(progress, 0.35, 0.6);
-  const plainCardSlide = reducedMotion ? 0 : (1 - subProgress(progress, 0.55, 0.85)) * 80; // px
-  const plainCardOpacity = reducedMotion ? 1 : subProgress(progress, 0.55, 0.8);
+  // Choreography keyframes (active on desktop)
+  const isAnimated = isDesktop && !reducedMotion;
+  const docShift = isAnimated ? subProgress(progress, 0.2, 0.6) * -18 : 0; // percent
+  const highlightProgress = isAnimated ? subProgress(progress, 0.25, 0.55) : 1;
+  const metricSlide = isAnimated ? (1 - subProgress(progress, 0.35, 0.65)) * 60 : 0; // px
+  const metricOpacity = isAnimated ? subProgress(progress, 0.35, 0.6) : 1;
+  const plainCardSlide = isAnimated ? (1 - subProgress(progress, 0.55, 0.85)) * 80 : 0; // px
+  const plainCardOpacity = isAnimated ? subProgress(progress, 0.55, 0.8) : 1;
 
   return (
     <div
       ref={containerRef}
-      className={`relative ${reducedMotion ? "h-auto py-20" : "h-[220vh]"}`}
+      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[220vh]"}`}
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 mb-4">

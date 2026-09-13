@@ -6,26 +6,27 @@ import { CheckSquare, ArrowRight, ShieldAlert, CheckCircle2, Briefcase } from "l
 import { useSceneScroll, subProgress } from "@/lib/hooks/useSceneScroll";
 
 export function ActScene() {
-  const [containerRef, progress, reducedMotion] = useSceneScroll();
+  const [containerRef, progress, reducedMotion, isDesktop] = useSceneScroll();
 
-  // Choreography keyframes
-  const problemProgress = reducedMotion ? 1 : subProgress(progress, 0.05, 0.35);
-  const check1Progress = reducedMotion ? 1 : subProgress(progress, 0.25, 0.55);
-  const check2Progress = reducedMotion ? 1 : subProgress(progress, 0.45, 0.75);
-  const check3Progress = reducedMotion ? 1 : subProgress(progress, 0.60, 0.85);
-  const briefProgress = reducedMotion ? 1 : subProgress(progress, 0.70, 0.95);
+  const isAnimated = isDesktop && !reducedMotion;
+  // Choreography keyframes (desktop only)
+  const problemProgress = isAnimated ? subProgress(progress, 0.05, 0.35) : 1;
+  const check1Progress = isAnimated ? subProgress(progress, 0.25, 0.55) : 1;
+  const check2Progress = isAnimated ? subProgress(progress, 0.45, 0.75) : 1;
+  const check3Progress = isAnimated ? subProgress(progress, 0.60, 0.85) : 1;
+  const briefProgress = isAnimated ? subProgress(progress, 0.70, 0.95) : 1;
 
-  const check1Slide = reducedMotion ? 0 : (1 - check1Progress) * 50;
-  const check2Slide = reducedMotion ? 0 : (1 - check2Progress) * 50;
-  const check3Slide = reducedMotion ? 0 : (1 - check3Progress) * 50;
-  const briefSlide = reducedMotion ? 0 : (1 - briefProgress) * 60;
+  const check1Slide = isAnimated ? (1 - check1Progress) * 50 : 0;
+  const check2Slide = isAnimated ? (1 - check2Progress) * 50 : 0;
+  const check3Slide = isAnimated ? (1 - check3Progress) * 50 : 0;
+  const briefSlide = isAnimated ? (1 - briefProgress) * 60 : 0;
 
   return (
     <div
       ref={containerRef}
-      className={`relative ${reducedMotion ? "h-auto py-20" : "h-[200vh]"}`}
+      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[200vh]"}`}
     >
-      <div className="sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 mb-4">

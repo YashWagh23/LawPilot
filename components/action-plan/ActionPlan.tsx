@@ -152,18 +152,22 @@ export const ActionPlanView: React.FC<ActionPlanProps> = ({
               }`}
             >
               <div className="flex items-start gap-3.5">
-                {/* Checkbox */}
+                {/* Checkbox with comfortable touch target */}
                 <button
                   type="button"
                   onClick={() => toggleCheck(item.id)}
-                  className={`mt-0.5 h-5 w-5 rounded-md border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-                    isDone
-                      ? "bg-emerald-600 border-emerald-600 text-white"
-                      : "border-slate-300 dark:border-slate-600 hover:border-indigo-500"
-                  }`}
-                  aria-label={`Mark "${item.title}" as completed`}
+                  className="min-h-[44px] min-w-[44px] -ml-2 -mt-2 flex items-center justify-center cursor-pointer shrink-0"
+                  aria-label={`Mark "${item.title}" as ${isDone ? "incomplete" : "completed"}`}
                 >
-                  {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  <span
+                    className={`h-5 w-5 rounded-md border flex items-center justify-center transition-colors ${
+                      isDone
+                        ? "bg-emerald-600 border-emerald-600 text-white"
+                        : "border-slate-300 dark:border-slate-600 hover:border-indigo-500"
+                    }`}
+                  >
+                    {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </span>
                 </button>
 
                 {/* Step Content */}
@@ -187,7 +191,7 @@ export const ActionPlanView: React.FC<ActionPlanProps> = ({
                   <button
                     type="button"
                     onClick={() => toggleExpand(item.id)}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline pt-0.5 cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline pt-0.5 cursor-pointer min-h-[36px]"
                   >
                     <span>{isExpanded ? "Hide details" : "Why this is recommended"}</span>
                     <ChevronDown

@@ -45,27 +45,33 @@ describe("Theme System & Toggle Logic", () => {
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
   });
 
-  it("prioritizes stored preference over system preference", () => {
-    // Stored preference is light even if system would prefer dark
-    localStorage.setItem(THEME_STORAGE_KEY, "light");
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    const systemPrefersDark = true;
-
-    const effectiveTheme = stored || (systemPrefersDark ? "dark" : "light");
-    expect(effectiveTheme).toBe("light");
-  });
-
-  it("falls back to system preference when no user preference exists", () => {
+  it("defaults to light theme on first visit regardless of system preference", () => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     expect(stored).toBeNull();
 
-    const systemPrefersDark = true;
-    const effectiveTheme = stored || (systemPrefersDark ? "dark" : "light");
-    expect(effectiveTheme).toBe("dark");
+    // Priority: Saved preference > Default light (NOT system preference > Default light)
+    const resolveEffectiveTheme = (saved: string | null): "light" | "dark" => {
+      if (saved === "dark" || saved === "light") return saved;
+      return "light";
+    };
 
-    const systemPrefersLight = false;
-    const effectiveTheme2 = stored || (systemPrefersLight ? "dark" : "light");
-    expect(effectiveTheme2).toBe("light");
+    expect(resolveEffectiveTheme(stored)).toBe("light");
+  });
+
+  it("prioritizes stored user preference over default light theme", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "dark");
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+
+    const resolveEffectiveTheme = (saved: string | null): "light" | "dark" => {
+      if (saved === "dark" || saved === "light") return saved;
+      return "light";
+    };
+
+    expect(resolveEffectiveTheme(stored)).toBe("dark");
+
+    // Switching back to light persists
+    localStorage.setItem(THEME_STORAGE_KEY, "light");
+    expect(resolveEffectiveTheme(localStorage.getItem(THEME_STORAGE_KEY))).toBe("light");
   });
 
   it("updates DOM classes correctly on theme switch", () => {

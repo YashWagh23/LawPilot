@@ -52,7 +52,7 @@ export function Navbar() {
               <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
                 LawPilot
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-0.5">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-0.5 hidden xs:block">
                 Understand · Verify · Act
               </span>
             </div>
@@ -102,11 +102,11 @@ export function Navbar() {
         </div>
 
         {/* Mobile controls */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-1 sm:gap-2">
           <ThemeToggle />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

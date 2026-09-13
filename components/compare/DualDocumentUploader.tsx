@@ -251,7 +251,7 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
         <button
           type="button"
           onClick={onSwapVersions}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 min-h-[44px] cursor-pointer"
         >
           <ArrowRightLeft className="w-3.5 h-3.5 text-blue-600" />
           <span>Swap Previous & Current Versions</span>
@@ -272,7 +272,7 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
           type="button"
           onClick={onCompare}
           disabled={!isReadyToCompare || isComparing}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
         >
           {isComparing ? (
             <>

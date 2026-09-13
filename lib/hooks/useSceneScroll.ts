@@ -15,19 +15,38 @@ function prefersReducedMotion(): boolean {
 export function useSceneScroll(): [
   React.RefObject<HTMLDivElement | null>,
   number,
+  boolean,
   boolean
 ] {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const [reducedMotion] = useState<boolean>(() => prefersReducedMotion());
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth >= 1024;
+  });
   const [progress, setProgress] = useState<number>(() =>
     prefersReducedMotion() ? 1.0 : 0.0
   );
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const update = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
+
+    if (!isDesktop || reducedMotion) {
+      setProgress(1.0);
+      return;
+    }
 
     const rect = el.getBoundingClientRect();
     const windowH = window.innerHeight;
@@ -43,10 +62,10 @@ export function useSceneScroll(): [
     const raw = scrolled / totalDistance;
     const clamped = Math.min(1.0, Math.max(0.0, raw));
     setProgress(clamped);
-  }, []);
+  }, [isDesktop, reducedMotion]);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || !isDesktop) return;
 
     const onScroll = () => {
       if (rafRef.current !== null) return;
@@ -56,7 +75,10 @@ export function useSceneScroll(): [
       });
     };
 
-    update();
+    rafRef.current = requestAnimationFrame(() => {
+      update();
+      rafRef.current = null;
+    });
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
 
@@ -68,9 +90,11 @@ export function useSceneScroll(): [
         rafRef.current = null;
       }
     };
-  }, [update, reducedMotion]);
+  }, [update, reducedMotion, isDesktop]);
 
-  return [containerRef, progress, reducedMotion];
+  const effectiveProgress = !isDesktop || reducedMotion ? 1.0 : progress;
+
+  return [containerRef, effectiveProgress, reducedMotion, isDesktop];
 }
 
 /**

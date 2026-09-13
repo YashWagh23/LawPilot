@@ -143,11 +143,11 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {onNavigateToActionPlan && (
             <button
               onClick={onNavigateToActionPlan}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition flex items-center gap-1.5 min-h-[40px]"
             >
               ← Action Plan
             </button>
@@ -155,7 +155,7 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
 
           <button
             onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition flex items-center gap-1.5 shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition flex items-center gap-1.5 shadow-sm min-h-[40px]"
             title="Copy as Markdown"
           >
             <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,7 +166,7 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
 
           <button
             onClick={handleDownload}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition flex items-center gap-1.5 shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition flex items-center gap-1.5 shadow-sm min-h-[40px]"
             title="Download Markdown file"
           >
             <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,7 +177,7 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
 
           <button
             onClick={handlePrint}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition flex items-center gap-2 min-h-[40px]"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -191,7 +191,7 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
         DOCUMENT BRIEF CONTAINER 
         Styled for on-screen elegance and print media perfection.
       */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-8 lg:p-12 shadow-2xl space-y-8 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 print:space-y-6">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-8 lg:p-12 shadow-2xl space-y-6 sm:space-y-8 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 print:space-y-6">
         {/* Document Header */}
         <div className="border-b border-slate-800 pb-6 print:border-black/20">
           <div className="flex items-center justify-between">

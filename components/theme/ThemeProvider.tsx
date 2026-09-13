@@ -23,22 +23,20 @@ interface ThemeContextType {
 const emptySubscribe = () => () => {};
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     if (stored === "light" || stored === "dark") return stored;
     const isDomDark = document.documentElement.classList.contains("dark");
-    const isDomLight = document.documentElement.classList.contains("light");
     if (isDomDark) return "dark";
-    if (isDomLight) return "light";
-    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    return "light";
   } catch {
-    return "dark";
+    return "light";
   }
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "dark",
+  theme: "light",
   toggleTheme: () => {},
   setTheme: () => {},
   mounted: false,
@@ -77,26 +75,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Listen for OS system theme changes only when user hasn't explicitly saved a preference
+  // Synchronize DOM on initial client mount without transition animation
   useEffect(() => {
-    // Synchronize DOM on initial client mount without transition animation
     applyThemeToDOM(theme, false);
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleSystemChange = (e: MediaQueryListEvent) => {
-      try {
-        if (!localStorage.getItem(THEME_STORAGE_KEY)) {
-          const sysTheme: Theme = e.matches ? "dark" : "light";
-          setThemeState(sysTheme);
-          applyThemeToDOM(sysTheme, true);
-        }
-      } catch {
-        // no-op
-      }
-    };
-
-    mediaQuery.addEventListener("change", handleSystemChange);
-    return () => mediaQuery.removeEventListener("change", handleSystemChange);
   }, [applyThemeToDOM, theme]);
 
   const setTheme = useCallback(
