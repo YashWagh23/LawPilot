@@ -494,6 +494,7 @@ export interface SituationQuestion {
 export interface SituationAssessment {
   id: string;
   userPrompt: string;
+  situationSummary?: string;
   identifiedCategory:
     | "employment_dispute"
     | "landlord_tenant"
@@ -501,8 +502,10 @@ export interface SituationAssessment {
     | "freelance_unpaid_invoice"
     | "intellectual_property"
     | "business_partnership"
+    | "insufficient_information"
     | "other";
   jurisdictionEstimate?: string;
+  disclaimer?: string;
   followUpQuestions: SituationQuestion[];
   missingFacts: string[];
   relevantLegalConcepts: {

@@ -1598,6 +1598,8 @@ export const SAMPLE_SITUATION_ASSESSMENT: SituationAssessment = {
   id: "situation-sample-unpaid-invoice",
   userPrompt:
     "I am a freelance software developer based in Austin, Texas. A client in California owes me $14,50,000 on an approved milestone invoice that was due 45 days ago. They are ignoring my emails. I have a signed statement of work, email approval of the code delivery, and timestamped GitHub commit logs.",
+  situationSummary:
+    "Unpaid milestone payment for delivered software development services under a signed Statement of Work, with payment overdue by 45 days and an unresponsive counterparty.",
   identifiedCategory: "freelance_unpaid_invoice",
   jurisdictionEstimate: "Texas (Creditor) / California (Debtor)",
   followUpQuestions: [
