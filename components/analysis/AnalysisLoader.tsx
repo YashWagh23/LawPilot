@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import type { AnalysisReport } from "@/types";
 import { AnalysisClientView } from "./AnalysisClientView";
@@ -12,47 +12,23 @@ interface AnalysisLoaderProps {
 }
 
 export function AnalysisLoader({ id, initialReport }: AnalysisLoaderProps) {
-  const [report, setReport] = useState<AnalysisReport | null>(initialReport);
-  const [isLoading, setIsLoading] = useState(!initialReport);
-
-  useEffect(() => {
-    if (initialReport) {
-      setReport(initialReport);
-      setIsLoading(false);
-      return;
-    }
-
-    // Attempt client-side retrieval from localStorage
+  const [report] = useState<AnalysisReport | null>(() => {
+    if (initialReport) return initialReport;
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem(`lawpilot_report_${id}`);
         if (stored) {
-          const parsed = JSON.parse(stored) as AnalysisReport;
-          setReport(parsed);
-          setIsLoading(false);
-          return;
+          return JSON.parse(stored) as AnalysisReport;
         }
-      } catch (_e) {
+      } catch {
         // Parse failure
       }
     }
-
-    setIsLoading(false);
-  }, [id, initialReport]);
+    return null;
+  });
 
   if (report) {
     return <AnalysisClientView report={report} />;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4 px-4">
-        <span className="inline-block h-8 w-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
-        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-          Loading document analysis report...
-        </p>
-      </div>
-    );
   }
 
   return (

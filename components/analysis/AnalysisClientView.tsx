@@ -30,6 +30,7 @@ import { LawyerBriefView } from "@/components/lawyer-brief/LawyerBrief";
 import { generateDeterministicActionPlan } from "@/lib/ai/agents/actionPlanningAgent";
 import { generateDeterministicLawyerBrief } from "@/lib/ai/agents/lawyerBriefAgent";
 import { formatDate } from "@/lib/utils";
+import { AskLawPilotView } from "./AskLawPilotView";
 
 interface AnalysisClientViewProps {
   report: AnalysisReport;
@@ -37,7 +38,7 @@ interface AnalysisClientViewProps {
 
 export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview_viewer" | "split_view" | "chains" | "clauses" | "actions" | "brief"
+    "overview_viewer" | "split_view" | "chains" | "clauses" | "actions" | "brief" | "ask_lawpilot"
   >("overview_viewer");
 
   const [selectedClauseId, setSelectedClauseId] = useState<string | null>(
@@ -340,6 +341,22 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           >
             <Briefcase className="w-4 h-4" />
             <span>Lawyer Brief</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("ask_lawpilot")}
+            className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
+              activeTab === "ask_lawpilot"
+                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-blue-500" />
+            <span>Ask LawPilot</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30">
+              AI Q&A
+            </span>
           </button>
         </nav>
       </div>
@@ -664,6 +681,15 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
               handleJumpToClause(matched.clauseId || matched.evidence?.clauseId, matched.evidence);
             }
           }}
+        />
+      )}
+
+      {/* TAB: Ask LawPilot Grounded Q&A */}
+      {activeTab === "ask_lawpilot" && (
+        <AskLawPilotView
+          report={report}
+          onJumpToClause={(clauseId) => handleJumpToClause(clauseId)}
+          onOpenChain={(chain) => setSelectedChainForModal(chain)}
         />
       )}
 

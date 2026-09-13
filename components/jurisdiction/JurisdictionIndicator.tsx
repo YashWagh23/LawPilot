@@ -36,7 +36,7 @@ export function JurisdictionIndicator({
   const [selectedState, setSelectedState] = useState(context?.stateOrUT || "Maharashtra");
 
   const currentCountry = context?.country || "India";
-  const currentState = context?.stateOrUT || (currentCountry === "India" ? "Maharashtra" : undefined);
+  const _currentState = context?.stateOrUT || (currentCountry === "India" ? "Maharashtra" : undefined);
   const isIndia = currentCountry.toLowerCase() === "india";
   const isUS = currentCountry.toLowerCase() === "united states" || currentCountry.toLowerCase() === "us";
 
