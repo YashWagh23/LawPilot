@@ -6,6 +6,12 @@ An intelligent, jurisdiction-aware legal assistance platform that deconstructs c
 
 ---
 
+## Live Demo
+
+**Production:** https://lawpilot-sepia.vercel.app/
+
+---
+
 ## Chosen Vertical
 
 ### AI for Legal Assistance & Access
@@ -283,7 +289,7 @@ npm test
 - Node.js 18.17 or higher
 - npm 9 or higher
 
-### Local Installation
+### Local Installation (Development)
 
 ```bash
 # 1. Clone repository
@@ -300,7 +306,8 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+- **Local Development:** Open [http://localhost:3000](http://localhost:3000) in your browser.
+- **Live Deployed Application:** Access the live production application at [https://lawpilot-sepia.vercel.app/](https://lawpilot-sepia.vercel.app/).
 
 ---
 
@@ -359,3 +366,4 @@ npm audit
 - [x] Production build succeeds (`npm run build`)
 - [x] Problem statement alignment table included
 - [x] Flagship demo operational and documented
+- [x] Live production deployment operational (https://lawpilot-sepia.vercel.app/)
