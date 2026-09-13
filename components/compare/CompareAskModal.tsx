@@ -55,7 +55,22 @@ const CompareAskModalContent: React.FC<ModalContentProps> = ({
           }),
         });
 
-        const data = await res.json();
+        let data: {
+          success?: boolean;
+          answer?: AskAnswerStructure;
+          message?: { structuredAnswer?: AskAnswerStructure };
+          error?: string;
+        } = {};
+        try {
+          const text = await res.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          if (isMounted) {
+            setError(`Question service returned an unreadable response (HTTP ${res.status}). Please try again.`);
+          }
+          return;
+        }
+
         if (!isMounted) return;
 
         const structured = data.answer || data.message?.structuredAnswer;
@@ -101,7 +116,20 @@ const CompareAskModalContent: React.FC<ModalContentProps> = ({
         }),
       });
 
-      const data = await res.json();
+      let data: {
+        success?: boolean;
+        answer?: AskAnswerStructure;
+        message?: { structuredAnswer?: AskAnswerStructure };
+        error?: string;
+      } = {};
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        setError(`Question service returned an unreadable response (HTTP ${res.status}). Please try again.`);
+        return;
+      }
+
       const structured = data.answer || data.message?.structuredAnswer;
       if (data.success && structured) {
         setAnswer(structured);

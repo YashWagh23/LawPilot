@@ -75,7 +75,7 @@ Upload (PDF / DOCX / TXT)
 Validation (Magic-byte inspection, MIME signature, 15MB size limit)
   │
   ▼
-Extraction (Page-aware raw text extraction via pdf-parse & mammoth)
+Extraction (Page-aware raw text extraction via unpdf & mammoth)
   │
   ▼
 Clause Analysis (Pattern-based heading segmentation & clause categorization)
@@ -114,7 +114,7 @@ Action (Deterministic action checklists, negotiation prompts & counsel brief)
 | **Styling** | Tailwind CSS v4 | Clean design system tokens and responsive layouts |
 | **AI Intelligence** | Google Gemini API (`@google/genai`) | Server-side structured extraction and grounded legal Q&A |
 | **Schema Validation** | Zod | Runtime schema validation for AI payloads and contracts |
-| **Document Parsing** | `pdf-parse`, `pdf-lib`, `mammoth` | Server-side extraction for PDF, DOCX, and TXT files |
+| **Document Parsing** | `unpdf`, `pdf-lib`, `mammoth` | Server-side extraction for PDF, DOCX, and TXT files |
 | **Test Suite** | Vitest | Fast unit, integration, and invariant testing |
 | **Icons** | Lucide React | Accessible, lightweight SVG iconography |
 | **Session Persistence** | Browser `localStorage` | Client-side local storage for Action Plan checklists and chat history |

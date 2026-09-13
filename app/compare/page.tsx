@@ -149,7 +149,17 @@ export default function ComparePage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data: { success?: boolean; comparison?: typeof comparisonResult; error?: string } = {};
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        setErrorMessage(
+          `The comparison service returned an unreadable response (HTTP ${res.status}). Please try again.`
+        );
+        return;
+      }
+
       if (data.success && data.comparison) {
         setComparisonResult(data.comparison);
         if (data.comparison.topMaterialChanges.length > 0) {

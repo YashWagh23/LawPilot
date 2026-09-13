@@ -1,5 +1,5 @@
-import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
+import { extractText } from "unpdf";
 import type { SupportedFileType } from "./fileValidator";
 
 export interface ExtractedPage {
@@ -26,38 +26,32 @@ export async function extractDocumentContent(
 
   if (fileType === "pdf") {
     try {
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
+      const data = new Uint8Array(buffer);
+      const result = await extractText(data);
 
       const pages: ExtractedPage[] = [];
 
-      if (Array.isArray(result.pages) && result.pages.length > 0) {
-        for (let i = 0; i < result.pages.length; i++) {
-          const pageObj = result.pages[i];
-          const pageText = typeof pageObj === "string" ? pageObj : pageObj?.text || "";
-          pages.push({
-            pageNumber: i + 1,
-            text: pageText,
-          });
-        }
-      } else {
-        // Fallback: split on form-feed characters if available
-        const rawPages = (result.text || "").split(/\f/);
-        rawPages.forEach((pText, idx) => {
+      if (Array.isArray(result.text) && result.text.length > 0) {
+        result.text.forEach((pageText, idx) => {
           pages.push({
             pageNumber: idx + 1,
-            text: pText,
+            text: typeof pageText === "string" ? pageText : String(pageText || ""),
           });
+        });
+      } else {
+        pages.push({
+          pageNumber: 1,
+          text: "",
         });
       }
 
-      const rawText = result.text || "";
+      const rawText = pages.map((p) => p.text).join("\n\n");
       const wordCount = rawText.trim().split(/\s+/).filter(Boolean).length;
 
       return {
         rawText,
         pages,
-        totalPageCount: Math.max(pages.length, 1),
+        totalPageCount: Math.max(result.totalPages || pages.length, 1),
         wordCount,
         extractionWarnings,
       };

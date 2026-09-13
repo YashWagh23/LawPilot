@@ -137,13 +137,21 @@ export function AskLawPilotView({
         }),
       });
 
-      const data = await response.json();
+      let data: { success?: boolean; answer?: AskAnswerStructure; error?: string } = {};
+      try {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(
+          `The question service returned an unreadable response (HTTP ${response.status}). Please try again.`
+        );
+      }
 
-      if (!response.ok || !data.success) {
+      if (!response.ok || !data.success || !data.answer) {
         throw new Error(data.error || "Unable to get an answer from LawPilot.");
       }
 
-      const structuredAnswer: AskAnswerStructure = data.answer;
+      const structuredAnswer = data.answer;
       const assistantMessage: AskConversationMessage = {
         id: structuredAnswer?.id || `ans-${report.id}-${updatedMessages.length + 1}`,
         role: "assistant",

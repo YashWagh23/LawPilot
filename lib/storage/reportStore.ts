@@ -1,10 +1,28 @@
 import type { AnalysisReport, Document } from "@/types";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
-import { getCachedAnalysisReport } from "@/lib/analysis/analysisOrchestrator";
+
+// In-memory runtime cache of analyzed reports (frictionless local-first retrieval across modules)
+declare global {
+  var __lawpilot_report_cache__: Map<string, AnalysisReport> | undefined;
+}
+
+const reportCache: Map<string, AnalysisReport> =
+  globalThis.__lawpilot_report_cache__ || new Map<string, AnalysisReport>();
+if (!globalThis.__lawpilot_report_cache__) {
+  globalThis.__lawpilot_report_cache__ = reportCache;
+}
+
+export function getCachedAnalysisReport(id: string): AnalysisReport | null {
+  return reportCache.get(id) || null;
+}
+
+export function saveCachedAnalysisReport(report: AnalysisReport): void {
+  reportCache.set(report.id, report);
+}
 
 /**
  * In-Memory & Demo Report Store
- * Provides fast retrieval of analysis reports from the active orchestrator cache
+ * Provides fast retrieval of analysis reports from the active cache
  * and pre-packaged demo documents for zero-auth exploration.
  */
 

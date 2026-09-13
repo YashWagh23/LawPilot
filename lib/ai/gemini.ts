@@ -23,8 +23,8 @@ export function getGeminiClient(): GoogleGenAI | null {
 }
 
 export const GEMINI_CONFIG = {
-  defaultModel: "gemini-2.5-flash",
-  reasoningModel: "gemini-2.5-pro",
+  defaultModel: "gemini-3.6-flash",
+  reasoningModel: "gemini-3.6-flash",
   temperature: 0.2, // Low temperature for high precision and grounded legal analysis
   maxOutputTokens: 8192,
 };

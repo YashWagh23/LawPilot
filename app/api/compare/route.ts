@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FLAGSHIP_DEMO_COMPARISON } from "@/lib/demo/compareDemoData";
-import { compareDocumentBuffers } from "@/lib/comparison/documentComparator";
 import { sanitizeFileName, MAX_FILE_SIZE_BYTES } from "@/lib/documents/fileValidator";
 
 export async function POST(req: NextRequest) {
@@ -9,7 +8,15 @@ export async function POST(req: NextRequest) {
 
     // 1. Demo Mode
     if (contentType.includes("application/json")) {
-      const body = await req.json();
+      let body: { isDemo?: boolean } = {};
+      try {
+        body = await req.json();
+      } catch {
+        return NextResponse.json(
+          { success: false, error: "Invalid JSON request body." },
+          { status: 400 }
+        );
+      }
       if (body.isDemo) {
         return NextResponse.json({
           success: true,
@@ -63,6 +70,10 @@ export async function POST(req: NextRequest) {
 
       const previousBuffer = Buffer.from(prevArrayBuffer);
       const currentBuffer = Buffer.from(currArrayBuffer);
+
+      const { compareDocumentBuffers } = await import(
+        "@/lib/comparison/documentComparator"
+      );
 
       const comparison = await compareDocumentBuffers({
         previousBuffer,

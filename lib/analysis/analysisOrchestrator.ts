@@ -43,24 +43,11 @@ export interface PipelineProgressUpdate {
   error?: string;
 }
 
-// In-memory runtime cache of analyzed reports (frictionless local-first retrieval across modules)
-declare global {
-  var __lawpilot_report_cache__: Map<string, AnalysisReport> | undefined;
-}
-
-const reportCache: Map<string, AnalysisReport> =
-  globalThis.__lawpilot_report_cache__ || new Map<string, AnalysisReport>();
-if (!globalThis.__lawpilot_report_cache__) {
-  globalThis.__lawpilot_report_cache__ = reportCache;
-}
-
-export function getCachedAnalysisReport(id: string): AnalysisReport | null {
-  return reportCache.get(id) || null;
-}
-
-export function saveCachedAnalysisReport(report: AnalysisReport): void {
-  reportCache.set(report.id, report);
-}
+import {
+  getCachedAnalysisReport,
+  saveCachedAnalysisReport,
+} from "@/lib/storage/reportStore";
+export { getCachedAnalysisReport, saveCachedAnalysisReport };
 
 /**
  * Main Document Intelligence Analysis Orchestrator

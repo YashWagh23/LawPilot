@@ -158,7 +158,15 @@ export default function ReviewPage() {
       setTimeout(() => { updateStage(2, "completed"); updateStage(3, "running"); }, 1200);
 
       const response = await fetch("/api/review/analyze", { method: "POST", body: formData });
-      const result = await response.json();
+      let result: { success?: boolean; error?: string; report?: unknown; reportId?: string } = {};
+      try {
+        const text = await response.text();
+        result = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(
+          `The document analysis service returned an unreadable response (HTTP ${response.status}). Please try again.`
+        );
+      }
 
       if (!response.ok || !result.success) throw new Error(result.error || "The document could not be read.");
 
