@@ -1,187 +1,299 @@
 "use client";
 
 import React, { useState } from "react";
+import { CheckCircle2, Layers } from "lucide-react";
+import type {
+  ClauseComparisonItem,
+  DocumentComparisonResult,
+} from "@/types";
 import {
-  GitCompare,
-  Upload,
-  ShieldAlert,
-  CheckCircle,
-  FileText,
-} from "lucide-react";
+  FLAGSHIP_DEMO_COMPARISON,
+} from "@/lib/demo/compareDemoData";
+import { CompareHeader } from "@/components/compare/CompareHeader";
+import { DualDocumentUploader } from "@/components/compare/DualDocumentUploader";
+import { ComparisonSummaryView } from "@/components/compare/ComparisonSummaryView";
+import { ChangeCardList } from "@/components/compare/ChangeCardList";
+import { SideBySideClauseView } from "@/components/compare/SideBySideClauseView";
+import { CompareAskModal } from "@/components/compare/CompareAskModal";
+
+interface DocState {
+  file: File | null;
+  displayName: string;
+  sizeBytes?: number;
+  isDemo?: boolean;
+}
 
 export default function ComparePage() {
-  const [hasLoadedSample, setHasLoadedSample] = useState(false);
+  const [previousDoc, setPreviousDoc] = useState<DocState>({
+    file: null,
+    displayName: "",
+    sizeBytes: undefined,
+    isDemo: false,
+  });
+
+  const [currentDoc, setCurrentDoc] = useState<DocState>({
+    file: null,
+    displayName: "",
+    sizeBytes: undefined,
+    isDemo: false,
+  });
+
+  const [comparisonResult, setComparisonResult] = useState<DocumentComparisonResult | null>(null);
+  const [selectedChange, setSelectedChange] = useState<ClauseComparisonItem | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Ask LawPilot Modal State
+  const [askModalState, setAskModalState] = useState<{
+    isOpen: boolean;
+    question: string;
+    clauseTitle: string;
+  }>({
+    isOpen: false,
+    question: "",
+    clauseTitle: "",
+  });
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Load Flagship India Demo pair
+  const handleLoadDemo = () => {
+    setErrorMessage(null);
+    setPreviousDoc({
+      file: null,
+      displayName: FLAGSHIP_DEMO_COMPARISON.previousDocument.fileName,
+      sizeBytes: FLAGSHIP_DEMO_COMPARISON.previousDocument.fileSizeBytes,
+      isDemo: true,
+    });
+    setCurrentDoc({
+      file: null,
+      displayName: FLAGSHIP_DEMO_COMPARISON.currentDocument.fileName,
+      sizeBytes: FLAGSHIP_DEMO_COMPARISON.currentDocument.fileSizeBytes,
+      isDemo: true,
+    });
+    setComparisonResult(FLAGSHIP_DEMO_COMPARISON);
+    // Select first material change
+    if (FLAGSHIP_DEMO_COMPARISON.topMaterialChanges.length > 0) {
+      setSelectedChange(FLAGSHIP_DEMO_COMPARISON.topMaterialChanges[0]);
+    } else if (FLAGSHIP_DEMO_COMPARISON.changes.length > 0) {
+      setSelectedChange(FLAGSHIP_DEMO_COMPARISON.changes[0]);
+    }
+    showToast("Loaded India Flagship Redline Demo: Candidate Baseline vs HR Redline.");
+  };
+
+  // Swap PREVIOUS <-> CURRENT versions
+  const handleSwapVersions = () => {
+    const tempPrev = { ...previousDoc };
+    const tempCurr = { ...currentDoc };
+
+    setPreviousDoc(tempCurr);
+    setCurrentDoc(tempPrev);
+    setComparisonResult(null);
+    setSelectedChange(null);
+    setErrorMessage(null);
+    showToast("Swapped Previous and Current document versions.");
+  };
+
+  // Run Semantic Comparison
+  const handleCompare = async () => {
+    setErrorMessage(null);
+
+    // Case 1: Demo files selected
+    if (previousDoc.isDemo && currentDoc.isDemo) {
+      setComparisonResult(FLAGSHIP_DEMO_COMPARISON);
+      if (FLAGSHIP_DEMO_COMPARISON.topMaterialChanges.length > 0) {
+        setSelectedChange(FLAGSHIP_DEMO_COMPARISON.topMaterialChanges[0]);
+      }
+      return;
+    }
+
+    // Case 2: Custom uploaded files
+    if (!previousDoc.file || !currentDoc.file) {
+      setErrorMessage("Please upload both Previous Version and Current Version document files.");
+      return;
+    }
+
+    if (previousDoc.file.name === currentDoc.file.name && previousDoc.file.size === currentDoc.file.size) {
+      setErrorMessage(
+        "Identical document selected for both Previous and Current versions. Please select two distinct drafts to compare."
+      );
+      return;
+    }
+
+    setIsComparing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("previousFile", previousDoc.file);
+      formData.append("currentFile", currentDoc.file);
+
+      const res = await fetch("/api/compare", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.comparison) {
+        setComparisonResult(data.comparison);
+        if (data.comparison.topMaterialChanges.length > 0) {
+          setSelectedChange(data.comparison.topMaterialChanges[0]);
+        } else if (data.comparison.changes.length > 0) {
+          setSelectedChange(data.comparison.changes[0]);
+        }
+        showToast("Semantic legal comparison complete!");
+      } else {
+        setErrorMessage(data.error || "Failed to compare document versions.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error connecting to comparison service.";
+      setErrorMessage(msg);
+    } finally {
+      setIsComparing(false);
+    }
+  };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      {/* Toast Banner */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            Intake Pathway 03
-          </span>
-          <span className="text-xs text-slate-700 dark:text-slate-300">·</span>
-          <span className="text-xs text-slate-700 dark:text-slate-300">Redline & Version Analysis</span>
-        </div>
-        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Compare Agreement Drafts & Redlines
-        </h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          Upload two versions of an agreement to identify modified obligations, stealth deletions, and newly introduced liability risks.
-        </p>
-      </div>
+      <CompareHeader onLoadDemo={handleLoadDemo} />
 
-      {/* Dual Document Upload Setup */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Version A: Original / Base */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Version A · Original Baseline
-            </span>
-            <span className="text-[11px] font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-              Base Draft
-            </span>
-          </div>
+      {/* Dual Document Uploader Cards */}
+      <DualDocumentUploader
+        previousDoc={previousDoc}
+        currentDoc={currentDoc}
+        onSelectPrevious={(file) => {
+          setPreviousDoc({
+            file,
+            displayName: file.name,
+            sizeBytes: file.size,
+            isDemo: false,
+          });
+          setComparisonResult(null);
+          setErrorMessage(null);
+        }}
+        onSelectCurrent={(file) => {
+          setCurrentDoc({
+            file,
+            displayName: file.name,
+            sizeBytes: file.size,
+            isDemo: false,
+          });
+          setComparisonResult(null);
+          setErrorMessage(null);
+        }}
+        onClearPrevious={() => {
+          setPreviousDoc({ file: null, displayName: "", isDemo: false });
+          setComparisonResult(null);
+        }}
+        onClearCurrent={() => {
+          setCurrentDoc({ file: null, displayName: "", isDemo: false });
+          setComparisonResult(null);
+        }}
+        onSwapVersions={handleSwapVersions}
+        onCompare={handleCompare}
+        isComparing={isComparing}
+        errorMessage={errorMessage}
+      />
 
-          <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-6 text-center">
-            {hasLoadedSample ? (
-              <div className="space-y-1">
-                <FileText className="w-8 h-8 text-blue-600 mx-auto" />
-                <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Commercial_Lease_Initial_Draft.pdf
-                </p>
-                <p className="text-[11px] text-slate-700 dark:text-slate-300">
-                  Uploaded · 28 Pages · 42 Clauses
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Upload className="w-6 h-6 text-slate-700 dark:text-slate-300 mx-auto" />
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  Drop original base contract here
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* COMPARISON RESULTS WORKSPACE */}
+      {comparisonResult && (
+        <div className="space-y-8 pt-4 border-t border-slate-200 dark:border-slate-800 animate-in fade-in duration-300">
+          {/* Summary & Metrics */}
+          <ComparisonSummaryView
+            summary={comparisonResult.summary}
+            jurisdictionComparison={comparisonResult.jurisdictionComparison}
+            topMaterialChanges={comparisonResult.topMaterialChanges}
+            onSelectChange={(change) => {
+              setSelectedChange(change);
+              // Scroll down to detail view if on small screen
+              const detailEl = document.getElementById("clause-inspection-area");
+              if (detailEl && window.innerWidth < 1024) {
+                detailEl.scrollIntoView({ behavior: "smooth" });
+              }
+            }}
+            selectedChangeId={selectedChange?.id}
+          />
 
-        {/* Version B: Counterparty Markup */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              Version B · Counterparty Proposed Redline
-            </span>
-            <span className="text-[11px] font-mono text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded">
-              Proposed Changes
-            </span>
-          </div>
-
-          <div className="border-2 border-dashed border-blue-200 dark:border-blue-900 rounded-lg p-6 text-center">
-            {hasLoadedSample ? (
-              <div className="space-y-1">
-                <FileText className="w-8 h-8 text-blue-600 mx-auto" />
-                <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                  Commercial_Lease_Landlord_Markup_v2.pdf
-                </p>
-                <p className="text-[11px] text-slate-700 dark:text-slate-300">
-                  Uploaded · 28 Pages · 4 Altered Clauses
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Upload className="w-6 h-6 text-blue-500 mx-auto" />
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  Drop revised redline or counterparty draft
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Sample Comparison Loader */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-          <GitCompare className="w-4 h-4 text-blue-600 shrink-0" />
-          <span>Need a demo comparison? Load sample lease revisions (Tenant Baseline vs. Landlord Markup).</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setHasLoadedSample(!hasLoadedSample)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
-        >
-          <span>{hasLoadedSample ? "Clear Sample Files" : "Load Sample Redline Comparison"}</span>
-        </button>
-      </div>
-
-      {/* Diff Inspection Area */}
-      {hasLoadedSample && (
-        <div className="space-y-6 pt-2">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              Detected Risk Shifts in Version B
-            </h2>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-400">
-              2 One-Sided Additions Detected
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            {/* Clause Diff Card 1 */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    Section 6.4: Accelerated Rent Remedy
-                  </span>
-                </div>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-400">
-                  Risk Escalated
+          {/* Two-Column Workspace Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Filterable Change List (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Detected Clauses ({comparisonResult.changes.length})
+                </h3>
+                <span className="text-[11px] text-slate-500">
+                  Prioritized by Significance
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                  <span className="text-[10px] text-slate-700 dark:text-slate-300 font-sans block mb-1">
-                    Baseline (Version A)
-                  </span>
-                  &ldquo;...Tenant pays standard statutory damages under California law.&rdquo;
-                </div>
-                <div className="p-3 rounded-lg bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 text-slate-900 dark:text-slate-100">
-                  <span className="text-[10px] text-amber-700 dark:text-amber-400 font-sans block mb-1 font-bold">
-                    Counterparty Added (Version B)
-                  </span>
-                  &ldquo;...Tenant pays <span className="bg-amber-200 dark:bg-amber-900 px-1 py-0.5 rounded">total remaining rent immediately without discount to present value</span> and Landlord has no duty to mitigate.&rdquo;
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                <strong>Impact:</strong> Landlord added an un-discounted rent acceleration penalty.
-              </p>
+              <ChangeCardList
+                changes={comparisonResult.changes}
+                selectedChange={selectedChange}
+                onSelectChange={(change) => setSelectedChange(change)}
+              />
             </div>
 
-            {/* Clause Diff Card 2 */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    Section 19.3: Mutual Waiver of Perils
-                  </span>
-                </div>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  Unchanged
+            {/* Right Column: Side-by-Side Detail View & Why It Matters (7 cols) */}
+            <div id="clause-inspection-area" className="lg:col-span-7 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Clause Difference & Legal Assessment
+                </h3>
+                <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
+                  Grounded Evidence
                 </span>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                Standard subrogation waiver remained intact without modification.
-              </p>
+
+              {selectedChange ? (
+                <SideBySideClauseView
+                  change={selectedChange}
+                  onAskLawPilot={(q) => {
+                    setAskModalState({
+                      isOpen: true,
+                      question: q,
+                      clauseTitle: selectedChange.clauseTitle,
+                    });
+                  }}
+                  onActionAdded={(title) => {
+                    showToast(`Added to Action Plan: "${title}"`);
+                  }}
+                />
+              ) : (
+                <div className="p-12 text-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                  <Layers className="w-8 h-8 text-slate-400 mx-auto" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Select a clause from the list to inspect differences
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    View side-by-side text, parameter changes, and statutory legal context.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* In-Context Ask LawPilot Modal */}
+      <CompareAskModal
+        isOpen={askModalState.isOpen}
+        onClose={() => setAskModalState({ isOpen: false, question: "", clauseTitle: "" })}
+        initialQuestion={askModalState.question}
+        clauseTitle={askModalState.clauseTitle}
+      />
     </div>
   );
 }

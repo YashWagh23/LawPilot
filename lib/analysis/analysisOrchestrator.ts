@@ -210,7 +210,7 @@ export async function orchestrateDocumentAnalysis(
       governingLaw: detectedJurisdiction.governingLaw,
     });
     evidenceChains = verificationResult.evidenceChains;
-  } catch (_e) {
+  } catch {
     // Non-fatal: fallback to empty chains if assembly encountered issues
     evidenceChains = [];
   }
@@ -238,7 +238,7 @@ export async function orchestrateDocumentAnalysis(
       evidenceChains,
       keyDates: factExtraction.dates,
     });
-  } catch (_e) {
+  } catch {
     actionPlan = undefined;
   }
 
@@ -264,6 +264,7 @@ export async function orchestrateDocumentAnalysis(
       jurisdiction: `${detectedJurisdiction.country}${
         detectedJurisdiction.stateOrUT ? " · " + detectedJurisdiction.stateOrUT : ""
       }`,
+      jurisdictionContext: detectedJurisdiction,
       documentSummary: factExtraction.metadata?.title
         ? `Legal agreement analyzed by LawPilot: ${factExtraction.metadata.title}`
         : "Legal agreement analyzed by LawPilot.",
@@ -273,7 +274,7 @@ export async function orchestrateDocumentAnalysis(
       keyDates: factExtraction.dates,
       actionPlan,
     });
-  } catch (_e) {
+  } catch {
     detailedLawyerBrief = undefined;
   }
 

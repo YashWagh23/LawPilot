@@ -5,6 +5,7 @@ import type {
   DetailedLawyerBrief,
   EvidenceChain,
   Finding,
+  JurisdictionContext,
   KeyDate,
   LawyerBriefClause,
   LawyerBriefDate,
@@ -23,6 +24,7 @@ export interface DetailedLawyerBriefInput {
   date?: string;
   parties: string[];
   jurisdiction?: string;
+  jurisdictionContext?: JurisdictionContext;
   documentSummary: string;
   findings: Finding[];
   clauses: Clause[];
@@ -137,7 +139,8 @@ export function generateDeterministicLawyerBrief(
   const highRiskCount = findings.filter(
     (f) => f.severity === "critical_attention" || f.severity === "high_attention"
   ).length;
-  const matterSummary = `Review of ${input.documentType || "Agreement"} titled "${input.documentTitle}". The document establishes an employment and restrictive covenant relationship under ${input.jurisdiction || "governing state law"}. Initial analysis identifies ${findings.length} substantive provisions of interest, including ${highRiskCount} elevated-risk terms regarding post-employment restrictions, training clawback obligations, and proprietary rights assignment. The client is seeking legal review to assess enforceability, identify drafting asymmetries, and negotiate standard protections prior to execution.`;
+  const jurisdictionLabel = input.jurisdiction || input.jurisdictionContext?.country || "applicable governing law";
+  const matterSummary = `Review of ${input.documentType || "Agreement"} titled "${input.documentTitle}". The document establishes an employment and restrictive covenant relationship under ${jurisdictionLabel}. Initial analysis identifies ${findings.length} substantive provisions of interest, including ${highRiskCount} elevated-risk terms regarding post-employment restrictions, training clawback obligations, and proprietary rights assignment. The client is seeking legal review to assess enforceability, identify drafting asymmetries, and negotiate standard protections prior to execution.`;
 
   // 2. User Concerns
   const userConcerns = findings.map(
@@ -190,7 +193,12 @@ export function generateDeterministicLawyerBrief(
 
   // If evidence chains are empty, synthesize baseline authorities based on jurisdiction
   if (verifiedLegalContext.length === 0) {
-    if (input.jurisdiction && /india|maharashtra|mumbai|pune/i.test(input.jurisdiction)) {
+    const isIndia = (input.jurisdiction && /india|maharashtra|mumbai|pune|delhi|bengaluru|karnataka/i.test(input.jurisdiction)) ||
+      input.jurisdictionContext?.country === "India" ||
+      /india|kavach/i.test(input.documentTitle);
+    const isDelaware = input.jurisdiction && /delaware/i.test(input.jurisdiction);
+
+    if (isIndia) {
       verifiedLegalContext.push(
         {
           issueTitle: "Liquidated Damages & Training Bonds",
@@ -209,7 +217,7 @@ export function generateDeterministicLawyerBrief(
           verificationStatus: "verified",
         }
       );
-    } else if (input.jurisdiction?.includes("Delaware") || input.documentTitle.toLowerCase().includes("employment")) {
+    } else if (isDelaware) {
       verifiedLegalContext.push(
         {
           issueTitle: "Training Expense Repayment & Wage Deductions",
@@ -324,8 +332,10 @@ export function generateDeterministicLawyerBrief(
       documentType: input.documentType,
       date: input.date || new Date().toISOString().split("T")[0],
       parties: input.parties && input.parties.length > 0 ? input.parties : ["Employer", "Employee"],
-      jurisdiction: input.jurisdiction || "State of Delaware",
+      jurisdiction: input.jurisdiction || input.jurisdictionContext?.country || "Applicable Law",
+      jurisdictionContext: input.jurisdictionContext,
     },
+    jurisdictionContext: input.jurisdictionContext,
     userConcerns,
     relevantClauses,
     verifiedLegalContext,

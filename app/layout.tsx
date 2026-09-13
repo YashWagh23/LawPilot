@@ -4,6 +4,7 @@ import "./globals.css";
 import { GlobalDisclaimer } from "@/components/common/GlobalDisclaimer";
 import { Navbar } from "@/components/common/Navbar";
 import { Footer } from "@/components/common/Footer";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,26 @@ export const metadata: Metadata = {
   ],
 };
 
+const themeInitializerScript = `
+(function() {
+  try {
+    var saved = localStorage.getItem('lawpilot-theme');
+    var theme = saved;
+    if (!theme || (theme !== 'light' && theme !== 'dark')) {
+      theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    var root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -37,13 +58,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans selection:bg-slate-900 selection:text-white dark:selection:bg-white dark:selection:text-slate-900">
-        <GlobalDisclaimer />
-        <Navbar />
-        <main className="flex-1 flex flex-col">{children}</main>
-        <Footer />
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: themeInitializerScript }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-[#0C0E14] dark:text-slate-100 font-sans">
+        <ThemeProvider>
+          <GlobalDisclaimer />
+          <Navbar />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

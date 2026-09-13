@@ -5,94 +5,80 @@ import { GLOBAL_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+    <footer className="mt-auto border-t border-slate-200 bg-white dark:border-slate-800/80 dark:bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Col 1: Brand & Safety Mission */}
-          <div className="md:col-span-2 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          {/* Brand & mission */}
+          <div className="space-y-4">
+            <Link href="/" className="flex items-center gap-2.5 group w-fit">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-white dark:bg-indigo-600 shadow-xs">
                 <Scale className="w-4 h-4" />
               </div>
               <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
                 LawPilot
               </span>
-              <span className="text-xs text-slate-700 dark:text-slate-300">· Understand. Verify. Act.</span>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-md">
-              A GenAI-powered legal information and document assistance platform. Designed for transparent legal reasoning through the Evidence Chain, grounded citations, and pragmatic action planning.
+            </Link>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
+              GenAI-powered legal document intelligence. Transparent reasoning through Evidence Chains, grounded citations, and pragmatic action planning.
             </p>
-            <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Built on 10 Core Legal Safety & Integrity Principles</span>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>Built on 10 Core Legal Safety Principles</span>
             </div>
           </div>
 
-          {/* Col 2: Product Pathways */}
+          {/* Navigation */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
-              Navigation
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-4">
+              Pathways
             </h4>
-            <ul className="mt-3 space-y-2 text-xs text-slate-700 dark:text-slate-300">
-              <li>
-                <Link href="/workspace" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Workspace
-                </Link>
-              </li>
-              <li>
-                <Link href="/review" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Document Review
-                </Link>
-              </li>
-              <li>
-                <Link href="/situation" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Situation Navigator
-                </Link>
-              </li>
-              <li>
-                <Link href="/compare" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Document Compare
-                </Link>
-              </li>
-              <li>
-                <Link href="/analysis/demo-commercial-lease" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Sample Analysis Report
-                </Link>
-              </li>
+            <ul className="space-y-2.5">
+              {[
+                { href: "/review",     label: "Document Review" },
+                { href: "/compare",    label: "Compare Redlines" },
+                { href: "/situation",  label: "Situation Navigator" },
+                { href: "/analysis/demo-employment-agreement", label: "India Demo" },
+              ].map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Col 3: Legal & Safety */}
+          {/* Safety */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-4">
               Safety & Governance
             </h4>
-            <ul className="mt-3 space-y-2 text-xs text-slate-700 dark:text-slate-300">
-              <li>
-                <Link href="/settings" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Privacy & Data Retention
-                </Link>
-              </li>
-              <li>
-                <span className="text-slate-700 dark:text-slate-300">Untrusted Document Isolation</span>
-              </li>
-              <li>
-                <span className="text-slate-700 dark:text-slate-300">Zero Citation Fabrication</span>
-              </li>
-              <li>
-                <span className="text-slate-700 dark:text-slate-300">Transparent Uncertainty</span>
-              </li>
+            <ul className="space-y-2.5">
+              {[
+                "Untrusted Document Isolation",
+                "Zero Citation Fabrication",
+                "Transparent Uncertainty",
+                "Prompt-Injection Boundary",
+              ].map((label) => (
+                <li key={label} className="text-xs text-slate-500 dark:text-slate-400">
+                  {label}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar with Mandatory Legal Disclaimer */}
-        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] text-slate-600 dark:text-slate-300 text-center sm:text-left">
-            <strong>Mandatory Notice:</strong> {GLOBAL_LEGAL_DISCLAIMER}
+        {/* Disclaimer */}
+        <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed max-w-2xl">
+            <strong className="font-semibold text-slate-500 dark:text-slate-400">Notice:</strong>{" "}
+            {GLOBAL_LEGAL_DISCLAIMER}
           </p>
-          <p className="text-[11px] text-slate-700 dark:text-slate-300 shrink-0">
-            © {new Date().getFullYear()} LawPilot. GenAI Competition Edition.
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+            © {new Date().getFullYear()} LawPilot
           </p>
         </div>
       </div>

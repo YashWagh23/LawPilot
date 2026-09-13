@@ -282,7 +282,7 @@ export function EvidenceChainDetailModal({
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
                     <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc list-inside">
                       <li>
-                        <strong>Governing Jurisdiction:</strong> Whether dispute is heard under Delaware law or employee domicile state law.
+                        <strong>Governing Jurisdiction:</strong> Whether dispute is heard under designated governing law or employee domicile statutory law.
                       </li>
                       <li>
                         <strong>Employee Role:</strong> Seniority, access to proprietary trade secrets, and direct customer contacts.

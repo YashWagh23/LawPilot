@@ -1,74 +1,77 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   FileText,
   Compass,
   GitCompare,
-  Settings,
   Scale,
   Menu,
   X,
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const NAV_ITEMS = [
-  { href: "/workspace", label: "Workspace", icon: Scale },
-  { href: "/review", label: "Document Review", icon: FileText },
-  { href: "/situation", label: "Situation Navigator", icon: Compass },
-  { href: "/compare", label: "Compare", icon: GitCompare },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/review",    label: "Document Review",    icon: FileText },
+  { href: "/compare",   label: "Compare",            icon: GitCompare },
+  { href: "/situation", label: "Situation Navigator",icon: Compass },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand */}
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold shadow-xs group-hover:scale-105 transition-transform">
-              <Scale className="w-5 h-5" />
+    <header
+      className={cn(
+        "sticky top-0 z-40 w-full transition-all duration-200",
+        scrolled
+          ? "border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-xs dark:border-slate-800/80 dark:bg-slate-950/95"
+          : "border-b border-transparent bg-white/80 backdrop-blur-sm dark:bg-slate-950/80"
+      )}
+    >
+      <div className="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* ── Brand ── */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-indigo-600 shadow-xs group-hover:scale-105 transition-transform duration-150">
+              <Scale className="w-4 h-4" />
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
-                  LawPilot
-                </span>
-                <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
-                  AI Preview
-                </span>
-              </div>
-              <span className="text-[10px] text-slate-700 dark:text-slate-300 font-medium tracking-wide">
+            <div className="flex flex-col leading-none">
+              <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
+                LawPilot
+              </span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-0.5">
                 Understand · Verify · Act
               </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-200 dark:border-slate-800">
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-0.5">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
-              const isActive =
-                item.href === "/workspace"
-                  ? pathname === "/workspace"
-                  : pathname.startsWith(item.href);
-
+              const isActive = pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150",
                     isActive
-                      ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-                      : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-900"
+                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60"
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -79,45 +82,41 @@ export function Navbar() {
           </nav>
         </div>
 
-        {/* Right CTA / Direct Actions */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* ── Right CTAs (Desktop) ── */}
+        <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
           <Link
             href="/analysis/demo-employment-agreement"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors duration-150"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>Try Demo</span>
-            <span className="text-[10px] font-medium px-1 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-              🇮🇳
-            </span>
+            <span className="text-[10px]">🇮🇳</span>
           </Link>
           <Link
             href="/review"
-            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors"
+            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 transition-colors duration-150"
           >
             Analyze Document
           </Link>
         </div>
 
-        {/* Mobile menu button */}
-        <div className="flex md:hidden items-center">
+        {/* Mobile controls */}
+        <div className="flex md:hidden items-center gap-2">
+          <ThemeToggle />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-            aria-label="Toggle menu"
+            className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+            aria-label="Toggle navigation menu"
           >
-            {mobileMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {/* Mobile dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 space-y-1">
+        <div className="md:hidden border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 space-y-1 lp-animate-slide-down">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href);
@@ -127,10 +126,10 @@ export function Navbar() {
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-                    : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
+                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/60"
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -138,22 +137,19 @@ export function Navbar() {
               </Link>
             );
           })}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
             <Link
               href="/analysis/demo-employment-agreement"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 rounded-lg"
+              className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg"
             >
-              <span className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Try Demo (India Flagship)</span>
-              </span>
-              <span className="text-xs">🇮🇳</span>
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Try Demo (India Flagship) 🇮🇳</span>
             </Link>
             <Link
               href="/review"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center px-3 py-2 text-sm font-semibold text-white bg-slate-900 dark:bg-white dark:text-slate-950 rounded-lg"
+              className="flex items-center justify-center px-3 py-2.5 text-sm font-semibold text-white bg-slate-900 dark:bg-indigo-600 rounded-lg"
             >
               Analyze Document
             </Link>

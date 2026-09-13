@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getCurrentUser, DEMO_USER } from "@/lib/firebase/auth";
 import { getAnalysisReportById } from "@/lib/firebase/firestore";
-import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import {
   validateDocumentFile,
   sanitizeFileName,

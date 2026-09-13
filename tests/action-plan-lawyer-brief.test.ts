@@ -14,7 +14,6 @@ import {
 import { DetailedLawyerBriefSchema } from "@/lib/ai/prompts/lawyerBrief";
 import {
   SAMPLE_ACTION_PLAN,
-  SAMPLE_DETAILED_LAWYER_BRIEF,
   SAMPLE_DELAWARE_DETAILED_LAWYER_BRIEF,
   SAMPLE_FINDINGS,
   SAMPLE_CLAUSES,

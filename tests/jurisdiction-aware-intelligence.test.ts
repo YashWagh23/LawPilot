@@ -25,7 +25,6 @@ import {
   SAMPLE_EVIDENCE_CHAINS,
   SAMPLE_ACTION_PLAN,
   SAMPLE_DETAILED_LAWYER_BRIEF,
-  SAMPLE_ANALYSIS_REPORT,
 } from "@/lib/demo/sampleAnalysis";
 import { compareSourcePriority } from "@/lib/safety/legalSourceValidator";
 import type { LegalSource } from "@/types";

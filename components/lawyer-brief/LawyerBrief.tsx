@@ -210,7 +210,7 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
             <span>•</span>
             <span><strong>Type:</strong> {brief.document.documentType}</span>
             <span>•</span>
-            <span><strong>Governing Law:</strong> {brief.document.jurisdiction || "Delaware"}</span>
+            <span><strong>Governing Law:</strong> {brief.document.jurisdiction || brief.jurisdictionContext?.country || "Applicable Law"}</span>
           </div>
         </div>
 
@@ -242,7 +242,7 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
             </div>
             <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-800 print:border-gray-300 print:p-2">
               <div className="text-slate-400 print:text-gray-500">Jurisdiction</div>
-              <div className="font-semibold text-white print:text-black mt-0.5">{brief.document.jurisdiction || "Delaware"}</div>
+              <div className="font-semibold text-white print:text-black mt-0.5">{brief.document.jurisdiction || brief.jurisdictionContext?.country || "Applicable Law"}</div>
             </div>
             <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-800 print:border-gray-300 print:p-2">
               <div className="text-slate-400 print:text-gray-500">Parties Involved</div>

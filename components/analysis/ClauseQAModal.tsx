@@ -29,7 +29,7 @@ export function ClauseQAModal({
   onClose,
   clause,
   finding,
-  jurisdiction = "Delaware",
+  jurisdiction = "Applicable Law",
   sources = [],
 }: ClauseQAModalProps) {
   const [question, setQuestion] = useState("");
@@ -39,10 +39,10 @@ export function ClauseQAModal({
   if (!isOpen) return null;
 
   const presetQuestions = [
-    "Can my employer definitely charge me $18,500 if I resign?",
-    "Is this 12-month non-compete enforceable for remote engineering?",
-    "Does the company own software I build on weekends on my own laptop?",
-    "Who pays the AAA arbitration fees if a dispute arises?",
+    "Can my employer enforce the training reimbursement bond?",
+    "Is this 12-month non-compete clause legally enforceable?",
+    "Does the company own software I build on personal time on my own laptop?",
+    "Who pays the arbitration and dispute resolution fees?",
   ];
 
   const handleAsk = async (queryToAsk: string) => {
