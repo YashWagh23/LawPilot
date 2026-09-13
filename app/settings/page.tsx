@@ -88,7 +88,7 @@ export default function SettingsPage() {
               <strong>Local-First Storage:</strong> Action Plan states and Ask LawPilot session history persist strictly in client local storage.
             </p>
             <p>
-              <strong>Ephemeral Processing:</strong> Uploaded documents are processed in-memory and never utilized to train public foundation models.
+              <strong>Document Handling:</strong> Documents are processed for the requested analysis and are not persisted by LawPilot in a third-party application database. External AI-provider handling is governed by the provider&apos;s applicable API terms and configuration.
             </p>
           </div>
         </div>

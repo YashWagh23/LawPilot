@@ -130,7 +130,7 @@ export default function HomePage() {
             <span className="text-slate-300 dark:text-slate-600">·</span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              Zero Hallucinations
+              Auditable Evidence
             </span>
           </div>
         </div>

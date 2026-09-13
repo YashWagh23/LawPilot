@@ -298,7 +298,7 @@ export default function ReviewPage() {
           </div>
 
           <p className="text-[11px] text-slate-400 text-center pt-1">
-            Private & confidential · Processed securely
+            Ephemeral session processing · No database persistence
           </p>
         </div>
       ) : selectedFile ? (
@@ -442,7 +442,7 @@ export default function ReviewPage() {
           <Shield className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
           <p>
             <strong className="text-slate-700 dark:text-slate-300 font-semibold">Privacy & Security:</strong>{" "}
-            Your documents are analyzed in private memory and never used to train public AI models.
+            Documents are processed for the requested analysis and are not persisted by LawPilot in a third-party application database. External AI-provider handling is governed by the provider&apos;s applicable API terms and configuration.
           </p>
         </div>
 

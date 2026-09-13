@@ -143,7 +143,7 @@ Action (Deterministic action checklists, negotiation prompts & counsel brief)
 ### 4. 🔄 Semantic Document Comparison (`/compare`)
 - Upload baseline and redlined draft agreements or explore pre-loaded demo pairs.
 - Distinguishes **Material Changes** (high liability, monetary increases, non-compete shifts) from all other general modifications.
-- Guarantees exact alignment between displayed material change cards and summary counts (no silent truncation).
+- Maintains exact alignment between displayed material change cards and summary counts (no silent truncation).
 - Side-by-side clause inspection with direct *Add to Action Plan* and *Ask LawPilot* integrations.
 
 ### 5. 🧭 Situation Navigator (`/situation`)
@@ -156,7 +156,7 @@ Action (Deterministic action checklists, negotiation prompts & counsel brief)
 - Prioritized, numbered checklist of practical pre-execution steps.
 - Categories: Urgent Items, Pre-Signing Verifications, Questions for HR/Employer, Documents to Collect, and Facts to Confirm.
 - Interactive checkboxes with browser `localStorage` persistence.
-- Domain invariant ensuring guaranteed unique, stable item IDs across repeated renders with zero duplicate key warnings.
+- Domain invariant enforcing unique, stable item IDs across repeated renders with zero duplicate key warnings.
 
 ### 7. 💼 Lawyer-Ready Brief (`/analysis/[id]` → Brief)
 - 1–2 page structured attorney intake document designed to streamline consultation.
@@ -186,12 +186,13 @@ Action (Deterministic action checklists, negotiation prompts & counsel brief)
 
 ## Security
 
-- **Server-Side API Keys**: Google Gemini API keys are consumed strictly in server environments (`process.env.GEMINI_API_KEY`) and are never exposed to the client browser.
-- **Untrusted Content Sandboxing**: Uploaded document content is treated as untrusted data, enclosed in strict safety boundaries to prevent prompt injection or instruction override attacks.
+- **Server-Side API Keys**: Google Gemini API keys are consumed strictly in server environments (`process.env.GEMINI_API_KEY`) without client-side exposure.
+- **Document Handling**: Documents are processed for the requested analysis and are not persisted by LawPilot in a third-party application database. External AI-provider handling is governed by the provider's applicable API terms and configuration.
+- **Untrusted Content Sandboxing**: Uploaded document content is treated as untrusted data, enclosed in safety boundaries to mitigate prompt injection or instruction override risks.
 - **Magic-Byte Validation**: Validates file headers on binary uploads (PDF `%PDF-`, DOCX `PK..`) to prevent MIME-type spoofing.
-- **File Upload Limits**: Enforces a strict 15MB file size limit and rejects corrupt, empty (0 bytes), or malformed files gracefully.
+- **File Upload Limits**: Enforces a 15MB file size limit and rejects corrupt, empty (0 bytes), or unsupported files gracefully.
 - **Sanitized Errors**: API routes sanitize stack traces and internal errors before returning user-facing HTTP responses.
-- **Zero Secrets Committed**: Strict `.gitignore` rules prevent environment files from entering repository history.
+- **No Secrets Committed**: Strict `.gitignore` rules prevent environment files from entering repository history.
 
 ---
 
@@ -270,7 +271,7 @@ npm test
 | **6. Answer questions from documents** | Grounded Q&A constrained strictly to document text, with citations and uncertainties | Ask LawPilot tab (`/analysis/[id]`), `AskLawPilotView.tsx` |
 | **7. Explain practical implications** | "Why this matters" and "What to verify" breakdowns for every finding | `FindingDetailModal.tsx`, `presentationTransformer.ts` |
 | **8. Help users understand next steps** | Reversible, actionable preparation checklists with scripts for counterparty | Action Plan tab (`/analysis/[id]`), `ActionPlan.tsx` |
-| **9. Produce actionable checklists** | Numbered, categorized checklist with browser persistence and guaranteed unique IDs | Action Plan tab (`/analysis/[id]`), `actionPlanningAgent.ts` |
+| **9. Produce actionable checklists** | Numbered, categorized checklist with browser persistence and unique IDs | Action Plan tab (`/analysis/[id]`), `actionPlanningAgent.ts` |
 | **10. Prepare for legal professionals** | 1–2 page structured Lawyer Brief with verified statutory references and questions | Lawyer Brief tab (`/analysis/[id]`), `LawyerBrief.tsx` |
 | **11. Maintain professional boundaries** | Explicit disclaimers, uncertainty declarations, no definitive legality claims | `GlobalDisclaimer.tsx`, `legalSafetyRules.ts` |
 
@@ -310,7 +311,7 @@ The only application credential for active AI analysis is the Google Gemini API 
 Create `.env.local`:
 
 ```env
-# Google Gemini API Key (Server-Side Only - Never exposed to browser)
+# Google Gemini API Key (Server-Side Only - Not exposed to client browser)
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
