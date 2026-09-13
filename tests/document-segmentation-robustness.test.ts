@@ -8,8 +8,11 @@ import {
 import { orchestrateDocumentAnalysis } from "@/lib/analysis/analysisOrchestrator";
 import { getAnalysisReportById } from "@/lib/firebase/firestore";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
+import path from "path";
 
-const pdfPath = "C:\\Users\\waghy\\OneDrive\\Desktop\\LawPilot_Test_Employment_Agreement.pdf";
+const localFixturePath = path.resolve(__dirname, "fixtures", "LawPilot_Test_Employment_Agreement.pdf");
+const fallbackPath = path.resolve(process.cwd(), "tests", "fixtures", "LawPilot_Test_Employment_Agreement.pdf");
+const pdfPath = fs.existsSync(localFixturePath) ? localFixturePath : fallbackPath;
 
 describe("Document Segmentation Robustness & Real PDF Regression Suite", () => {
   // Test 1: Real PDF Full Pipeline & Clause Segmentation
