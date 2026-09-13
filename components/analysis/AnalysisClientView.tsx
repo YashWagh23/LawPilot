@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import type { AnalysisReport, EvidenceLink } from "@/types";
+import type { AnalysisReport, Clause, EvidenceChain, EvidenceLink, Finding } from "@/types";
 import { EvidenceChainCard } from "@/components/evidence/EvidenceChainCard";
+import { EvidenceChainDetailModal } from "@/components/evidence/EvidenceChainDetailModal";
+import { SplitEvidenceView } from "@/components/evidence/SplitEvidenceView";
+import { ClauseQAModal } from "@/components/analysis/ClauseQAModal";
 import { SeverityBadge } from "@/components/evidence/SeverityBadge";
 import { DocumentViewer } from "@/components/document/DocumentViewer";
 import {
@@ -10,13 +13,16 @@ import {
   Layers,
   CheckSquare,
   Briefcase,
-  Download,
   Printer,
+  Download,
   ShieldCheck,
   DollarSign,
   Clock,
   Calendar,
   Eye,
+  Columns,
+  MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -26,7 +32,7 @@ interface AnalysisClientViewProps {
 
 export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview_viewer" | "chains" | "clauses" | "actions" | "brief"
+    "overview_viewer" | "split_view" | "chains" | "clauses" | "actions" | "brief"
   >("overview_viewer");
 
   const [selectedClauseId, setSelectedClauseId] = useState<string | null>(
@@ -35,6 +41,13 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   const [activeEvidenceLink, setActiveEvidenceLink] = useState<EvidenceLink | null>(
     report.evidenceLinks[0] || null
   );
+
+  // Phase 3 Modal States
+  const [selectedChainForModal, setSelectedChainForModal] =
+    useState<EvidenceChain | null>(null);
+  const [qaClause, setQaClause] = useState<Clause | null>(null);
+  const [qaFinding, setQaFinding] = useState<Finding | null>(null);
+  const [isQaOpen, setIsQaOpen] = useState<boolean>(false);
 
   const handleJumpToClause = (clauseId: string, link?: EvidenceLink) => {
     setSelectedClauseId(clauseId);
@@ -232,6 +245,19 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             <span>Document Viewer & Findings ({report.findings.length})</span>
           </button>
 
+          <button
+            type="button"
+            onClick={() => setActiveTab("split_view")}
+            className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
+              activeTab === "split_view"
+                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            <Columns className="w-4 h-4" />
+            <span>Split Evidence View</span>
+          </button>
+
           {report.evidenceChains && report.evidenceChains.length > 0 && (
             <button
               type="button"
@@ -288,6 +314,21 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         </nav>
       </div>
 
+      {/* TAB: Split Evidence View */}
+      {activeTab === "split_view" && (
+        <SplitEvidenceView
+          clauses={report.clauses}
+          findings={report.findings}
+          evidenceChains={report.evidenceChains}
+          onAskQuestion={(clauseId, finding) => {
+            const matched = report.clauses.find((c) => c.id === clauseId);
+            setQaClause(matched || null);
+            setQaFinding(finding || null);
+            setIsQaOpen(true);
+          }}
+        />
+      )}
+
       {/* TAB: Document Viewer & Clauses that Deserve Attention */}
       {activeTab === "overview_viewer" && (
         <div className="space-y-8">
@@ -315,50 +356,122 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                 ...reviewFindings,
                 ...contextFindings,
                 ...infoFindings,
-              ].map((finding) => (
-                <div
-                  key={finding.id}
-                  className="p-5 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col justify-between space-y-3"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <SeverityBadge severity={finding.severity} />
-                      <span className="text-xs font-mono text-slate-500">
-                        {finding.evidence.section}
-                        {finding.evidence.pageNumber
-                          ? ` · Page ${finding.evidence.pageNumber}`
-                          : " · Page n/a"}
-                      </span>
+              ].map((finding) => {
+                const linkedChain = report.evidenceChains.find(
+                  (c) =>
+                    c.finding.id === finding.id ||
+                    c.finding.clauseId === finding.clauseId
+                );
+                const verificationStatus = linkedChain?.verification?.status;
+                const verificationLabel =
+                  verificationStatus === "verified"
+                    ? "Verified"
+                    : verificationStatus === "partially_verified"
+                    ? "Context dependent"
+                    : verificationStatus === "conflicting"
+                    ? "Conflicting"
+                    : "Not verified";
+
+                return (
+                  <div
+                    key={finding.id}
+                    className="p-5 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col justify-between space-y-3.5"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <SeverityBadge severity={finding.severity} />
+                        <span className="text-xs font-mono text-slate-500">
+                          {finding.evidence.section}
+                          {finding.evidence.pageNumber
+                            ? ` · Page ${finding.evidence.pageNumber}`
+                            : " · Page n/a"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                          {finding.title}
+                        </h3>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 mt-1 leading-relaxed">
+                          {finding.description}
+                        </p>
+                      </div>
+
+                      {/* Metadata Ribbon: Document Evidence & Legal Verification */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                        <span className="text-slate-500 font-medium">
+                          Document evidence:{" "}
+                          <strong className="text-slate-700 dark:text-slate-300 font-mono">
+                            {finding.evidence.section}
+                            {finding.evidence.pageNumber
+                              ? ` · Page ${finding.evidence.pageNumber}`
+                              : ""}
+                          </strong>
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-semibold ${
+                            verificationLabel === "Verified"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                              : verificationLabel === "Context dependent"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                              : verificationLabel === "Conflicting"
+                              ? "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                          }`}
+                        >
+                          Legal verification: {verificationLabel}
+                        </span>
+                      </div>
                     </div>
 
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                      {finding.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {finding.description}
-                    </p>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 italic pt-1 border-t border-slate-100 dark:border-slate-800">
-                      <strong>Why it matters:</strong> {finding.whyItMatters}
-                    </p>
-                  </div>
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (linkedChain) {
+                            setSelectedChainForModal(linkedChain);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>See why</span>
+                      </button>
 
-                  <div className="pt-2 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => handleJumpToClause(finding.clauseId, finding.evidence)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors cursor-pointer"
-                    >
-                      <span>View Clause in Document</span>
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
-                    {finding.uncertainties && finding.uncertainties.length > 0 && (
-                      <span className="text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded">
-                        Factual dependency noted
-                      </span>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const matchedClause = report.clauses.find(
+                              (c) => c.id === finding.clauseId
+                            );
+                            setQaClause(matchedClause || null);
+                            setQaFinding(finding);
+                            setIsQaOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 cursor-pointer"
+                          title="Ask question about this clause"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Ask</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleJumpToClause(finding.clauseId, finding.evidence)
+                          }
+                          className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 cursor-pointer"
+                          title="View in Document Viewer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -610,6 +723,28 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           </div>
         </div>
       )}
+
+      {/* Evidence Chain Detail Modal */}
+      <EvidenceChainDetailModal
+        chain={selectedChainForModal}
+        isOpen={!!selectedChainForModal}
+        onClose={() => setSelectedChainForModal(null)}
+        onViewInDocument={(clauseId) => handleJumpToClause(clauseId)}
+      />
+
+      {/* Clause QA Modal */}
+      <ClauseQAModal
+        isOpen={isQaOpen}
+        onClose={() => {
+          setIsQaOpen(false);
+          setQaClause(null);
+          setQaFinding(null);
+        }}
+        clause={qaClause}
+        finding={qaFinding}
+        jurisdiction={report.metadata.jurisdiction || report.metadata.governingLaw || "Delaware"}
+        sources={report.evidenceChains.flatMap((c) => c.legalSources || [])}
+      />
     </div>
   );
 }

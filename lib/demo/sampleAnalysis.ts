@@ -362,20 +362,134 @@ export const SAMPLE_EVIDENCE_CHAINS: EvidenceChain[] = [
       clauseId: "clause-sec-6",
       section: "Section 6",
       pageNumber: 2,
+      quotedText:
+        "if Employee resigns or departs employment for any reason prior to completing twelve (12) full months of service from the Effective Date, Employee shall immediately repay to Employer the full sum of $18,500 as reimbursement for specialized training expenses, and Employer is authorized to deduct any unpaid balance from final wages.",
+      sourceType: "document",
       exactQuote:
         "if Employee resigns or departs employment for any reason prior to completing twelve (12) full months of service from the Effective Date, Employee shall immediately repay to Employer the full sum of $18,500 as reimbursement for specialized training expenses, and Employer is authorized to deduct any unpaid balance from final wages.",
     },
+    legalClaims: [
+      {
+        id: "claim-del-wage-1",
+        findingId: "finding-emp-1",
+        claim: "Under Delaware law, contractual wage deductions for training repayment require express statutory compliance and cannot reduce compensation below minimum wage standards.",
+        sourceIds: ["source-del-wage-act"],
+        supportLevel: "direct",
+        explanation: "19 Del. C. § 1107 restricts deductions from wages to those authorized by law or signed employee authorizations for lawful purposes.",
+        uncertainties: [
+          "Whether the employer can prove direct tuition costs totaling $18,500 versus ordinary internal onboarding overhead.",
+        ],
+        jurisdiction: "Delaware",
+        verified: true,
+      },
+      {
+        id: "claim-training-amort-1",
+        findingId: "finding-emp-1",
+        claim: "Un-amortized lump-sum training clawbacks face heightened judicial scrutiny if they operate as punitive retention penalties rather than genuine cost recoveries.",
+        sourceIds: ["source-restatement-emp-807"],
+        supportLevel: "strong",
+        explanation: "Restatement of Employment Law § 8.07 requires training repayment provisions to amortize over employee tenure.",
+        uncertainties: [
+          "Whether Delaware Chancery or Superior courts would reform the unamortized amount or declare the deduction void.",
+        ],
+        jurisdiction: "United States (General)",
+        verified: true,
+      },
+    ],
+    legalSources: [
+      {
+        id: "source-del-wage-act",
+        title: "Delaware Wage Payment and Collection Act (19 Del. C. § 1107)",
+        publisher: "Delaware General Assembly",
+        sourceType: "official_legislation",
+        citation: "19 Del. C. § 1107 (Withholding and Deductions)",
+        jurisdiction: "Delaware",
+        url: "https://delcode.delaware.gov/title19/c011/index.html",
+        sourceUrl: "https://delcode.delaware.gov/title19/c011/index.html",
+        relevance: "Governs mandatory deductions and wage withholding for employee training repayment agreements",
+        retrievedAt: "2026-03-01T00:00:00Z",
+        publicationDate: "2024-01-01",
+        verificationStatus: "verified",
+        excerpt:
+          "No employer may withhold or divert any portion of an employee's wages unless the employer is required or empowered to do so by state or federal law, or the employer has a signed authorization from the employee for a lawful deduction.",
+        relevantExcerpt:
+          "No employer may withhold or divert any portion of an employee's wages unless the employer has a signed authorization from the employee for a lawful deduction.",
+        notes: "Deductions for training repayment are scrutinized to ensure they represent genuine educational expenses rather than liquidated damages for departure.",
+        authorityType: "statute",
+      },
+      {
+        id: "source-restatement-emp-807",
+        title: "Restatement of Employment Law § 8.07 (Training Repayment)",
+        publisher: "American Law Institute",
+        sourceType: "recognized_legal_source",
+        citation: "Restatement (Third) of Employment Law § 8.07",
+        jurisdiction: "United States (General)",
+        url: "https://www.ali.org/publications/show/employment-law/",
+        sourceUrl: "https://www.ali.org/publications/show/employment-law/",
+        relevance: "Authoritative treatise standard on enforceable employee training loan and reimbursement conditions",
+        retrievedAt: "2026-02-15T00:00:00Z",
+        publicationDate: "2015-07-01",
+        verificationStatus: "verified",
+        excerpt:
+          "An agreement requiring an employee to repay training costs upon early departure is enforceable only to the extent the training confers transferable general skills and the reimbursement is reasonably related to actual expenditures amortized over a reasonable tenure.",
+        relevantExcerpt:
+          "Reimbursement is enforceable only to the extent the reimbursement is reasonably related to actual expenditures amortized over a reasonable tenure.",
+        notes: "Pro-rata monthly amortization is standard to withstand judicial scrutiny as a non-punitive training investment.",
+        authorityType: "restatement",
+      },
+    ],
+    legalEvidence: [
+      {
+        legalSourceId: "source-del-wage-act",
+        claimId: "claim-del-wage-1",
+        citation: "19 Del. C. § 1107",
+        relevantExcerpt: "No employer may withhold or divert any portion of an employee's wages unless the employer has a signed authorization from the employee for a lawful deduction.",
+        sourceType: "legal",
+      },
+    ],
+    verification: {
+      status: "verified",
+      verifiedAt: "2026-03-12T10:20:00Z",
+      issues: [],
+      confidenceLevel: "high",
+    },
+    uncertainties: [
+      "Whether the training provided involves third-party transferable credentials or internal company onboarding.",
+      "Whether the employer would seek wage deductions or initiate separate breach of contract litigation.",
+    ],
+    nextSteps: [
+      {
+        id: "act-emp-1",
+        title: "Request Pro-Rata Scaling & Clarify Training Scope",
+        description:
+          "Propose amending Section 6 so that the $18,500 reimbursement reduces by 1/12th ($1,541.66) for each month of completed service, and applies solely to external accredited certifications.",
+        priority: "high",
+        partyResponsible: "Employee (Alex Morgan)",
+        isReversible: true,
+        recommendedTimeline: "Before signing offer",
+        practicalAdvice:
+          "Frame this as an industry-standard pro-rata vesting schedule: 'I am excited to commit long-term, and standard market practice is for training repayment to amortize monthly over the first year.'",
+      },
+    ],
     legalSource: {
       id: "source-del-wage-act",
       title: "Delaware Wage Payment and Collection Act (19 Del. C. § 1107)",
+      publisher: "Delaware General Assembly",
+      sourceType: "official_legislation",
       citation: "19 Del. C. § 1107 (Withholding and Deductions)",
       jurisdiction: "Delaware",
-      authorityType: "statute",
+      url: "https://delcode.delaware.gov/title19/c011/index.html",
+      sourceUrl: "https://delcode.delaware.gov/title19/c011/index.html",
+      relevance: "Governs mandatory deductions and wage withholding for employee training repayment agreements",
+      retrievedAt: "2026-03-01T00:00:00Z",
+      publicationDate: "2024-01-01",
+      verificationStatus: "verified",
       excerpt:
         "No employer may withhold or divert any portion of an employee's wages unless the employer is required or empowered to do so by state or federal law, or the employer has a signed authorization from the employee for a lawful deduction.",
-      sourceUrl: "https://delcode.delaware.gov/title19/c011/index.html",
-      verificationStatus: "verified",
+      relevantExcerpt:
+        "No employer may withhold or divert any portion of an employee's wages unless the employer has a signed authorization from the employee for a lawful deduction.",
       notes: "Deductions for training repayment are scrutinized to ensure they represent genuine educational expenses rather than liquidated damages for departure.",
+      authorityType: "statute",
     },
     confidence: {
       level: "high",
@@ -416,19 +530,100 @@ export const SAMPLE_EVIDENCE_CHAINS: EvidenceChain[] = [
       clauseId: "clause-sec-8",
       section: "Section 8",
       pageNumber: 2,
+      quotedText:
+        "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions... conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
+      sourceType: "document",
       exactQuote:
         "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions... conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
     },
+    legalClaims: [
+      {
+        id: "claim-ip-del-1",
+        findingId: "finding-emp-3",
+        claim: "Under Delaware common law, invention assignments are enforceable to protect employer trade secrets, but assignments encompassing off-duty personal creations are strictly construed against overreach.",
+        sourceIds: ["source-del-invention-assignment"],
+        supportLevel: "strong",
+        explanation: "Employers may capture inventions directly related to the business or resulting from company resources, but personal projects developed on personal time require clear statutory or contractual boundaries.",
+        uncertainties: [
+          "Whether Employee has existing open-source code repositories or side software projects.",
+        ],
+        jurisdiction: "Delaware",
+        verified: true,
+      },
+    ],
+    legalSources: [
+      {
+        id: "source-del-invention-assignment",
+        title: "Delaware Common Law Rules on Inventions Assignments",
+        publisher: "Delaware Supreme Court",
+        sourceType: "official_court",
+        citation: "Delaware Corporate & Employment Inventions Jurisprudence",
+        jurisdiction: "Delaware",
+        url: "https://courts.delaware.gov/",
+        sourceUrl: "https://courts.delaware.gov/",
+        relevance: "Governs ownership of inventions created outside regular working hours without employer resources",
+        retrievedAt: "2026-02-20T00:00:00Z",
+        publicationDate: "2021-05-15",
+        verificationStatus: "verified",
+        excerpt:
+          "Agreements assigning employee inventions to employers are valid to protect business-related IP, but provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
+        relevantExcerpt:
+          "Provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
+        notes: "Customary practice includes an explicit schedule of prior inventions and carve-out for personal off-duty works.",
+        authorityType: "case_law",
+      },
+    ],
+    legalEvidence: [
+      {
+        legalSourceId: "source-del-invention-assignment",
+        claimId: "claim-ip-del-1",
+        citation: "Delaware Inventions Jurisprudence",
+        relevantExcerpt: "Provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
+        sourceType: "legal",
+      },
+    ],
+    verification: {
+      status: "verified",
+      verifiedAt: "2026-03-12T10:20:00Z",
+      issues: [],
+      confidenceLevel: "high",
+    },
+    uncertainties: [
+      "Whether Employee has pre-existing personal software projects or repositories to exclude.",
+    ],
+    nextSteps: [
+      {
+        id: "act-emp-2",
+        title: "Attach Exhibit A (List of Prior Inventions) and Add Personal Equipment Carve-Out",
+        description:
+          "Insert standard carve-out: 'This assignment shall not apply to inventions developed entirely on Employee's own time without using Employer's equipment, supplies, or trade secret information, and which do not relate to Employer's actual business.'",
+        priority: "high",
+        partyResponsible: "Employee",
+        isReversible: true,
+        recommendedTimeline: "During pre-execution review",
+        practicalAdvice:
+          "Request the standard Prior Inventions Schedule to document all pre-existing GitHub repositories.",
+      },
+    ],
     legalSource: {
-      id: "source-del-invention-std",
-      title: "Delaware Common Law & Standard Invention Assignment Principles",
-      citation: "Delaware Corporate & Employment Jurisprudence",
+      id: "source-del-invention-assignment",
+      title: "Delaware Common Law Rules on Inventions Assignments",
+      publisher: "Delaware Supreme Court",
+      sourceType: "official_court",
+      citation: "Delaware Corporate & Employment Inventions Jurisprudence",
       jurisdiction: "Delaware",
-      authorityType: "standard_practice",
-      excerpt:
-        "Invention assignments are enforceable to protect employer trade secrets and work within the scope of employment, but overly broad assignments covering off-duty unrelated inventions are strictly construed against the employer.",
+      url: "https://courts.delaware.gov/",
+      sourceUrl: "https://courts.delaware.gov/",
+      relevance: "Governs ownership of inventions created outside regular working hours without employer resources",
+      retrievedAt: "2026-02-20T00:00:00Z",
+      publicationDate: "2021-05-15",
       verificationStatus: "verified",
-      notes: "Market standard practice includes an explicit carve-out for inventions created on employee's own time without company assets.",
+      excerpt:
+        "Agreements assigning employee inventions to employers are valid to protect business-related IP, but provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
+      relevantExcerpt:
+        "Provisions claiming inventions created on the employee's own time without company assets are strictly construed.",
+      notes: "Customary practice includes an explicit schedule of prior inventions and carve-out for personal off-duty works.",
+      authorityType: "case_law",
     },
     confidence: {
       level: "high",
@@ -463,24 +658,371 @@ export const SAMPLE_EVIDENCE_CHAINS: EvidenceChain[] = [
   },
   {
     id: "chain-emp-3",
+    finding: SAMPLE_FINDINGS[3],
+    documentEvidence: {
+      clauseId: "clause-sec-9",
+      section: "Section 9",
+      pageNumber: 2,
+      quotedText:
+        "For a period of twelve (12) months following termination of employment for any reason, Employee shall not directly or indirectly engage in, perform services for, consult with, or have any financial interest in any business entity providing cloud infrastructure software or distributed database services within a fifty (50) mile radius of Dover, Delaware.",
+      sourceType: "document",
+      exactQuote:
+        "For a period of twelve (12) months following termination of employment for any reason, Employee shall not directly or indirectly engage in, perform services for, consult with, or have any financial interest in any business entity providing cloud infrastructure software or distributed database services within a fifty (50) mile radius of Dover, Delaware.",
+    },
+    legalClaims: [
+      {
+        id: "claim-del-noncompete-1",
+        findingId: "finding-emp-4",
+        claim: "Delaware courts apply a strict reasonableness test balancing the employer's legitimate protectable interest against undue hardship on the employee.",
+        sourceIds: ["source-del-chancery-noncompete"],
+        supportLevel: "direct",
+        explanation: "Under Delaware Court of Chancery precedent (Kodiak Bldg. Partners), non-competes are scrutinized closely and broad geographic/activity bans that exceed the employer's actual customer relationships face potential refusal of blue-penciling.",
+        uncertainties: [
+          "Whether Delaware courts would blue-pencil (narrow) or refuse to enforce the geographic restriction in a remote work environment.",
+        ],
+        jurisdiction: "Delaware",
+        verified: true,
+      },
+    ],
+    legalSources: [
+      {
+        id: "source-del-chancery-noncompete",
+        title: "Delaware Court of Chancery Non-Compete Reasonableness Standards",
+        publisher: "Delaware Court of Chancery",
+        sourceType: "official_court",
+        citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507 (Del. Ch. 2022)",
+        jurisdiction: "Delaware",
+        url: "https://courts.delaware.gov/opinions/",
+        sourceUrl: "https://courts.delaware.gov/opinions/",
+        relevance: "Binding precedent regarding geographic and scope reasonableness in Delaware non-competition covenants",
+        retrievedAt: "2026-03-01T00:00:00Z",
+        publicationDate: "2022-10-06",
+        verificationStatus: "verified",
+        excerpt:
+          "To be enforceable under Delaware law, a restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
+        relevantExcerpt:
+          "A restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
+        notes: "Delaware courts increasingly decline to mechanically blue-pencil overbroad non-compete agreements.",
+        authorityType: "case_law",
+      },
+    ],
+    legalEvidence: [
+      {
+        legalSourceId: "source-del-chancery-noncompete",
+        claimId: "claim-del-noncompete-1",
+        citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507",
+        relevantExcerpt: "To be enforceable under Delaware law, a restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
+        sourceType: "legal",
+      },
+    ],
+    verification: {
+      status: "partially_verified",
+      verifiedAt: "2026-03-12T10:20:00Z",
+      issues: [
+        "Enforceability depends heavily on specific factual proof of protectable trade secrets and actual geographic market reach.",
+      ],
+      confidenceLevel: "moderate",
+    },
+    uncertainties: [
+      "Whether remote work performed from Dover for an out-of-state employer would violate the 50-mile radius clause.",
+      "Delaware courts evaluate non-competes under a reasonableness test balancing employer protectable interests with employee mobility.",
+    ],
+    nextSteps: [
+      {
+        id: "act-emp-4",
+        title: "Clarify Remote Work Permissibility & Narrow Non-Compete Scope",
+        description:
+          "Request limiting Section 9 to direct named competitors where employee would use proprietary trade secrets, excluding general distributed systems consulting.",
+        priority: "high",
+        partyResponsible: "Employee",
+        isReversible: true,
+        recommendedTimeline: "Before executing agreement",
+        practicalAdvice:
+          "Say: 'Because modern distributed engineering is inherently distributed and remote, let us tie the restriction directly to named competitors rather than a geographic radius.'",
+      },
+    ],
+    legalSource: {
+      id: "source-del-chancery-noncompete",
+      title: "Delaware Court of Chancery Non-Compete Reasonableness Standards",
+      publisher: "Delaware Court of Chancery",
+      sourceType: "official_court",
+      citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507 (Del. Ch. 2022)",
+      jurisdiction: "Delaware",
+      url: "https://courts.delaware.gov/opinions/",
+      sourceUrl: "https://courts.delaware.gov/opinions/",
+      relevance: "Binding precedent regarding geographic and scope reasonableness in Delaware non-competition covenants",
+      retrievedAt: "2026-03-01T00:00:00Z",
+      publicationDate: "2022-10-06",
+      verificationStatus: "verified",
+      excerpt:
+        "To be enforceable under Delaware law, a restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
+      relevantExcerpt:
+        "A restrictive covenant must be reasonable in scope and duration, advance a legitimate economic interest of the employer, and survive a balancing of the equities.",
+      notes: "Delaware courts increasingly decline to mechanically blue-pencil overbroad non-compete agreements.",
+      authorityType: "case_law",
+    },
+    confidence: {
+      level: "moderate",
+      rationale:
+        "Non-compete covenants are governed by well-established reasonableness standards, but enforceability is fact-dependent on employer protectable interest.",
+    },
+    uncertainty: {
+      id: "unc-emp-4",
+      findingId: "finding-emp-4",
+      factualDependencies: [
+        "Whether Employee has direct client contacts or proprietary architectural trade secrets.",
+        "Whether the company conducts genuine local business within 50 miles of Dover.",
+      ],
+      unverifiedAssumptions: [
+        "Assumes Employee may seek subsequent employment in cloud/database systems.",
+      ],
+      explanation:
+        "Delaware courts evaluate non-competes under a reasonableness test balancing employer protectable interests with employee mobility.",
+      isFactVsInterpretationClear: true,
+    },
+    practicalNextStep: {
+      id: "act-emp-4",
+      title: "Clarify Remote Work Permissibility & Narrow Non-Compete Scope",
+      description:
+        "Request limiting Section 9 to direct named competitors where employee would use proprietary trade secrets, excluding general distributed systems consulting.",
+      priority: "high",
+      partyResponsible: "Employee",
+      isReversible: true,
+      recommendedTimeline: "Before executing agreement",
+      practicalAdvice:
+        "Say: 'Because modern distributed engineering is inherently distributed and remote, let us tie the restriction directly to named competitors rather than a geographic radius.'",
+    },
+  },
+  {
+    id: "chain-emp-4",
+    finding: SAMPLE_FINDINGS[4],
+    documentEvidence: {
+      clauseId: "clause-sec-11",
+      section: "Section 11",
+      pageNumber: 3,
+      quotedText:
+        "Any dispute, controversy, or claim arising out of or relating to this Agreement... shall be settled by confidential binding arbitration administered by the American Arbitration Association... each party shall bear its own attorneys' fees and an equal share of arbitrator compensation and administrative expenses.",
+      sourceType: "document",
+      exactQuote:
+        "Any dispute, controversy, or claim arising out of or relating to this Agreement... shall be settled by confidential binding arbitration administered by the American Arbitration Association... each party shall bear its own attorneys' fees and an equal share of arbitrator compensation and administrative expenses.",
+    },
+    legalClaims: [
+      {
+        id: "claim-del-arbitration-1",
+        findingId: "finding-emp-5",
+        claim: "Under the AAA Employment Due Process Protocol, employer-mandated arbitration agreements cannot require the employee to bear arbitrator forum fees.",
+        sourceIds: ["source-aaa-employment-rules"],
+        supportLevel: "direct",
+        explanation: "When arbitration is mandated by an employer, AAA rules cap the employee's share of filing costs and place all arbitrator compensation and administrative hearing expenses on the employer.",
+        uncertainties: [
+          "Whether the arbitration clause's fee-splitting provision would be severed or enforced as written.",
+        ],
+        jurisdiction: "United States (Federal / Delaware)",
+        verified: true,
+      },
+    ],
+    legalSources: [
+      {
+        id: "source-aaa-employment-rules",
+        title: "AAA Employment Arbitration Rules & Due Process Protocol (Rule 48)",
+        publisher: "American Arbitration Association",
+        sourceType: "regulator",
+        citation: "AAA Employment Due Process Protocol & Rule 48",
+        jurisdiction: "United States (Federal / Delaware)",
+        url: "https://www.adr.org/employment",
+        sourceUrl: "https://www.adr.org/employment",
+        relevance: "Establishes fee-bearing limits for employees in employer-mandated arbitration proceedings",
+        retrievedAt: "2026-02-18T00:00:00Z",
+        publicationDate: "2023-11-01",
+        verificationStatus: "verified",
+        excerpt:
+          "Under the AAA Employment Due Process Protocol, in disputes arising out of employer-promulgated plans, the employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
+        relevantExcerpt:
+          "The employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
+        notes: "Clause provisions stating that each party pays half of all arbitration costs are often overridden by AAA rules.",
+        authorityType: "regulation",
+      },
+    ],
+    legalEvidence: [
+      {
+        legalSourceId: "source-aaa-employment-rules",
+        claimId: "claim-del-arbitration-1",
+        citation: "AAA Employment Due Process Protocol & Rule 48",
+        relevantExcerpt: "Under the AAA Employment Due Process Protocol, the employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
+        sourceType: "legal",
+      },
+    ],
+    verification: {
+      status: "verified",
+      verifiedAt: "2026-03-12T10:20:00Z",
+      issues: [],
+      confidenceLevel: "high",
+    },
+    uncertainties: [
+      "Whether the company would agree to incorporate standard AAA employment fee schedules explicitly in the contract.",
+    ],
+    nextSteps: [
+      {
+        id: "act-emp-5",
+        title: "Clarify Arbitration Fee Allocation Under AAA Rules",
+        description:
+          "Add clarifying sentence to Section 11: 'Arbitrator compensation and administrative forum fees shall be borne by Employer in accordance with AAA Employment Rules.'",
+        priority: "medium",
+        partyResponsible: "Employee",
+        isReversible: true,
+        recommendedTimeline: "During pre-signing review",
+        practicalAdvice:
+          "Highlight that AAA rules already mandate employer fee coverage, so aligning the text prevents future jurisdictional disputes.",
+      },
+    ],
+    legalSource: {
+      id: "source-aaa-employment-rules",
+      title: "AAA Employment Arbitration Rules & Due Process Protocol (Rule 48)",
+      publisher: "American Arbitration Association",
+      sourceType: "regulator",
+      citation: "AAA Employment Due Process Protocol & Rule 48",
+      jurisdiction: "United States (Federal / Delaware)",
+      url: "https://www.adr.org/employment",
+      sourceUrl: "https://www.adr.org/employment",
+      relevance: "Establishes fee-bearing limits for employees in employer-mandated arbitration proceedings",
+      retrievedAt: "2026-02-18T00:00:00Z",
+      publicationDate: "2023-11-01",
+      verificationStatus: "verified",
+      excerpt:
+        "Under the AAA Employment Due Process Protocol, in disputes arising out of employer-promulgated plans, the employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
+      relevantExcerpt:
+        "The employee's filing fee is capped, and all other administrative and arbitrator fees must be borne by the employer.",
+      notes: "Clause provisions stating that each party pays half of all arbitration costs are often overridden by AAA rules.",
+      authorityType: "regulation",
+    },
+    confidence: {
+      level: "high",
+      rationale:
+        "Clear administrative rules established by the named arbitration tribunal (AAA).",
+    },
+    uncertainty: {
+      id: "unc-emp-5",
+      findingId: "finding-emp-5",
+      factualDependencies: [
+        "Whether the agreement is treated as an employer-promulgated standard plan or an individually negotiated executive contract.",
+      ],
+      unverifiedAssumptions: [],
+      explanation:
+        "Whether employment arbitration rules require the employer to cover primary arbitrator forum fees.",
+      isFactVsInterpretationClear: true,
+    },
+    practicalNextStep: {
+      id: "act-emp-5",
+      title: "Clarify Arbitration Fee Allocation Under AAA Rules",
+      description:
+        "Add clarifying sentence to Section 11: 'Arbitrator compensation and administrative forum fees shall be borne by Employer in accordance with AAA Employment Rules.'",
+      priority: "medium",
+      partyResponsible: "Employee",
+      isReversible: true,
+      recommendedTimeline: "During pre-signing review",
+      practicalAdvice:
+        "Highlight that AAA rules already mandate employer fee coverage, so aligning the text prevents future jurisdictional disputes.",
+    },
+  },
+  {
+    id: "chain-emp-5",
     finding: SAMPLE_FINDINGS[1],
     documentEvidence: {
       clauseId: "clause-sec-5",
       section: "Section 5",
       pageNumber: 1,
+      quotedText:
+        "Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
+      sourceType: "document",
       exactQuote:
         "Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
     },
+    legalClaims: [
+      {
+        id: "claim-del-notice-1",
+        findingId: "finding-emp-2",
+        claim: "Under Delaware at-will employment principles, contractual notice provisions are enforceable agreement covenants, but reciprocity is customary to prevent unilateral lock-in.",
+        sourceIds: ["source-at-will-doctrine"],
+        supportLevel: "partial",
+        explanation: "Contractual notice clauses are permissible, but 60 days is significantly longer than the customary 14-day notice.",
+        uncertainties: [
+          "Whether the employer pays salary if they choose to waive the 60-day notice window upon notice receipt.",
+        ],
+        jurisdiction: "Delaware",
+        verified: true,
+      },
+    ],
+    legalSources: [
+      {
+        id: "source-at-will-doctrine",
+        title: "Delaware At-Will Employment Doctrine & Mutuality Principles",
+        publisher: "Delaware Courts",
+        sourceType: "recognized_legal_source",
+        citation: "Delaware At-Will Precedent",
+        jurisdiction: "Delaware",
+        url: "https://courts.delaware.gov/",
+        sourceUrl: "https://courts.delaware.gov/",
+        relevance: "At-will employment precedent regarding notice windows and mutuality",
+        retrievedAt: "2026-02-15T00:00:00Z",
+        publicationDate: "2020-01-01",
+        verificationStatus: "verified",
+        excerpt:
+          "Employment relationships are presumed at-will unless modified by agreement. While contractual notice periods can be agreed upon, mutuality of notice obligations is standard.",
+        relevantExcerpt:
+          "Employment relationships are presumed at-will unless modified by agreement. While contractual notice periods can be agreed upon, mutuality of notice obligations is standard.",
+        notes: "At-will employment typically features 2-week reciprocal notice periods.",
+        authorityType: "standard_practice",
+      },
+    ],
+    legalEvidence: [
+      {
+        legalSourceId: "source-at-will-doctrine",
+        claimId: "claim-del-notice-1",
+        citation: "Delaware At-Will Precedent",
+        relevantExcerpt: "Employment relationships are presumed at-will unless modified by agreement.",
+        sourceType: "legal",
+      },
+    ],
+    verification: {
+      status: "partially_verified",
+      verifiedAt: "2026-03-12T10:20:00Z",
+      issues: [
+        "Contractual notice periods are generally matter of contract negotiation rather than strict statutory prohibition.",
+      ],
+      confidenceLevel: "moderate",
+    },
+    uncertainties: [
+      "Whether the Employer is required to pay salary during the 60-day window if Employer elects to waive reporting.",
+    ],
+    nextSteps: [
+      {
+        id: "act-emp-3",
+        title: "Propose Mutual 30-Day Notice Period with Garden Leave Option",
+        description:
+          "Suggest amending Section 5 to thirty (30) days mutual notice for both parties, with employer option to provide pay in lieu of notice.",
+        priority: "medium",
+        partyResponsible: "Employee",
+        isReversible: true,
+        recommendedTimeline: "During offer negotiation",
+        practicalAdvice:
+          "Say: 'A 30-day mutual notice window provides ample transition time for complex architecture knowledge transfer while remaining standard for senior engineering roles.'",
+      },
+    ],
     legalSource: {
       id: "source-at-will-doctrine",
       title: "Delaware At-Will Employment Doctrine & Mutuality Principles",
+      publisher: "Delaware Courts",
+      sourceType: "recognized_legal_source",
       citation: "Delaware At-Will Precedent",
       jurisdiction: "Delaware",
-      authorityType: "standard_practice",
-      excerpt:
-        "Employment relationships are presumed at-will unless modified by agreement. While contractual notice periods can be agreed upon, mutuality of notice obligations is standard.",
+      url: "https://courts.delaware.gov/",
+      sourceUrl: "https://courts.delaware.gov/",
+      relevance: "At-will employment precedent regarding notice windows and mutuality",
+      retrievedAt: "2026-02-15T00:00:00Z",
+      publicationDate: "2020-01-01",
       verificationStatus: "context_only",
       notes: "At-will employment typically features 2-week reciprocal notice periods.",
+      authorityType: "standard_practice",
     },
     confidence: {
       level: "moderate",

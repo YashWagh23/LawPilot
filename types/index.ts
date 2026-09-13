@@ -12,13 +12,41 @@ export type SeverityLevel =
 
 export type ImportanceLevel = SeverityLevel;
 
-export type ConfidenceLevel = "high" | "moderate" | "low";
+export type ConfidenceLevel = "high" | "moderate" | "limited" | "insufficient" | "low";
 
 export type VerificationStatus =
   | "verified"
+  | "partially_verified"
   | "context_only"
   | "requires_human_counsel"
+  | "unsupported"
+  | "conflicting"
+  | "insufficient_context"
   | "unverified";
+
+export type SourceType =
+  | "official_legislation"
+  | "official_court"
+  | "government_agency"
+  | "regulator"
+  | "recognized_legal_source"
+  | "secondary_source"
+  | "general_web"
+  | "unverified";
+
+export type SupportLevel =
+  | "direct"
+  | "strong"
+  | "partial"
+  | "context_dependent"
+  | "unsupported";
+
+export type VerificationStatusLevel =
+  | "verified"
+  | "partially_verified"
+  | "unsupported"
+  | "conflicting"
+  | "insufficient_context";
 
 export type ClauseCategory =
   | "payment"
@@ -136,13 +164,56 @@ export interface Finding {
 export interface LegalSource {
   id: string;
   title: string;
-  citation: string;
+  publisher?: string;
+  sourceType: SourceType;
   jurisdiction: string;
-  authorityType: "statute" | "case_law" | "regulation" | "restatement" | "standard_practice";
-  excerpt: string;
-  sourceUrl?: string;
-  verificationStatus: VerificationStatus;
+  citation: string;
+  url?: string;
+  sourceUrl?: string; // backward compatibility
+  relevance: string;
+  retrievedAt: string;
+  publicationDate?: string;
+  verificationStatus: VerificationStatusLevel | VerificationStatus;
+  excerpt?: string;
+  relevantExcerpt?: string;
   notes?: string;
+  authorityType?: "statute" | "case_law" | "regulation" | "restatement" | "standard_practice"; // backward compatibility
+}
+
+export interface LegalClaim {
+  id: string;
+  findingId: string;
+  claim: string;
+  sourceIds: string[];
+  supportLevel: SupportLevel;
+  explanation: string;
+  uncertainties: string[];
+  jurisdiction: string;
+  verified: boolean;
+}
+
+export interface DocumentEvidence {
+  clauseId: string;
+  quotedText: string;
+  pageNumber: number | null;
+  section: string;
+  sourceType: "document";
+  exactQuote?: string; // backward compatibility
+}
+
+export interface LegalEvidence {
+  legalSourceId: string;
+  claimId: string;
+  citation: string;
+  relevantExcerpt: string;
+  sourceType: "legal";
+}
+
+export interface VerificationDetails {
+  status: VerificationStatusLevel;
+  verifiedAt: string;
+  issues: string[];
+  confidenceLevel: ConfidenceLevel;
 }
 
 export interface Uncertainty {
@@ -168,19 +239,40 @@ export interface ActionItem {
 export interface EvidenceChain {
   id: string;
   finding: Finding;
-  documentEvidence: {
-    clauseId: string;
-    section: string;
-    pageNumber?: number | null;
-    exactQuote: string;
-  };
-  legalSource?: LegalSource;
-  confidence: {
+  documentEvidence: DocumentEvidence;
+  legalClaims: LegalClaim[];
+  legalSources: LegalSource[];
+  legalEvidence?: LegalEvidence[];
+  verification: VerificationDetails;
+  uncertainties: string[];
+  nextSteps: ActionItem[];
+  // Backward compatibility / convenience aliases
+  confidence?: {
     level: ConfidenceLevel;
     rationale: string;
   };
-  uncertainty: Uncertainty;
-  practicalNextStep: ActionItem;
+  uncertainty?: Uncertainty;
+  practicalNextStep?: ActionItem;
+  legalSource?: LegalSource;
+}
+
+export interface ClauseQuestionInput {
+  documentId: string;
+  clauseId: string;
+  question: string;
+  jurisdiction?: string;
+}
+
+export interface ClauseQuestionAnswer {
+  question: string;
+  clauseId: string;
+  whatContractSays: string;
+  legalContext: string;
+  whatThisMeans: string;
+  whatWeCannotDetermine: string;
+  nextStep: string;
+  sources: LegalSource[];
+  confidence: ConfidenceLevel;
 }
 
 export interface LawyerBrief {
