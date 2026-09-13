@@ -145,7 +145,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             {report.metadata.title}
           </h1>
           <p className="mt-2 text-base sm:text-lg font-medium text-indigo-600 dark:text-indigo-400">
-            LawPilot found {presentationFindings.length} {presentationFindings.length === 1 ? "thing" : "things"} worth your attention.
+            {`LawPilot found ${presentationFindings.length} ${presentationFindings.length === 1 ? "thing" : "things"} worth your attention.`}
           </p>
         </div>
 
