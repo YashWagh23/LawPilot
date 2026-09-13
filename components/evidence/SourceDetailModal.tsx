@@ -25,6 +25,15 @@ export function SourceDetailModal({
   isOpen,
   onClose,
 }: SourceDetailModalProps) {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !source) return null;
 
   const priorityRank = SOURCE_TYPE_PRIORITY[source.sourceType] ?? 99;
@@ -37,6 +46,7 @@ export function SourceDetailModal({
         className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="source-detail-modal-title"
       >
         {/* Modal Header */}
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 flex items-start justify-between gap-4">
@@ -59,7 +69,7 @@ export function SourceDetailModal({
                   ID: {source.id}
                 </span>
               </div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-1 leading-snug">
+              <h2 id="source-detail-modal-title" className="text-lg font-bold text-slate-900 dark:text-white mt-1 leading-snug">
                 {source.title}
               </h2>
               {source.publisher && (

@@ -36,6 +36,15 @@ export function ClauseQAModal({
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<ClauseQuestionAnswer | null>(null);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const presetQuestions = [
@@ -76,6 +85,7 @@ export function ClauseQAModal({
         className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="clause-qa-modal-title"
       >
         {/* Header */}
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/90 flex items-start justify-between gap-4">
@@ -84,7 +94,7 @@ export function ClauseQAModal({
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+              <h2 id="clause-qa-modal-title" className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                 Ask a Question About This Provision
               </h2>
               <p className="text-xs text-slate-500">

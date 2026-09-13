@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { orchestrateDocumentAnalysis } from "@/lib/analysis/analysisOrchestrator";
+import { sanitizeFileName, MAX_FILE_SIZE_BYTES } from "@/lib/documents/fileValidator";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,10 +46,21 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Uploaded file exceeds maximum allowed size of ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const safeFileName = sanitizeFileName(file.name);
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      const report = await orchestrateDocumentAnalysis(buffer, file.name);
+      const report = await orchestrateDocumentAnalysis(buffer, safeFileName);
 
       return NextResponse.json({
         success: true,
@@ -69,7 +81,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: errorMsg,
+        error: errorMsg.slice(0, 300),
       },
       { status: 400 }
     );

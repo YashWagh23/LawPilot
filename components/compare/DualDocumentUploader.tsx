@@ -126,10 +126,19 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
             </div>
           ) : (
             <div
+              role="button"
+              tabIndex={0}
+              aria-label="Upload Previous Version (Base Draft)"
               onDragOver={(e) => e.preventDefault()}
               onDrop={handlePrevDrop}
               onClick={() => prevInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-lg p-6 text-center cursor-pointer transition-colors space-y-2 bg-slate-50/50 dark:bg-slate-950/40"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  prevInputRef.current?.click();
+                }
+              }}
+              className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500 rounded-lg p-6 text-center cursor-pointer transition-colors space-y-2 bg-slate-50/50 dark:bg-slate-950/40"
             >
               <Upload className="w-6 h-6 text-slate-400 mx-auto" />
               <div>
@@ -149,7 +158,8 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
           <button
             type="button"
             onClick={onSwapVersions}
-            className="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:border-blue-300 shadow-md transition-all cursor-pointer"
+            aria-label="Swap Previous and Current versions"
+            className="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:border-blue-300 shadow-md transition-all cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             title="Swap Previous and Current versions"
           >
             <ArrowRightLeft className="w-4 h-4" />
@@ -208,10 +218,19 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
             </div>
           ) : (
             <div
+              role="button"
+              tabIndex={0}
+              aria-label="Upload Current Version (Revised Redline)"
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleCurrDrop}
               onClick={() => currInputRef.current?.click()}
-              className="border-2 border-dashed border-blue-200 dark:border-blue-900 hover:border-blue-500 dark:hover:border-blue-400 rounded-lg p-6 text-center cursor-pointer transition-colors space-y-2 bg-blue-50/20 dark:bg-blue-950/20"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  currInputRef.current?.click();
+                }
+              }}
+              className="border-2 border-dashed border-blue-200 dark:border-blue-900 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 rounded-lg p-6 text-center cursor-pointer transition-colors space-y-2 bg-blue-50/20 dark:bg-blue-950/20"
             >
               <Upload className="w-6 h-6 text-blue-500 mx-auto" />
               <div>

@@ -132,20 +132,39 @@ export function validateDocumentFile(
     };
   }
 
-  // Match extension against detected signature
+  // Match extension against detected signature to prevent file extension spoofing
   const lowerName = sanitizedFileName.toLowerCase();
-  if (detectedType === "pdf" && !lowerName.endsWith(".pdf")) {
-    // Gracefully handle or append .pdf
-  } else if (detectedType === "docx" && !lowerName.endsWith(".docx")) {
-    // Gracefully handle or append .docx
-  } else if (
+  if (lowerName.endsWith(".pdf") && detectedType !== "pdf") {
+    return {
+      isValid: false,
+      errorCode: "UNSUPPORTED_TYPE",
+      errorMessage: "File has a .pdf extension but lacks valid PDF magic bytes (%PDF).",
+    };
+  }
+  if (lowerName.endsWith(".docx") && detectedType !== "docx") {
+    return {
+      isValid: false,
+      errorCode: "UNSUPPORTED_TYPE",
+      errorMessage: "File has a .docx extension but lacks valid DOCX magic bytes.",
+    };
+  }
+  if (
     detectedType === "txt" &&
-    (lowerName.endsWith(".exe") || lowerName.endsWith(".bin") || lowerName.endsWith(".png"))
+    (lowerName.endsWith(".exe") ||
+      lowerName.endsWith(".bin") ||
+      lowerName.endsWith(".png") ||
+      lowerName.endsWith(".jpg") ||
+      lowerName.endsWith(".jpeg") ||
+      lowerName.endsWith(".gif") ||
+      lowerName.endsWith(".zip") ||
+      lowerName.endsWith(".tar") ||
+      lowerName.endsWith(".sh") ||
+      lowerName.endsWith(".bat"))
   ) {
     return {
       isValid: false,
       errorCode: "UNSUPPORTED_TYPE",
-      errorMessage: "Executable and image files are not supported.",
+      errorMessage: "Executable, archive, and image files are not supported.",
     };
   }
 

@@ -234,7 +234,19 @@ export default function ColorBends({
       window.addEventListener("resize", handleResize);
     }
 
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let isVisible = typeof document !== "undefined" ? document.visibilityState !== "hidden" : true;
+    let isIntersecting = true;
+
     const loop = () => {
+      if (!isVisible || !isIntersecting) {
+        rafRef.current = null;
+        return;
+      }
+
       const dt = clock.getDelta();
       const elapsed = clock.elapsedTime;
       material.uniforms.uTime.value = elapsed;
@@ -251,12 +263,47 @@ export default function ColorBends({
       cur.lerp(tgt, amt);
       material.uniforms.uPointer.value.copy(cur);
       renderer.render(scene, camera);
-      rafRef.current = requestAnimationFrame(loop);
+
+      // Render single frame if user requested reduced motion
+      if (!reducedMotion) {
+        rafRef.current = requestAnimationFrame(loop);
+      } else {
+        rafRef.current = null;
+      }
     };
+
+    const resumeLoopIfNeeded = () => {
+      if (isVisible && isIntersecting && !reducedMotion && rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(loop);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      isVisible = document.visibilityState !== "hidden";
+      if (isVisible) {
+        resumeLoopIfNeeded();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    let intersectionObserver: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      intersectionObserver = new IntersectionObserver(([entry]) => {
+        isIntersecting = entry.isIntersecting;
+        if (isIntersecting) {
+          resumeLoopIfNeeded();
+        }
+      });
+      intersectionObserver.observe(container);
+    }
+
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (intersectionObserver) intersectionObserver.disconnect();
       if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
       else window.removeEventListener("resize", handleResize);
       geometry.dispose();

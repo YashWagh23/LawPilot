@@ -33,6 +33,15 @@ export function EvidenceChainDetailModal({
 }: EvidenceChainDetailModalProps) {
   const [inspectedSource, setInspectedSource] = useState<LegalSource | null>(null);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !chain) return null;
 
   const docEvidence = chain.documentEvidence;
@@ -52,6 +61,7 @@ export function EvidenceChainDetailModal({
           className="w-full max-w-3xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           role="dialog"
           aria-modal="true"
+          aria-labelledby="evidence-chain-modal-title"
         >
           {/* Header */}
           <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/90 flex items-start justify-between gap-4">
@@ -67,7 +77,7 @@ export function EvidenceChainDetailModal({
               </div>
               <div className="flex items-center gap-3">
                 <SeverityBadge severity={chain.finding.severity} />
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                <h2 id="evidence-chain-modal-title" className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                   {chain.finding.title}
                 </h2>
               </div>

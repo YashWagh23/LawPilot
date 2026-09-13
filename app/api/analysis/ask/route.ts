@@ -3,7 +3,11 @@ import type { AnalysisReport } from "@/types";
 import type { AskConversationMessage } from "@/types/ask";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import { getAnalysisReportById } from "@/lib/firebase/firestore";
+import { getCachedAnalysisReport } from "@/lib/analysis/analysisOrchestrator";
 import { askLawPilot } from "@/lib/ai/ask/askEngine";
+
+const MAX_QUESTION_LENGTH = 2000;
+const MAX_HISTORY_LENGTH = 25;
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,12 +31,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!documentId) {
+    if (question.length > MAX_QUESTION_LENGTH) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Question exceeds the maximum length of ${MAX_QUESTION_LENGTH} characters.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!documentId || typeof documentId !== "string" || !documentId.trim()) {
       return NextResponse.json(
         { success: false, error: "Document ID is required." },
         { status: 400 }
       );
     }
+
+    const safeHistory = Array.isArray(history)
+      ? history.slice(-MAX_HISTORY_LENGTH)
+      : [];
 
     // Resolve Report:
     // 1. Direct match for demo
@@ -45,17 +63,22 @@ export async function POST(request: NextRequest) {
       report = SAMPLE_ANALYSIS_REPORT;
     }
 
-    // 2. Try client-provided report (local-first storage recovery)
+    // 2. In-memory runtime cache lookup (local session)
+    if (!report) {
+      report = getCachedAnalysisReport(documentId);
+    }
+
+    // 3. Try client-provided report (local-first storage recovery)
     if (!report && clientReport && clientReport.id === documentId) {
       report = clientReport;
     }
 
-    // 3. Try server store
+    // 4. Try server store
     if (!report) {
       report = await getAnalysisReportById(documentId);
     }
 
-    // 4. Fallback if still not found
+    // 5. Fallback if still not found
     if (!report && clientReport) {
       report = clientReport;
     }
@@ -74,7 +97,7 @@ export async function POST(request: NextRequest) {
     const answer = await askLawPilot({
       report,
       question: question.trim(),
-      history,
+      history: safeHistory,
     });
 
     return NextResponse.json({
@@ -86,7 +109,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: `Ask LawPilot encountered an issue: ${message}`,
+        error: `Ask LawPilot encountered an issue: ${message.slice(0, 200)}`,
       },
       { status: 500 }
     );

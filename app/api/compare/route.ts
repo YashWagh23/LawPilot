@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FLAGSHIP_DEMO_COMPARISON } from "@/lib/demo/compareDemoData";
 import { compareDocumentBuffers } from "@/lib/comparison/documentComparator";
+import { sanitizeFileName, MAX_FILE_SIZE_BYTES } from "@/lib/documents/fileValidator";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,6 +34,16 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      if (previousFile.size > MAX_FILE_SIZE_BYTES || currentFile.size > MAX_FILE_SIZE_BYTES) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `One or more files exceed the maximum allowed size of ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB.`,
+          },
+          { status: 400 }
+        );
+      }
+
       if (previousFile.name === currentFile.name && previousFile.size === currentFile.size) {
         // Double check same file before parsing
         return NextResponse.json(
@@ -44,6 +55,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const safePrevName = sanitizeFileName(previousFile.name);
+      const safeCurrName = sanitizeFileName(currentFile.name);
+
       const prevArrayBuffer = await previousFile.arrayBuffer();
       const currArrayBuffer = await currentFile.arrayBuffer();
 
@@ -52,9 +66,9 @@ export async function POST(req: NextRequest) {
 
       const comparison = await compareDocumentBuffers({
         previousBuffer,
-        previousFileName: previousFile.name,
+        previousFileName: safePrevName,
         currentBuffer,
-        currentFileName: currentFile.name,
+        currentFileName: safeCurrName,
       });
 
       return NextResponse.json({
@@ -75,7 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: message,
+        error: message.slice(0, 300),
       },
       { status: 400 }
     );

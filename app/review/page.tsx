@@ -357,6 +357,7 @@ export default function ReviewPage() {
             ref={fileInputRef}
             type="file"
             id="file-upload"
+            aria-label="Upload legal document (PDF, DOCX, or TXT)"
             accept=".pdf,.docx,.txt"
             onChange={handleFileInputChange}
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"

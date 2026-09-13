@@ -36,14 +36,20 @@ export function identifyImportantClausesAndFindings(
     const text = clause.rawText.toLowerCase();
 
     // Finding 1: Early termination financial obligation / training reimbursement
-    if (
+    const isTrainingReimbursement =
       (clause.category === "payment" || clause.category === "termination") &&
-      (text.includes("reimburse") ||
-        text.includes("liquidated damages") ||
+      (clause.title.toLowerCase().includes("training") ||
+        (text.includes("training") && (text.includes("reimburse") || text.includes("repayment") || text.includes("documented cost"))));
+
+    const isExitPenaltyOrDamages =
+      (clause.category === "payment" || clause.category === "termination") &&
+      (text.includes("liquidated damages") ||
         text.includes("accelerated rent") ||
-        text.includes("training fee"))
-    ) {
-      const severity: SeverityLevel = text.includes("liquidated damages") || text.includes("accelerated")
+        text.includes("early departure penalty") ||
+        (text.includes("penalty") && text.includes("departure")));
+
+    if (isTrainingReimbursement || isExitPenaltyOrDamages) {
+      const severity: SeverityLevel = isExitPenaltyOrDamages
         ? "critical_attention"
         : "high_attention";
 
@@ -52,11 +58,13 @@ export function identifyImportantClausesAndFindings(
 
       findings.push({
         id: `finding-${input.documentId}-${idx + 1}`,
-        title: `${clause.title} creates potential exit financial obligation`,
+        title: isTrainingReimbursement
+          ? `Training cost reimbursement obligation upon voluntary resignation`
+          : `${clause.title} creates potential exit financial obligation`,
         category: "Financial & Termination Obligations",
         severity,
-        description: `This clause stipulates a financial payment or reimbursement upon early departure prior to the designated commitment window.`,
-        whyItMatters: `This creates a direct monetary liability if separation occurs before the agreed period, which could substantially impact departure decisions.`,
+        description: `This clause stipulates a financial reimbursement or cost recovery obligation if the employee resigns within a designated timeframe following sponsored training.`,
+        whyItMatters: `This creates an exit financial obligation that could require repaying significant expenses upon departure. Under Indian law (e.g. Section 74 Indian Contract Act), such amounts are enforceable only to the extent of actual, reasonable expenditure incurred.`,
         clauseId: clause.id,
         uncertainties: [
           "Actual enforceability depends on whether the amount represents actual costs incurred versus an agreed estimate.",
@@ -70,7 +78,8 @@ export function identifyImportantClausesAndFindings(
     if (
       clause.category === "restriction" ||
       text.includes("non-compete") ||
-      text.includes("non-solicitation")
+      text.includes("non-solicitation") ||
+      clause.title.toLowerCase().includes("post-employment restriction")
     ) {
       highCount++;
       findings.push({
@@ -79,7 +88,7 @@ export function identifyImportantClausesAndFindings(
         category: "Restrictive Covenants",
         severity: "high_attention",
         description: `The agreement restricts competitive business activities or client solicitation following termination of the relationship.`,
-        whyItMatters: `Post-employment restrictions may limit future employment or business opportunities within the specified geographical area and timeframe.`,
+        whyItMatters: `Post-employment restrictions may limit future employment or business opportunities within the specified geographical area and timeframe. Under Section 27 of the Indian Contract Act, post-employment non-compete agreements are void as restraints of trade.`,
         clauseId: clause.id,
         uncertainties: [
           "State and regional enforceability of non-compete covenants is subject to statutory geographic and duration constraints.",
@@ -94,7 +103,9 @@ export function identifyImportantClausesAndFindings(
       clause.category === "intellectual_property" &&
       (text.includes("all inventions") ||
         text.includes("conceived during") ||
-        text.includes("sole and exclusive property"))
+        text.includes("sole and exclusive property") ||
+        text.includes("assignment to cover") ||
+        text.includes("course of employment"))
     ) {
       highCount++;
       findings.push({

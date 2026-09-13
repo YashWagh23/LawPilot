@@ -43,8 +43,16 @@ export interface PipelineProgressUpdate {
   error?: string;
 }
 
-// In-memory runtime cache of analyzed reports (frictionless local-first retrieval)
-const reportCache = new Map<string, AnalysisReport>();
+// In-memory runtime cache of analyzed reports (frictionless local-first retrieval across modules)
+declare global {
+  var __lawpilot_report_cache__: Map<string, AnalysisReport> | undefined;
+}
+
+const reportCache: Map<string, AnalysisReport> =
+  globalThis.__lawpilot_report_cache__ || new Map<string, AnalysisReport>();
+if (!globalThis.__lawpilot_report_cache__) {
+  globalThis.__lawpilot_report_cache__ = reportCache;
+}
 
 export function getCachedAnalysisReport(id: string): AnalysisReport | null {
   return reportCache.get(id) || null;

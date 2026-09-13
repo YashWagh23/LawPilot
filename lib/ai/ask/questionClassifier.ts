@@ -31,6 +31,7 @@ export function classifyQuestion(rawQuestion: string): QuestionClassificationRes
     /\b(sports|cricket score|football|fifa|world cup)\b/,
     /\b(movie|cinema|actor|celebrity)\b/,
     /\b(who is the president|capital of|how tall is)\b/,
+    /\b(hack|hotwire|ddos|exploit|malware|virus|code a script|python script|write code)\b/,
   ];
 
   const hasLegalKeywords = /\b(contract|agreement|clause|section|legal|notice|salary|employer|employee|non-compete|bond|law|hr|lawyer|risk|obligation|party|ip|intellectual property)\b/.test(
