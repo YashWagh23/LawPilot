@@ -1,4 +1,10 @@
-import type { AnalysisReport } from "@/types";
+import type {
+  ActionItem,
+  ActionPlan,
+  AnalysisReport,
+  DetailedLawyerBrief,
+  EvidenceChain,
+} from "@/types";
 import { validateDocumentFile } from "@/lib/documents/fileValidator";
 import { extractDocumentContent } from "@/lib/documents/textExtractor";
 import { normalizeDocumentContent } from "@/lib/documents/documentNormalizer";
@@ -6,26 +12,38 @@ import { segmentDocumentIntoClauses } from "@/lib/documents/clauseSegmenter";
 import { extractDocumentFacts } from "@/lib/ai/agents/extractionAgent";
 import { identifyImportantClausesAndFindings } from "@/lib/ai/agents/riskAnalysisAgent";
 import { mapFindingsToEvidence } from "./evidenceMapper";
+import {
+  detectJurisdiction,
+  isIndianJurisdiction,
+} from "@/lib/jurisdiction/jurisdictionDetector";
+import {
+  DEMO_VERIFIED_INDIAN_LEGAL_SOURCES,
+  DEMO_VERIFIED_LEGAL_SOURCES,
+} from "@/lib/ai/agents/legalResearchAgent";
+import { verifyAndAssembleEvidence } from "@/lib/ai/agents/verificationAgent";
+import { generateActionPlan } from "@/lib/ai/agents/actionPlanningAgent";
+import { generateDetailedLawyerBrief } from "@/lib/ai/agents/lawyerBriefAgent";
 import { GLOBAL_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
 
 export interface PipelineProgressUpdate {
   stage:
     | "VALIDATE"
-    | "EXTRACT_CONTENT"
-    | "NORMALIZE_CONTENT"
-    | "SEGMENT_CLAUSES"
-    | "EXTRACT_FACTS"
-    | "IDENTIFY_FINDINGS"
-    | "MAP_EVIDENCE"
+    | "READ_DOCUMENT"
+    | "EXTRACT_CLAUSES"
+    | "IDENTIFY_TERMS"
+    | "CHECK_LEGAL_CONTEXT"
+    | "BUILD_EVIDENCE_CHAINS"
+    | "PREPARE_ACTION_PLAN"
     | "COMPLETE"
     | "FAILED";
   label: string;
-  progressPercent: number;
+  stepIndex: number;
+  totalSteps: number;
   timestamp: string;
   error?: string;
 }
 
-// In-memory runtime cache of analyzed reports
+// In-memory runtime cache of analyzed reports (frictionless local-first retrieval)
 const reportCache = new Map<string, AnalysisReport>();
 
 export function getCachedAnalysisReport(id: string): AnalysisReport | null {
@@ -38,7 +56,8 @@ export function saveCachedAnalysisReport(report: AnalysisReport): void {
 
 /**
  * Main Document Intelligence Analysis Orchestrator
- * Runs the end-to-end processing pipeline from binary upload to structured AnalysisReport.
+ * Executes the complete 6-stage end-to-end processing pipeline from raw file buffer
+ * to fully-hydrated AnalysisReport with Jurisdiction, Evidence Chains, Action Plan, and Lawyer Brief.
  */
 export async function orchestrateDocumentAnalysis(
   fileBuffer: Buffer,
@@ -47,11 +66,12 @@ export async function orchestrateDocumentAnalysis(
 ): Promise<AnalysisReport> {
   const documentId = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-  // Stage 1: Validate File
+  // Stage 0: Security & Format Validation
   onProgress?.({
     stage: "VALIDATE",
-    label: "Validating document format and security signatures...",
-    progressPercent: 10,
+    label: "Validating file integrity, MIME signatures, and size limits...",
+    stepIndex: 0,
+    totalSteps: 6,
     timestamp: new Date().toISOString(),
   });
 
@@ -60,18 +80,20 @@ export async function orchestrateDocumentAnalysis(
     onProgress?.({
       stage: "FAILED",
       label: validation.errorMessage,
-      progressPercent: 10,
+      stepIndex: 0,
+      totalSteps: 6,
       timestamp: new Date().toISOString(),
       error: validation.errorMessage,
     });
     throw new Error(validation.errorMessage);
   }
 
-  // Stage 2: Extract Content
+  // Stage 1: Reading document
   onProgress?.({
-    stage: "EXTRACT_CONTENT",
-    label: "Reading text and isolating document pages...",
-    progressPercent: 25,
+    stage: "READ_DOCUMENT",
+    label: "Reading document text and establishing untrusted memory boundary...",
+    stepIndex: 1,
+    totalSteps: 6,
     timestamp: new Date().toISOString(),
   });
 
@@ -80,24 +102,30 @@ export async function orchestrateDocumentAnalysis(
     validation.fileType
   );
 
-  // Stage 3: Normalize Content
-  onProgress?.({
-    stage: "NORMALIZE_CONTENT",
-    label: "Normalizing text and establishing untrusted memory boundary...",
-    progressPercent: 40,
-    timestamp: new Date().toISOString(),
-  });
+  if (!extractedContent.rawText || extractedContent.rawText.trim().length < 20) {
+    const emptyErr = "We couldn't extract enough text to analyze this document.";
+    onProgress?.({
+      stage: "FAILED",
+      label: emptyErr,
+      stepIndex: 1,
+      totalSteps: 6,
+      timestamp: new Date().toISOString(),
+      error: emptyErr,
+    });
+    throw new Error(emptyErr);
+  }
 
   const normalized = normalizeDocumentContent(
     extractedContent.rawText,
     extractedContent.pages
   );
 
-  // Stage 4: Segment into Clauses/Sections
+  // Stage 2: Extracting clauses
   onProgress?.({
-    stage: "SEGMENT_CLAUSES",
-    label: "Identifying clause boundaries and section numbering...",
-    progressPercent: 55,
+    stage: "EXTRACT_CLAUSES",
+    label: "Extracting clauses, section boundaries, and hierarchy...",
+    stepIndex: 2,
+    totalSteps: 6,
     timestamp: new Date().toISOString(),
   });
 
@@ -107,11 +135,12 @@ export async function orchestrateDocumentAnalysis(
     documentId
   );
 
-  // Stage 5: Extract Structured Facts (Gemini Extraction Agent)
+  // Stage 3: Identifying important terms
   onProgress?.({
-    stage: "EXTRACT_FACTS",
-    label: "Extracting parties, key dates, financial metrics, and plain English summaries...",
-    progressPercent: 70,
+    stage: "IDENTIFY_TERMS",
+    label: "Identifying important terms, defined obligations, and one-sided clauses...",
+    stepIndex: 3,
+    totalSteps: 6,
     timestamp: new Date().toISOString(),
   });
 
@@ -124,30 +153,13 @@ export async function orchestrateDocumentAnalysis(
     fileSizeBytes: validation.sizeBytes,
   });
 
-  // If Gemini produced enriched clauses, merge them with segmenter
   if (factExtraction.clauses.length > 0) {
     segmentedClauses = factExtraction.clauses;
   }
 
-  // Stage 6: Identify Important Clauses & Create Initial Findings
-  onProgress?.({
-    stage: "IDENTIFY_FINDINGS",
-    label: "Identifying important provisions requiring attention...",
-    progressPercent: 85,
-    timestamp: new Date().toISOString(),
-  });
-
   const riskResult = identifyImportantClausesAndFindings({
     documentId,
     clauses: segmentedClauses,
-  });
-
-  // Stage 7: Evidence Mapping
-  onProgress?.({
-    stage: "MAP_EVIDENCE",
-    label: "Linking every finding to verbatim clause evidence...",
-    progressPercent: 95,
-    timestamp: new Date().toISOString(),
   });
 
   const { mappedFindings, evidenceLinks } = mapFindingsToEvidence(
@@ -156,10 +168,151 @@ export async function orchestrateDocumentAnalysis(
     documentId
   );
 
-  // Build the complete AnalysisReport
+  // Stage 4: Checking legal context (Jurisdiction & Statutory Grounding)
+  onProgress?.({
+    stage: "CHECK_LEGAL_CONTEXT",
+    label: "Detecting jurisdiction context and retrieving verified statutory authorities...",
+    stepIndex: 4,
+    totalSteps: 6,
+    timestamp: new Date().toISOString(),
+  });
+
+  const detectedJurisdiction = detectJurisdiction({
+    text: normalized.normalizedFullText,
+    clauses: segmentedClauses,
+    metadata: factExtraction.metadata,
+  });
+
+  // Select verified statutory repository calibrated to detected jurisdiction
+  const legalSourcesMap = isIndianJurisdiction(detectedJurisdiction)
+    ? DEMO_VERIFIED_INDIAN_LEGAL_SOURCES
+    : DEMO_VERIFIED_LEGAL_SOURCES;
+  const legalSources = Object.values(legalSourcesMap).flat();
+
+  // Stage 5: Building evidence chains
+  onProgress?.({
+    stage: "BUILD_EVIDENCE_CHAINS",
+    label: "Building verified evidence chains connecting clauses to legal context...",
+    stepIndex: 5,
+    totalSteps: 6,
+    timestamp: new Date().toISOString(),
+  });
+
+  let evidenceChains: EvidenceChain[] = [];
+  try {
+    const verificationResult = await verifyAndAssembleEvidence({
+      findings: mappedFindings,
+      clauses: segmentedClauses,
+      sources: legalSources,
+      jurisdiction: `${detectedJurisdiction.country}${
+        detectedJurisdiction.stateOrUT ? " · " + detectedJurisdiction.stateOrUT : ""
+      }`,
+      governingLaw: detectedJurisdiction.governingLaw,
+    });
+    evidenceChains = verificationResult.evidenceChains;
+  } catch (_e) {
+    // Non-fatal: fallback to empty chains if assembly encountered issues
+    evidenceChains = [];
+  }
+
+  // Stage 6: Preparing action plan & lawyer brief
+  onProgress?.({
+    stage: "PREPARE_ACTION_PLAN",
+    label: "Preparing actionable preparation checklist and lawyer-ready brief...",
+    stepIndex: 6,
+    totalSteps: 6,
+    timestamp: new Date().toISOString(),
+  });
+
+  let actionPlan: ActionPlan | undefined = undefined;
+  try {
+    actionPlan = await generateActionPlan({
+      documentId,
+      documentTitle: factExtraction.metadata?.title || validation.sanitizedFileName,
+      documentSummary: factExtraction.metadata?.title
+        ? `Legal agreement analyzed by LawPilot: ${factExtraction.metadata.title}`
+        : "Legal agreement analyzed by LawPilot.",
+      parties: factExtraction.parties.map((p) => `${p.name} (${p.role})`),
+      jurisdiction: detectedJurisdiction.country,
+      findings: mappedFindings,
+      evidenceChains,
+      keyDates: factExtraction.dates,
+    });
+  } catch (_e) {
+    actionPlan = undefined;
+  }
+
+  if (actionPlan) {
+    actionPlan.items = [
+      ...actionPlan.urgentItems,
+      ...actionPlan.beforeSigning,
+      ...actionPlan.questionsToAsk,
+      ...actionPlan.documentsToCollect,
+      ...actionPlan.factsToConfirm,
+      ...actionPlan.followUpItems,
+    ];
+  }
+
+  let detailedLawyerBrief: DetailedLawyerBrief | undefined = undefined;
+  try {
+    detailedLawyerBrief = await generateDetailedLawyerBrief({
+      documentId,
+      documentTitle: factExtraction.metadata?.title || validation.sanitizedFileName,
+      documentType: factExtraction.metadata?.documentType || "Agreement",
+      date: factExtraction.metadata?.effectiveDate || undefined,
+      parties: factExtraction.parties.map((p) => `${p.name} (${p.role})`),
+      jurisdiction: `${detectedJurisdiction.country}${
+        detectedJurisdiction.stateOrUT ? " · " + detectedJurisdiction.stateOrUT : ""
+      }`,
+      documentSummary: factExtraction.metadata?.title
+        ? `Legal agreement analyzed by LawPilot: ${factExtraction.metadata.title}`
+        : "Legal agreement analyzed by LawPilot.",
+      findings: mappedFindings,
+      clauses: segmentedClauses,
+      evidenceChains,
+      keyDates: factExtraction.dates,
+      actionPlan,
+    });
+  } catch (_e) {
+    detailedLawyerBrief = undefined;
+  }
+
+  // Backward-compatible action items
+  const backwardCompatibleActionItems: ActionItem[] = actionPlan?.items && actionPlan.items.length > 0
+    ? actionPlan.items.map((item, idx) => ({
+        id: item.id || `act-${idx + 1}`,
+        title: item.title,
+        description: item.explanation,
+        priority:
+          item.priority === "urgent"
+            ? "high"
+            : item.priority === "important"
+            ? "high"
+            : "medium",
+        partyResponsible: "Document Reviewer",
+        isReversible: item.isReversible,
+        recommendedTimeline: item.actionType === "monitor_deadline" ? "Milestone" : "Before signing",
+        practicalAdvice: item.practicalAdvice || "Review clause with legal counsel.",
+      }))
+    : mappedFindings.map((f, idx) => ({
+        id: `act-${idx + 1}`,
+        title: `Clarify ${f.title}`,
+        description: f.description,
+        priority:
+          f.severity === "critical_attention" || f.severity === "high_attention"
+            ? "high"
+            : "medium",
+        partyResponsible: "Document Reviewer",
+        isReversible: true,
+        recommendedTimeline: "Before signing",
+        practicalAdvice: `Review ${f.evidence.section} with legal counsel or request written clarification from counterparty.`,
+      }));
+
+  // Build the complete, fully-hydrated AnalysisReport
   const report: AnalysisReport = {
     id: documentId,
     documentId,
+    jurisdiction: detectedJurisdiction,
     metadata: {
       ...factExtraction.metadata,
       pageCount: extractedContent.totalPageCount,
@@ -167,6 +320,7 @@ export async function orchestrateDocumentAnalysis(
       fileName: validation.sanitizedFileName,
       fileSizeBytes: validation.sizeBytes,
       isUntrustedContent: true,
+      governingLaw: detectedJurisdiction.governingLaw,
     },
     createdAt: new Date().toISOString(),
     status: "completed",
@@ -195,17 +349,10 @@ export async function orchestrateDocumentAnalysis(
     evidenceLinks,
     financialTerms: factExtraction.financialTerms,
     keyDates: factExtraction.dates,
-    evidenceChains: [],
-    actionItems: mappedFindings.map((f, idx) => ({
-      id: `act-${idx + 1}`,
-      title: `Clarify ${f.title}`,
-      description: f.description,
-      priority: f.severity === "critical_attention" || f.severity === "high_attention" ? "high" : "medium",
-      partyResponsible: "Document Reviewer",
-      isReversible: true,
-      recommendedTimeline: "Before signing",
-      practicalAdvice: `Review ${f.evidence.section} with legal counsel or request written clarification from counterparty.`,
-    })),
+    evidenceChains,
+    actionPlan,
+    actionItems: backwardCompatibleActionItems,
+    detailedLawyerBrief,
     lawyerBrief: {
       id: `brief-${documentId}`,
       generatedAt: new Date().toISOString(),
@@ -218,18 +365,21 @@ export async function orchestrateDocumentAnalysis(
         recommendedQuestion: `What is the counterparty's standard position on modifying ${f.evidence.section}?`,
       })),
       missingInformation: factExtraction.uncertainties,
-      recommendedNegotiationPoints: mappedFindings.map((f) => `Request clarification on ${f.evidence.section}`),
+      recommendedNegotiationPoints: mappedFindings.map(
+        (f) => `Request clarification on ${f.evidence.section}`
+      ),
     },
     safetyDisclaimer: GLOBAL_LEGAL_DISCLAIMER,
   };
 
-  // Cache in memory for instant retrieval
+  // Cache in memory for instant frictionless retrieval
   saveCachedAnalysisReport(report);
 
   onProgress?.({
     stage: "COMPLETE",
     label: "Analysis complete.",
-    progressPercent: 100,
+    stepIndex: 6,
+    totalSteps: 6,
     timestamp: new Date().toISOString(),
   });
 

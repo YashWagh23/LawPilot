@@ -302,12 +302,65 @@ export async function verifyAndAssembleEvidence(
     };
 
     // Filter sources associated with this finding
-    const relatedSources = input.sources.filter(
+    const catLower = finding.category.toLowerCase();
+    const titleLower = finding.title.toLowerCase();
+    const clauseTextLower = clause.rawText.toLowerCase();
+
+    let relatedSources = input.sources.filter(
       (s) =>
-        s.relevance.toLowerCase().includes(finding.category.toLowerCase()) ||
-        s.title.toLowerCase().includes(finding.category.toLowerCase()) ||
+        s.relevance.toLowerCase().includes(catLower) ||
+        s.title.toLowerCase().includes(catLower) ||
+        (catLower.includes("financial") &&
+          (s.relevance.toLowerCase().includes("liquidated damages") ||
+            s.relevance.toLowerCase().includes("repayment") ||
+            s.title.includes("74") ||
+            s.title.toLowerCase().includes("wage"))) ||
+        (catLower.includes("restrictive") &&
+          (s.relevance.toLowerCase().includes("non-compete") ||
+            s.relevance.toLowerCase().includes("restraint") ||
+            s.title.includes("27"))) ||
+        (catLower.includes("intellectual") &&
+          (s.relevance.toLowerCase().includes("copyright") ||
+            s.relevance.toLowerCase().includes("invention") ||
+            s.title.includes("17"))) ||
+        (catLower.includes("arbitrat") && s.relevance.toLowerCase().includes("arbitrat")) ||
+        (catLower.includes("notice") && s.relevance.toLowerCase().includes("notice")) ||
         s.notes?.includes(finding.id)
     );
+
+    if (relatedSources.length === 0) {
+      relatedSources = input.sources.filter((s) => {
+        const sTitle = s.title.toLowerCase();
+        const sRel = s.relevance.toLowerCase();
+        if (
+          clauseTextLower.includes("non-compete") ||
+          clauseTextLower.includes("competing business") ||
+          titleLower.includes("non-compete")
+        ) {
+          return sTitle.includes("27") || sRel.includes("non-compete") || sRel.includes("restraint");
+        }
+        if (
+          clauseTextLower.includes("bond") ||
+          clauseTextLower.includes("repay") ||
+          clauseTextLower.includes("liquidated damages") ||
+          titleLower.includes("financial")
+        ) {
+          return sTitle.includes("74") || sRel.includes("liquidated damages") || sRel.includes("repayment") || sTitle.includes("wage");
+        }
+        if (
+          clauseTextLower.includes("invention") ||
+          clauseTextLower.includes("intellectual property") ||
+          titleLower.includes("property")
+        ) {
+          return sTitle.includes("copyright") || sRel.includes("work made for hire");
+        }
+        return false;
+      });
+    }
+
+    if (relatedSources.length === 0 && input.sources.length > 0) {
+      relatedSources = [input.sources[0]];
+    }
 
     // Filter claims associated with this finding
     const candidateClaims = (input.claims || []).filter(

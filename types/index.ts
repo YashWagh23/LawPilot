@@ -356,6 +356,7 @@ export interface ActionPlan {
   factsToConfirm: ActionPlanItem[];
   professionalReviewTriggers: ActionPlanTrigger[];
   followUpItems: ActionPlanItem[];
+  items?: ActionPlanItem[];
   generatedAt: string;
 }
 
@@ -441,6 +442,7 @@ export interface AnalysisReport {
   documentId: string;
   metadata: DocumentMetadata;
   createdAt: string;
+  jurisdiction?: JurisdictionContext;
   jurisdictionContext?: JurisdictionContext;
   status: "completed" | "processing" | "needs_clarification" | "error";
   summary: {

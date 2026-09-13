@@ -79,20 +79,23 @@ export function Navbar() {
           </nav>
         </div>
 
-        {/* Right CTA / Quick Action */}
+        {/* Right CTA / Direct Actions */}
         <div className="hidden sm:flex items-center gap-3">
           <Link
             href="/analysis/demo-employment-agreement"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white px-2.5 py-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Sample Employment Agreement</span>
+            <span>Try Demo</span>
+            <span className="text-[10px] font-medium px-1 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              🇮🇳
+            </span>
           </Link>
           <Link
             href="/review"
-            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-medium text-white shadow-xs hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors"
+            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors"
           >
-            Start Review
+            Analyze Document
           </Link>
         </div>
 
@@ -135,14 +138,24 @@ export function Navbar() {
               </Link>
             );
           })}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
             <Link
               href="/analysis/demo-employment-agreement"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400"
+              className="flex items-center justify-between px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 rounded-lg"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Sample Employment Agreement</span>
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Try Demo (India Flagship)</span>
+              </span>
+              <span className="text-xs">🇮🇳</span>
+            </Link>
+            <Link
+              href="/review"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-center px-3 py-2 text-sm font-semibold text-white bg-slate-900 dark:bg-white dark:text-slate-950 rounded-lg"
+            >
+              Analyze Document
             </Link>
           </div>
         </div>

@@ -1,8 +1,7 @@
 import React from "react";
-import { notFound } from "next/navigation";
 import { getAnalysisReportById } from "@/lib/firebase/firestore";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
-import { AnalysisClientView } from "@/components/analysis/AnalysisClientView";
+import { AnalysisLoader } from "@/components/analysis/AnalysisLoader";
 
 export default async function AnalysisPage({
   params,
@@ -10,13 +9,15 @@ export default async function AnalysisPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Immediate synchronous match for demo documents
   const report =
-    (await getAnalysisReportById(id)) ||
-    (id === "demo-commercial-lease" ? SAMPLE_ANALYSIS_REPORT : null);
+    id === "demo-employment-agreement" ||
+    id === "demo-commercial-lease" ||
+    id === SAMPLE_ANALYSIS_REPORT.id
+      ? SAMPLE_ANALYSIS_REPORT
+      : await getAnalysisReportById(id);
 
-  if (!report) {
-    notFound();
-  }
-
-  return <AnalysisClientView report={report} />;
+  return <AnalysisLoader id={id} initialReport={report} />;
 }
+

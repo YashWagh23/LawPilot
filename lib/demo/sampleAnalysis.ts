@@ -1558,6 +1558,7 @@ export const SAMPLE_ANALYSIS_REPORT: AnalysisReport = {
   documentId: "demo-employment-agreement",
   metadata: SAMPLE_DOCUMENT_METADATA,
   createdAt: "2026-06-01T10:20:00Z",
+  jurisdiction: SAMPLE_DOCUMENT_METADATA.jurisdictionContext,
   jurisdictionContext: SAMPLE_DOCUMENT_METADATA.jurisdictionContext,
   status: "completed",
   summary: {

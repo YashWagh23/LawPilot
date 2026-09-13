@@ -21,58 +21,119 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative pt-16 pb-20 md:pt-24 md:pb-28 border-b border-slate-200 dark:border-slate-800/80 bg-gradient-to-b from-white via-slate-50/50 to-slate-50 dark:from-slate-950 dark:via-slate-900/40 dark:to-slate-950">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Architecture Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800 mb-6">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>AI-Native Legal Assistance Platform · GenAI Architecture</span>
+          {/* Core Principle Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs mb-6 tracking-wide">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-400 dark:text-blue-600" />
+            <span>LawPilot · Understand. Verify. Act.</span>
           </div>
 
           {/* Exact Required Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-slate-950 dark:text-white leading-[1.12]">
             Legal documents weren&apos;t written for humans.
             <br />
-            <span className="text-slate-700 dark:text-slate-300">LawPilot was.</span>
+            <span className="text-blue-600 dark:text-blue-400">LawPilot was.</span>
           </h1>
 
-          {/* Exact Required Subheadline */}
+          {/* Core Problem & Purpose Statement */}
           <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Understand the fine print. Verify the legal context. Know what to do next.
+            Deconstruct complex legal agreements into plain English, verify statutory context against official legal authorities, and determine practical, reversible next steps.
           </p>
 
-          {/* Dual CTAs */}
+          {/* Primary Frictionless Actions */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <Link
-              href="/review"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-slate-900 text-white font-medium text-sm hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 shadow-xs transition-colors"
+              href="/analysis/demo-employment-agreement"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             >
-              <FileText className="w-4 h-4" />
-              <span>Review a document</span>
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Try the Demo</span>
+              <span className="text-[11px] font-normal px-1.5 py-0.5 rounded bg-blue-700/80 text-blue-100">
+                🇮🇳 India Flagship
+              </span>
             </Link>
 
             <Link
-              href="/situation"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-white text-slate-800 font-medium text-sm border border-slate-300 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors"
+              href="/review"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             >
-              <Compass className="w-4 h-4" />
-              <span>Describe a situation</span>
+              <FileText className="w-4 h-4" />
+              <span>Analyze a Document</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
             </Link>
           </div>
 
-          <div className="mt-5 flex items-center justify-center gap-4 text-xs text-slate-700 dark:text-slate-300">
+          {/* Instant Operational Guarantees */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              Zero Citation Fabrication
+              Zero User Login Required
             </span>
             <span>·</span>
             <span className="flex items-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              Untrusted Content Isolation
+              Untrusted Document Isolation
             </span>
             <span>·</span>
             <span className="flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              Transparent Evidence Chains
+              Grounded Statutory Context
             </span>
+            <span>·</span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Zero Citation Fabrication
+            </span>
+          </div>
+
+          {/* 4 Instant Value Pillars (Communicates in Seconds) */}
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+            <div className="p-4 rounded-xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                01 · WHAT IT DOES
+              </span>
+              <h3 className="mt-1.5 text-sm font-bold text-slate-900 dark:text-white">
+                Translates Legalese
+              </h3>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Deconstructs agreements into plain English clauses, defined terms, and explicit financial obligations.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                02 · REAL DOCUMENTS
+              </span>
+              <h3 className="mt-1.5 text-sm font-bold text-slate-900 dark:text-white">
+                PDF · DOCX · TXT Intake
+              </h3>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Processes real agreements up to 15MB with server-side magic-byte validation and prompt-injection safety.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                03 · LEGAL RESEARCH
+              </span>
+              <h3 className="mt-1.5 text-sm font-bold text-slate-900 dark:text-white">
+                Verified Legal Context
+              </h3>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Detects jurisdiction and grounds risks in official statutory repositories (India Code, Supreme Court) with zero hallucinations.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                04 · PRACTICAL ACTION
+              </span>
+              <h3 className="mt-1.5 text-sm font-bold text-slate-900 dark:text-white">
+                Reversible Next Steps
+              </h3>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Generates actionable negotiation checklists, copyable scripts, and a structured Lawyer-Ready Brief.
+              </p>
+            </div>
           </div>
         </div>
       </section>
