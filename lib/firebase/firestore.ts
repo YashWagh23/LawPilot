@@ -16,7 +16,7 @@ export async function getAnalysisReportById(
     return cached;
   }
 
-  // Demo data fallback when running in development/competition preview
+  // Demo data fallback when running in preview or offline mode
   if (
     id === "demo-employment-agreement" ||
     id === "demo-commercial-lease" ||

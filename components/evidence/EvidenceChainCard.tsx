@@ -225,7 +225,7 @@ export function EvidenceChainCard({
                     {chain.uncertainty?.explanation ||
                       (chain.uncertainties && chain.uncertainties.length > 0
                         ? chain.uncertainties[0]
-                        : "Application is fact-dependent and requires professional legal evaluation.")}
+                        : "Application is fact-dependent and requires professional legal counsel.")}
                   </p>
                   {((chain.uncertainty?.factualDependencies && chain.uncertainty.factualDependencies.length > 0) ||
                     (chain.uncertainties && chain.uncertainties.length > 1)) && (

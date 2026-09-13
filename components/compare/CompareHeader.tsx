@@ -33,7 +33,7 @@ export const CompareHeader: React.FC<CompareHeaderProps> = ({
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold transition-all shadow-xs hover:shadow cursor-pointer disabled:opacity-50"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          <span>{isLoadingDemo ? "Loading Redline..." : "Load India Redline Demo"}</span>
+          <span>{isLoadingDemo ? "Loading Redline..." : "Load Sample Redline"}</span>
           <span className="text-[10px] px-1 rounded bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800">
             🇮🇳
           </span>

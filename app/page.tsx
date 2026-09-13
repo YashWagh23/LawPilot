@@ -97,7 +97,7 @@ export default function HomePage() {
               <Sparkles className="w-4 h-4 text-amber-300" />
               <span>Try the Demo</span>
               <span className="text-[11px] font-normal px-1.5 py-0.5 rounded-md bg-indigo-700/80 text-indigo-100">
-                🇮🇳 India Flagship
+                🇮🇳 Sample Agreement
               </span>
             </Link>
 

@@ -1,10 +1,10 @@
 /**
  * LawPilot Authentication & User Context
  * 
- * ARCHITECTURE PRINCIPLE (PHASE 6):
- * LawPilot is a competition-grade prototype engineered for frictionless access.
+ * ARCHITECTURE PRINCIPLE:
+ * LawPilot is engineered for frictionless, private access.
  * It requires NO user accounts, NO logins, NO registration screens, and NO auth guards.
- * Judges, evaluators, and users can immediately test all capabilities without gating.
+ * Users can immediately explore all capabilities without gating.
  */
 
 export interface LawPilotUser {
@@ -16,8 +16,8 @@ export interface LawPilotUser {
 
 export const DEMO_USER: LawPilotUser = {
   uid: "lawpilot-public-user",
-  email: "evaluator@lawpilot.local",
-  displayName: "Legal Evaluator (Open Access)",
+  email: "guest@lawpilot.local",
+  displayName: "Guest User (Open Access)",
   isAnonymous: true,
 };
 

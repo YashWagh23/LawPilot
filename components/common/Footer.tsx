@@ -37,7 +37,7 @@ export function Footer() {
                 { href: "/review",     label: "Document Review" },
                 { href: "/compare",    label: "Compare Redlines" },
                 { href: "/situation",  label: "Situation Navigator" },
-                { href: "/analysis/demo-employment-agreement", label: "India Demo" },
+                { href: "/analysis/demo-employment-agreement", label: "Sample Agreement" },
               ].map((item) => (
                 <li key={item.href}>
                   <Link

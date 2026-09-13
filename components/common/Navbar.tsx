@@ -62,7 +62,7 @@ export function Navbar() {
           <nav className="hidden md:flex items-center gap-0.5">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname.startsWith(item.href);
+              const isActive = pathname ? pathname.startsWith(item.href) : false;
               return (
                 <Link
                   key={item.href}
@@ -119,7 +119,7 @@ export function Navbar() {
         <div className="md:hidden border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 space-y-1 lp-animate-slide-down">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname.startsWith(item.href);
+            const isActive = pathname ? pathname.startsWith(item.href) : false;
             return (
               <Link
                 key={item.href}
@@ -144,7 +144,7 @@ export function Navbar() {
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg"
             >
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Try Demo (India Flagship) 🇮🇳</span>
+              <span>Sample Agreement (India) 🇮🇳</span>
             </Link>
             <Link
               href="/review"

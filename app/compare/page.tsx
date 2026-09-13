@@ -82,7 +82,7 @@ export default function ComparePage() {
     } else if (FLAGSHIP_DEMO_COMPARISON.changes.length > 0) {
       setSelectedChange(FLAGSHIP_DEMO_COMPARISON.changes[0]);
     }
-    showToast("Loaded India Flagship Redline Demo: Candidate Baseline vs HR Redline.");
+    showToast("Loaded sample redline comparison: Candidate Baseline vs HR Redline.");
   };
 
   // Swap PREVIOUS <-> CURRENT versions

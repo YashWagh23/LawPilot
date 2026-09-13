@@ -220,7 +220,7 @@ export function FinalCtaScene() {
         {/* Subtle Pill Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 mb-6 backdrop-blur-sm shadow-xs">
           <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span>Competition-Ready Legal AI</span>
+          <span>AI for Legal Documents</span>
         </div>
 
         {/* Prominent Minimal Headline */}
@@ -243,7 +243,7 @@ export function FinalCtaScene() {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md hover:shadow-xl hover:shadow-indigo-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>Try Flagship Demo</span>
+            <span>Explore Interactive Demo</span>
             <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-indigo-700/90 text-indigo-100">
               🇮🇳 India
             </span>
@@ -281,7 +281,7 @@ export function FinalCtaScene() {
           <span className="text-slate-300 dark:text-slate-700">·</span>
           <span className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            Instant Evaluation
+            Instant Analysis
           </span>
         </div>
       </div>

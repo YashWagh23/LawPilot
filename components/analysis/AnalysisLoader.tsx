@@ -60,7 +60,7 @@ export function AnalysisLoader({ id, initialReport }: AnalysisLoaderProps) {
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900 font-medium text-xs hover:bg-blue-100 transition-colors"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>Open Flagship India Demo</span>
+          <span>Open Sample Analysis</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>

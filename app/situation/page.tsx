@@ -96,7 +96,7 @@ export default function SituationPage() {
             {isProcessing ? (
               <>
                 <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                <span>Evaluating Facts...</span>
+                <span>Analyzing Facts...</span>
               </>
             ) : (
               <>
