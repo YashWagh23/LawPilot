@@ -82,6 +82,11 @@ export interface KeyDate {
   date?: string | null;
   description?: string;
   noticePeriodDays?: number | null;
+  isDeadline?: boolean;
+  clauseReference?: {
+    section?: string;
+    pageNumber?: number | null;
+  };
 }
 
 export interface KeyFinancialTerm {
@@ -129,6 +134,7 @@ export interface Clause {
   pageNumber: number | null; // Explicitly null if location unavailable
   importance: ImportanceLevel;
   // Legacy aliases for backward compatibility
+  clauseText?: string;
   sectionNumber?: string;
   plainEnglishSummary?: string;
   highlightedRisk?: SeverityLevel;
@@ -153,7 +159,15 @@ export interface Finding {
   clauseId: string;
   evidence: EvidenceLink;
   uncertainties: string[];
-  // Legacy fields
+  // Extended & legacy fields for Action Plan and Brief linkages
+  plainEnglishSummary?: string;
+  actionableAdvice?: string;
+  clauseReference?: {
+    clauseId?: string;
+    section?: string;
+    pageNumber?: number | null;
+    exactQuote?: string;
+  };
   documentId?: string;
   summary?: string;
   detailedAnalysis?: string;
@@ -184,6 +198,7 @@ export interface LegalClaim {
   id: string;
   findingId: string;
   claim: string;
+  statement?: string; // backward compatibility
   sourceIds: string[];
   supportLevel: SupportLevel;
   explanation: string;
@@ -275,6 +290,118 @@ export interface ClauseQuestionAnswer {
   confidence: ConfidenceLevel;
 }
 
+export type ActionItemType =
+  | "clarify"
+  | "collect_document"
+  | "confirm_fact"
+  | "ask_party"
+  | "compare_version"
+  | "seek_professional_review"
+  | "monitor_deadline"
+  | "preserve_evidence"
+  | "general_preparation";
+
+export type ActionPriority = "urgent" | "important" | "recommended" | "optional";
+
+export interface ActionPlanItem {
+  id: string;
+  title: string;
+  explanation: string;
+  actionType: ActionItemType;
+  priority: ActionPriority;
+  findingId?: string;
+  findingTitle?: string;
+  clauseId?: string;
+  clauseSection?: string;
+  pageNumber?: number | null;
+  isReversible: boolean;
+  completed?: boolean;
+  completedAt?: string;
+  practicalAdvice?: string;
+}
+
+export interface ActionPlanTrigger {
+  id: string;
+  findingId: string;
+  clauseSection: string;
+  reason: string;
+  severity: SeverityLevel;
+}
+
+export interface ActionPlan {
+  id: string;
+  documentId: string;
+  summary: string;
+  urgentItems: ActionPlanItem[];
+  beforeSigning: ActionPlanItem[];
+  questionsToAsk: ActionPlanItem[];
+  documentsToCollect: ActionPlanItem[];
+  factsToConfirm: ActionPlanItem[];
+  professionalReviewTriggers: ActionPlanTrigger[];
+  followUpItems: ActionPlanItem[];
+  generatedAt: string;
+}
+
+export interface ActionItemProgress {
+  actionId: string;
+  completed: boolean;
+  completedAt?: string;
+}
+
+export interface LawyerBriefClause {
+  clauseId: string;
+  section: string;
+  pageNumber: number | null;
+  excerpt: string;
+  plainEnglish: string;
+  importance: SeverityLevel;
+}
+
+export interface LawyerBriefLegalContext {
+  issueTitle: string;
+  sourceTitle: string;
+  citation: string;
+  jurisdiction: string;
+  explanation: string;
+  verificationStatus: string;
+}
+
+export interface LawyerBriefQuestion {
+  findingId: string;
+  clauseReference: string;
+  question: string;
+  context: string;
+}
+
+export interface LawyerBriefDate {
+  label: string;
+  date?: string | null;
+  noticePeriodDays?: number | null;
+  description: string;
+  isDeadline: boolean;
+}
+
+export interface DetailedLawyerBrief {
+  id: string;
+  generatedAt: string;
+  matterSummary: string;
+  document: {
+    title: string;
+    documentType: string;
+    date: string;
+    parties: string[];
+    jurisdiction?: string;
+  };
+  userConcerns: string[];
+  relevantClauses: LawyerBriefClause[];
+  verifiedLegalContext: LawyerBriefLegalContext[];
+  whatRemainsUncertain: string[];
+  documentsAvailable: string[];
+  questionsForCounsel: LawyerBriefQuestion[];
+  importantDates: LawyerBriefDate[];
+  disclaimer: string;
+}
+
 export interface LawyerBrief {
   id: string;
   generatedAt: string;
@@ -313,7 +440,9 @@ export interface AnalysisReport {
   keyDates: KeyDate[];
   evidenceChains: EvidenceChain[];
   actionItems: ActionItem[];
+  actionPlan?: ActionPlan;
   lawyerBrief: LawyerBrief;
+  detailedLawyerBrief?: DetailedLawyerBrief;
   safetyDisclaimer: string;
 }
 

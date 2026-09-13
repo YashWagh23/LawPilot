@@ -1,7 +1,9 @@
 import { GLOBAL_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
 import type {
+  ActionPlan,
   AnalysisReport,
   Clause,
+  DetailedLawyerBrief,
   DocumentMetadata,
   EvidenceChain,
   EvidenceLink,
@@ -1109,6 +1111,429 @@ export const SAMPLE_LAWYER_BRIEF: LawyerBrief = {
   ],
 };
 
+export const SAMPLE_ACTION_PLAN: ActionPlan = {
+  id: "action-plan-employment-agreement-01",
+  documentId: "demo-employment-agreement",
+  summary:
+    "Preparation action plan for Alex Morgan: 3 urgent pre-signing items, 4 pointed questions for Aegis Cloud Dynamics, 3 vital evidence documents to collect, and professional review triggers before execution.",
+  urgentItems: [
+    {
+      id: "act-plan-urgent-1",
+      title: "Request Narrowing of Non-Compete Scope and Competitor Specificity",
+      explanation:
+        "The current covenant in Section 9 imposes a 12-month ban within a 50-mile radius that encompasses all cloud or software services, effectively locking out remote architectural work.",
+      actionType: "ask_party",
+      priority: "urgent",
+      findingId: "finding-emp-4",
+      findingTitle: "12-Month Post-Employment Non-Compete Within 50-Mile Radius",
+      clauseId: "clause-sec-9",
+      clauseSection: "Section 9",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice:
+        "Ask Aegis HR: 'Could we narrow Section 9 to a defined list of direct competitors and confirm that remote distributed systems work for non-competing firms is permitted?'",
+    },
+    {
+      id: "act-plan-urgent-2",
+      title: "Propose Pro-Rata Monthly Amortization for $18,500 Training Repayment",
+      explanation:
+        "Section 6 requires 100% repayment even if departing on day 364 of the 12-month period, without substantiation of third-party out-of-pocket costs.",
+      actionType: "clarify",
+      priority: "urgent",
+      findingId: "finding-emp-1",
+      findingTitle: "Early Departure Training Fee Reimbursement Penalty ($18,500)",
+      clauseId: "clause-sec-6",
+      clauseSection: "Section 6",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice:
+        "Propose: 'Repayment shall amortize pro-rata by 1/12th ($1,541.67) for each completed month of service, and apply only to accredited third-party tuition.'",
+    },
+    {
+      id: "act-plan-urgent-3",
+      title: "Execute and Attach Exhibit A Listing All Pre-Existing Inventions",
+      explanation:
+        "Section 8 contains an un-carved assignment of all inventions conceived during the employment term, including off-duty work on personal devices.",
+      actionType: "preserve_evidence",
+      priority: "urgent",
+      findingId: "finding-emp-3",
+      findingTitle: "Broad Intellectual Property Assignment Covering Personal Works",
+      clauseId: "clause-sec-8",
+      clauseSection: "Section 8",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice:
+        "List all pre-existing GitHub repositories, side projects, and personal tools on Exhibit A before signing to prevent employer ownership claims.",
+    },
+  ],
+  beforeSigning: [
+    {
+      id: "act-plan-before-1",
+      title: "Negotiate Mutual 30-Day Notice of Resignation",
+      explanation:
+        "Section 5 imposes a unilateral 60-day notice obligation on the employee while remaining silent on employer notice or garden leave pay.",
+      actionType: "clarify",
+      priority: "important",
+      findingId: "finding-emp-2",
+      findingTitle: "60-Day Unilateral Resignation Notice Requirement",
+      clauseId: "clause-sec-5",
+      clauseSection: "Section 5",
+      pageNumber: 1,
+      isReversible: true,
+      practicalAdvice:
+        "Propose standard mutual language: 'Either party may terminate employment with thirty (30) calendar days advance written notice.'",
+    },
+    {
+      id: "act-plan-before-2",
+      title: "Clarify Arbitration Fee Allocation Under AAA Rules",
+      explanation:
+        "Section 11 splits arbitrator and forum fees 50/50, which contradicts mandatory AAA Employment Due Process Protocol rules requiring employers to bear hearing costs.",
+      actionType: "clarify",
+      priority: "important",
+      findingId: "finding-emp-5",
+      findingTitle: "Mandatory Binding Arbitration with Fee-Splitting Provision",
+      clauseId: "clause-sec-11",
+      clauseSection: "Section 11",
+      pageNumber: 3,
+      isReversible: true,
+      practicalAdvice:
+        "Confirm with Aegis legal counsel that employer pays all AAA administrative and arbitrator fees in compliance with Rule 48.",
+    },
+  ],
+  questionsToAsk: [
+    {
+      id: "act-plan-q-1",
+      title: "Clarify Training Cost Amortization & Involuntary Termination",
+      explanation: "Ensure liability does not trigger if employment ends without cause or via employer restructuring.",
+      actionType: "ask_party",
+      priority: "urgent",
+      findingId: "finding-emp-1",
+      findingTitle: "Early Departure Training Fee Reimbursement Penalty ($18,500)",
+      clauseId: "clause-sec-6",
+      clauseSection: "Section 6",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice:
+        "Ask: 'Does the reimbursement obligation extinguish if employment is terminated by the Company without Cause?'",
+    },
+    {
+      id: "act-plan-q-2",
+      title: "Confirm Carve-Out for Personal Open-Source Contributions",
+      explanation: "Verify that off-duty contributions to public open-source libraries remain personal IP.",
+      actionType: "ask_party",
+      priority: "urgent",
+      findingId: "finding-emp-3",
+      findingTitle: "Broad Intellectual Property Assignment Covering Personal Works",
+      clauseId: "clause-sec-8",
+      clauseSection: "Section 8",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice:
+        "Ask: 'Can we add explicit language confirming that non-commercial open-source contributions created on personal time remain employee property?'",
+    },
+    {
+      id: "act-plan-q-3",
+      title: "Confirm Scope of 50-Mile Non-Compete for Distributed Roles",
+      explanation: "Understand whether remote positions headquartered out-of-state are treated as competing.",
+      actionType: "ask_party",
+      priority: "important",
+      findingId: "finding-emp-4",
+      findingTitle: "12-Month Post-Employment Non-Compete Within 50-Mile Radius",
+      clauseId: "clause-sec-9",
+      clauseSection: "Section 9",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice:
+        "Ask: 'Is the 50-mile radius measured from the Dover office, and does it restrict remote engineering for non-Delaware clients?'",
+    },
+  ],
+  documentsToCollect: [
+    {
+      id: "act-plan-doc-1",
+      title: "Archive Personal Codebase Repositories and Commit Hashes",
+      explanation: "Establish immutable timestamps proving creation dates of personal software before starting employment.",
+      actionType: "collect_document",
+      priority: "urgent",
+      findingId: "finding-emp-3",
+      isReversible: true,
+      practicalAdvice: "Export Git log commit histories and upload cryptographic hashes to personal cloud storage.",
+    },
+    {
+      id: "act-plan-doc-2",
+      title: "Request Itemized Invoices for Scheduled Training Certifications",
+      explanation: "Demand advance documentation of the accredited vendor and third-party fee for the $18,500 course.",
+      actionType: "collect_document",
+      priority: "important",
+      findingId: "finding-emp-1",
+      isReversible: true,
+      practicalAdvice: "Request official syllabus and payment receipt from Aegis before enrolling in the training.",
+    },
+    {
+      id: "act-plan-doc-3",
+      title: "Retain Signed Offer Letter & Formal Job Description",
+      explanation: "Compare promised duties against written assignment scope to avoid unexpected scope expansion.",
+      actionType: "collect_document",
+      priority: "recommended",
+      isReversible: true,
+      practicalAdvice: "Maintain offline copies of all recruiting emails and initial compensation proposals.",
+    },
+  ],
+  factsToConfirm: [
+    {
+      id: "act-plan-fact-1",
+      title: "Confirm Physical Territory of Aegis Enterprise Accounts",
+      explanation: "Verify exactly which corporate clients Aegis actively services to establish the realistic boundary of customer restrictions.",
+      actionType: "confirm_fact",
+      priority: "important",
+      findingId: "finding-emp-4",
+      isReversible: true,
+      practicalAdvice: "Request a general list of industry verticals Aegis operates in.",
+    },
+    {
+      id: "act-plan-fact-2",
+      title: "Confirm 90-Day Probationary Review Protocol",
+      explanation: "Clarify whether notice period during the initial 90 days differs from the 60-day standard.",
+      actionType: "confirm_fact",
+      priority: "recommended",
+      isReversible: true,
+      practicalAdvice: "Check if the employee handbook specifies a shorter notice during probation.",
+    },
+  ],
+  professionalReviewTriggers: [
+    {
+      id: "trigger-emp-train",
+      findingId: "finding-emp-1",
+      clauseSection: "Section 6",
+      reason: "Potential violation of Delaware Wage Payment Act (19 Del. C. § 1107) regarding un-amortized penalty deductions.",
+      severity: "high_attention",
+    },
+    {
+      id: "trigger-emp-noncompete",
+      findingId: "finding-emp-4",
+      clauseSection: "Section 9",
+      reason: "Delaware Court of Chancery precedent (Kodiak Bldg. Partners) indicates overbroad geographical definitions are non-enforceable without blue-penciling.",
+      severity: "high_attention",
+    },
+    {
+      id: "trigger-emp-ip",
+      findingId: "finding-emp-3",
+      clauseSection: "Section 8",
+      reason: "Assignment of personal off-duty creations risks loss of personal portfolio without statutory carve-out protection.",
+      severity: "high_attention",
+    },
+  ],
+  followUpItems: [
+    {
+      id: "act-plan-follow-1",
+      title: "Calendar Probationary Evaluation Milestone (Day 75)",
+      explanation: "Schedule performance checkpoint 15 days prior to the expiration of the 90-day probationary window.",
+      actionType: "monitor_deadline",
+      priority: "recommended",
+      pageNumber: 1,
+      isReversible: true,
+      practicalAdvice: "Set a calendar alert for July 15, 2026 to review deliverables with team lead.",
+    },
+    {
+      id: "act-plan-follow-2",
+      title: "Track 12-Month Training Reimbursement Expiration (April 30, 2027)",
+      explanation: "After 12 continuous months of service, the $18,500 reimbursement obligation legally lapses.",
+      actionType: "monitor_deadline",
+      priority: "important",
+      pageNumber: 2,
+      isReversible: true,
+      practicalAdvice: "Note May 1, 2027 as the date of full liability release.",
+    },
+  ],
+  generatedAt: "2026-03-12T10:25:00Z",
+};
+
+export const SAMPLE_DETAILED_LAWYER_BRIEF: DetailedLawyerBrief = {
+  id: "detailed-brief-employment-agreement-01",
+  generatedAt: "2026-03-12T10:30:00Z",
+  matterSummary:
+    "Review of Employment & Proprietary Inventions Agreement between Aegis Cloud Dynamics Inc. (Delaware Employer) and Alex Morgan (Employee candidate for Senior Distributed Systems Architect at $145,000/year). Initial analysis flags 3 severe asymmetric covenants: a non-amortized $18,500 training reimbursement clawback, broad personal IP assignment, and a 12-month post-employment non-compete. Client seeks counsel review on enforceability under Delaware law and assistance drafting key carve-outs prior to execution.",
+  document: {
+    title: "Employment & Proprietary Inventions Agreement",
+    documentType: "Executive Employment Agreement",
+    date: "2026-05-01",
+    parties: ["Aegis Cloud Dynamics Inc. (Employer)", "Alex Morgan (Employee)"],
+    jurisdiction: "State of Delaware",
+  },
+  userConcerns: [
+    "[HIGH] Early Departure Training Clawback ($18,500): Requires full lump-sum repayment if employee leaves within 12 months, without pro-rata monthly amortization.",
+    "[HIGH] Broad IP Assignment: Captures all inventions developed during term, including those conceived on personal time without company resources.",
+    "[HIGH] 12-Month Non-Compete: Restricts competitive software work within 50 miles, potentially preventing remote distributed engineering.",
+    "[REVIEW] 60-Day Resignation Notice: Long unilateral requirement with no reciprocal employer severance or garden leave.",
+    "[REVIEW] AAA Fee-Splitting: Splits forum and arbitrator compensation equally, in conflict with AAA Employment Due Process Protocol.",
+  ],
+  relevantClauses: [
+    {
+      clauseId: "clause-sec-6",
+      section: "Section 6",
+      pageNumber: 2,
+      excerpt:
+        "In the event Employee voluntarily resigns... within twelve (12) months following the Effective Date, Employee agrees to immediately reimburse Employer the liquidated sum of Eighteen Thousand Five Hundred Dollars ($18,500.00) representing specialized cloud systems training expenses.",
+      plainEnglish:
+        "Full $18,500 repayment required if departing within 1 year, even if leaving in month 11. No proof of actual third-party costs required.",
+      importance: "high_attention",
+    },
+    {
+      clauseId: "clause-sec-8",
+      section: "Section 8",
+      pageNumber: 2,
+      excerpt:
+        "Employee hereby assigns to Employer all right, title, and interest in and to any and all inventions... conceived, developed, or reduced to practice by Employee during the term of employment, whether or not during regular working hours, and whether or not using Company facilities or equipment.",
+      plainEnglish:
+        "Blanket assignment claiming ownership of software created on personal devices during personal time.",
+      importance: "high_attention",
+    },
+    {
+      clauseId: "clause-sec-9",
+      section: "Section 9",
+      pageNumber: 2,
+      excerpt:
+        "For a period of twelve (12) months following the termination of Employee's employment... Employee shall not... directly or indirectly engage in, perform services for, or invest in any business competitive with Employer within a fifty (50) mile radius.",
+      plainEnglish:
+        "12-month non-compete preventing employment with any competitive firm within 50 miles of Dover, DE.",
+      importance: "high_attention",
+    },
+    {
+      clauseId: "clause-sec-5",
+      section: "Section 5",
+      pageNumber: 1,
+      excerpt:
+        "Employee agrees to provide not less than sixty (60) calendar days advance written notice to Employer prior to any voluntary resignation or termination of employment.",
+      plainEnglish:
+        "Mandatory 60-day notice prior to quitting; employer has no reciprocal notice obligation.",
+      importance: "review",
+    },
+    {
+      clauseId: "clause-sec-11",
+      section: "Section 11",
+      pageNumber: 3,
+      excerpt:
+        "Any dispute, controversy, or claim... shall be settled by confidential binding arbitration administered by the American Arbitration Association... each party shall bear its own attorneys' fees and an equal share of arbitrator compensation and administrative expenses.",
+      plainEnglish:
+        "Mandatory arbitration where employee must pay 50% of arbitrator fees, creating high financial barriers to dispute resolution.",
+      importance: "review",
+    },
+  ],
+  verifiedLegalContext: [
+    {
+      issueTitle: "Training Expense Reimbursement & Wage Deductions",
+      sourceTitle: "Delaware Wage Payment and Collection Act",
+      citation: "19 Del. C. § 1107 (Withholding and Deductions)",
+      jurisdiction: "Delaware",
+      explanation:
+        "Prohibits employers from withholding wages or enforcing liquidated penalty deductions without documented authorization and substantiated employer costs.",
+      verificationStatus: "verified",
+    },
+    {
+      issueTitle: "Post-Employment Non-Compete Enforceability",
+      sourceTitle: "Delaware Court of Chancery Precedent",
+      citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507",
+      jurisdiction: "Delaware",
+      explanation:
+        "Delaware courts refuse to enforce or blue-pencil overbroad non-compete covenants that extend beyond the employer's protectable goodwill or legitimate business interests.",
+      verificationStatus: "verified",
+    },
+    {
+      issueTitle: "Employee Invention Assignment Boundaries",
+      sourceTitle: "Delaware Common Law Inventions Jurisprudence",
+      citation: "Delaware Corporate & Employment Inventions Jurisprudence",
+      jurisdiction: "Delaware",
+      explanation:
+        "Agreements assigning employee inventions are strictly construed when claiming inventions created on the employee's own time without company assets.",
+      verificationStatus: "verified",
+    },
+    {
+      issueTitle: "Mandatory Arbitration Fee Bearing",
+      sourceTitle: "AAA Employment Due Process Protocol (Rule 48)",
+      citation: "AAA Employment Due Process Protocol & Rule 48",
+      jurisdiction: "United States (Federal / Delaware)",
+      explanation:
+        "In employer-promulgated arbitration plans, the employee's filing fee is capped, and all arbitrator fees and administrative expenses must be paid by the employer.",
+      verificationStatus: "verified",
+    },
+  ],
+  whatRemainsUncertain: [
+    "Whether Aegis will provide itemized proof of third-party tuition for the $18,500 training program.",
+    "Whether the 50-mile non-compete applies to remote software engineering for out-of-state tech clients.",
+    "Whether Aegis will accept a formal Exhibit A schedule excluding pre-existing GitHub repositories.",
+    "Whether the 60-day notice requirement includes garden leave pay if Aegis relieves employee of duties early.",
+  ],
+  documentsAvailable: [
+    "Employment & Proprietary Inventions Agreement (complete 3-page draft)",
+    "Formal Written Offer Letter ($145,000 base salary confirmation)",
+    "Inventory of Pre-Existing Personal Software Projects and GitHub commit histories",
+    "Email correspondence regarding remote work flexibility and role expectations",
+  ],
+  questionsForCounsel: [
+    {
+      findingId: "finding-emp-1",
+      clauseReference: "Section 6",
+      question:
+        "Does the $18,500 lump-sum training clawback constitute an unenforceable liquidated penalty under Delaware law, and what specific amortization language should we propose?",
+      context:
+        "The clause does not reduce repayment over the 12-month period and does not condition payment on voluntary departure versus termination without cause.",
+    },
+    {
+      findingId: "finding-emp-4",
+      clauseReference: "Section 9",
+      question:
+        "Under Delaware Court of Chancery standards, can we challenge the 50-mile restriction as overbroad for a remote distributed systems role, or negotiate an exclusive list of named direct competitors?",
+      context:
+        "Client intends to work on distributed cloud infrastructure and needs certainty that subsequent remote employment will not trigger litigation.",
+    },
+    {
+      findingId: "finding-emp-3",
+      clauseReference: "Section 8",
+      question:
+        "How should Exhibit A and Section 8 be modified to cleanly incorporate standard statutory carve-outs (e.g. Cal. Lab. Code § 2870 model) under Delaware law?",
+      context:
+        "Client maintains active open-source software libraries and personal developer tools created prior to joining Aegis.",
+    },
+    {
+      findingId: "finding-emp-11",
+      clauseReference: "Section 11",
+      question:
+        "Will the 50/50 fee-splitting provision be severed automatically under AAA Employment Rule 48, or should we demand an explicit contract amendment confirming employer covers all hearing fees?",
+      context:
+        "Arbitration costs could easily exceed $20,000, creating an impermissible barrier to enforcing wage or employment claims.",
+    },
+  ],
+  importantDates: [
+    {
+      label: "Effective Commencement Date",
+      date: "2026-05-01",
+      description: "Start of employment term and accrual of all contractual covenants.",
+      isDeadline: true,
+    },
+    {
+      label: "Probationary Performance Review Window",
+      date: "2026-07-30",
+      noticePeriodDays: 90,
+      description: "Initial 90-day evaluation milestone.",
+      isDeadline: false,
+    },
+    {
+      label: "Resignation Notice Window",
+      date: null,
+      noticePeriodDays: 60,
+      description: "Mandatory advance written notice required prior to voluntary departure.",
+      isDeadline: true,
+    },
+    {
+      label: "Training Reimbursement Expiration",
+      date: "2027-04-30",
+      description: "12-month tenure threshold after which the $18,500 training reimbursement expires entirely.",
+      isDeadline: true,
+    },
+  ],
+  disclaimer:
+    "NOTICE & DISCLAIMER: This briefing document was generated by LawPilot to assist the user in preparing for an efficient consultation with a licensed legal practitioner. It organizes facts, clause excerpts, and verified statutory context identified in the submitted document. This document does NOT constitute formal legal advice, representation, or an attorney-client relationship. All legal interpretations and strategic decisions must be confirmed by a licensed attorney.",
+};
+
 export const SAMPLE_ANALYSIS_REPORT: AnalysisReport = {
   id: "demo-employment-agreement",
   documentId: "demo-employment-agreement",
@@ -1142,7 +1567,9 @@ export const SAMPLE_ANALYSIS_REPORT: AnalysisReport = {
     recommendedTimeline: "Before signing",
     practicalAdvice: `Review ${f.evidence.section} and request standard written adjustment.`,
   })),
+  actionPlan: SAMPLE_ACTION_PLAN,
   lawyerBrief: SAMPLE_LAWYER_BRIEF,
+  detailedLawyerBrief: SAMPLE_DETAILED_LAWYER_BRIEF,
   safetyDisclaimer: GLOBAL_LEGAL_DISCLAIMER,
 };
 

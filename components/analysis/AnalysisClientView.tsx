@@ -14,7 +14,6 @@ import {
   CheckSquare,
   Briefcase,
   Printer,
-  Download,
   ShieldCheck,
   DollarSign,
   Clock,
@@ -24,6 +23,10 @@ import {
   MessageSquare,
   Sparkles,
 } from "lucide-react";
+import { ActionPlanView } from "@/components/action-plan/ActionPlan";
+import { LawyerBriefView } from "@/components/lawyer-brief/LawyerBrief";
+import { generateDeterministicActionPlan } from "@/lib/ai/agents/actionPlanningAgent";
+import { generateDeterministicLawyerBrief } from "@/lib/ai/agents/lawyerBriefAgent";
 import { formatDate } from "@/lib/utils";
 
 interface AnalysisClientViewProps {
@@ -291,12 +294,15 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             onClick={() => setActiveTab("actions")}
             className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === "actions"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
                 : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
             <CheckSquare className="w-4 h-4" />
-            <span>Action Checklist ({report.actionItems.length})</span>
+            <span>Action Plan</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30">
+              ACT
+            </span>
           </button>
 
           <button
@@ -304,12 +310,12 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             onClick={() => setActiveTab("brief")}
             className={`flex items-center gap-2 pb-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === "brief"
-                ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400"
                 : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
             <Briefcase className="w-4 h-4" />
-            <span>Lawyer-Ready Brief</span>
+            <span>Lawyer Brief</span>
           </button>
         </nav>
       </div>
@@ -581,147 +587,60 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         </div>
       )}
 
-      {/* TAB: Action Checklist */}
+      {/* TAB: Action Plan (ACT Layer) */}
       {activeTab === "actions" && (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              Practical Action Items & Negotiation Phrasing
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              LawPilot Rule 10: Prefer practical, reversible steps over irreversible legal decisions.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {report.actionItems.map((action, idx) => (
-              <div
-                key={action.id}
-                className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-3"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold">
-                      {idx + 1}
-                    </span>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                      {action.title}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {action.isReversible && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                        Reversible Action
-                      </span>
-                    )}
-                    <span className="text-xs text-slate-500">
-                      Timeline: {action.recommendedTimeline}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {action.description}
-                </p>
-
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                  <strong className="text-slate-900 dark:text-slate-100">
-                    Negotiation Phrasing Tip:{" "}
-                  </strong>
-                  <span className="text-slate-600 dark:text-slate-300">
-                    {action.practicalAdvice}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ActionPlanView
+          actionPlan={
+            report.actionPlan ||
+            generateDeterministicActionPlan({
+              documentId: report.documentId,
+              documentTitle: report.metadata.title,
+              documentSummary: report.summary.keyTakeaway,
+              parties: report.metadata.parties.map((p) => p.name),
+              jurisdiction: report.metadata.jurisdiction || report.metadata.governingLaw || undefined,
+              findings: report.findings,
+              evidenceChains: report.evidenceChains,
+              keyDates: report.keyDates,
+            })
+          }
+          onSelectFinding={(findingId) => {
+            const matched = report.findings.find((f) => f.id === findingId);
+            if (matched) {
+              handleJumpToClause(matched.clauseId || matched.evidence?.clauseId, matched.evidence);
+            }
+          }}
+          onNavigateToBrief={() => setActiveTab("brief")}
+        />
       )}
 
-      {/* TAB: Lawyer-Ready Brief */}
+      {/* TAB: Lawyer Brief */}
       {activeTab === "brief" && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Counsel Consultation Export
-              </span>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                Lawyer-Ready Brief
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Organized facts and high-impact questions to present to an attorney, cutting billable intake hours.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Export Brief</span>
-            </button>
-          </div>
-
-          <div className="space-y-5 text-xs sm:text-sm">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100 mb-2">
-                Executive Matter Summary
-              </h3>
-              <p className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 leading-relaxed">
-                {report.lawyerBrief.documentSummary}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100 mb-2">
-                Key Inquiries to Pose to Retained Counsel
-              </h3>
-              <div className="space-y-2">
-                {report.lawyerBrief.keyIssuesToReview.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {item.issue}
-                      </span>
-                      <span className="font-mono text-xs text-slate-500">
-                        {item.clauseReference}
-                      </span>
-                    </div>
-                    <p className="text-xs text-blue-700 dark:text-blue-400 font-medium">
-                      &ldquo;{item.recommendedQuestion}&rdquo;
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100 mb-2">
-                Information Missing from Agreement Draft
-              </h3>
-              <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-300">
-                {report.lawyerBrief.missingInformation.map((info, idx) => (
-                  <li key={idx}>{info}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100 mb-2">
-                Recommended Counter-Negotiation Points
-              </h3>
-              <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-300">
-                {report.lawyerBrief.recommendedNegotiationPoints.map((point, idx) => (
-                  <li key={idx}>{point}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
+        <LawyerBriefView
+          brief={
+            report.detailedLawyerBrief ||
+            generateDeterministicLawyerBrief({
+              documentId: report.documentId,
+              documentTitle: report.metadata.title,
+              documentType: report.metadata.documentType,
+              date: report.metadata.effectiveDate || undefined,
+              parties: report.metadata.parties.map((p) => p.name),
+              jurisdiction: report.metadata.jurisdiction || report.metadata.governingLaw || undefined,
+              documentSummary: report.summary.keyTakeaway,
+              findings: report.findings,
+              clauses: report.clauses,
+              evidenceChains: report.evidenceChains,
+              keyDates: report.keyDates,
+              actionPlan: report.actionPlan,
+            })
+          }
+          onNavigateToActionPlan={() => setActiveTab("actions")}
+          onSelectFinding={(findingId) => {
+            const matched = report.findings.find((f) => f.id === findingId);
+            if (matched) {
+              handleJumpToClause(matched.clauseId || matched.evidence?.clauseId, matched.evidence);
+            }
+          }}
+        />
       )}
 
       {/* Evidence Chain Detail Modal */}
