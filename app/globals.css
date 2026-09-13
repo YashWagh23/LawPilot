@@ -259,3 +259,66 @@ html.theme-transitioning *::after {
   transition-delay: 0s !important;
 }
 
+/* ============================================================
+   FLOATING DOCUMENT ANIMATIONS (Bottom Landing Visual Section)
+   ============================================================ */
+@keyframes lp-float-1 {
+  0% { transform: translateY(0px) rotate(-6deg); }
+  50% { transform: translateY(-9px) rotate(-4deg); }
+  100% { transform: translateY(0px) rotate(-6deg); }
+}
+
+@keyframes lp-float-2 {
+  0% { transform: translateY(0px) rotate(-12deg); }
+  50% { transform: translateY(-13px) rotate(-9deg); }
+  100% { transform: translateY(0px) rotate(-12deg); }
+}
+
+@keyframes lp-float-3 {
+  0% { transform: translateY(0px) rotate(6deg); }
+  50% { transform: translateY(-8px) rotate(8deg); }
+  100% { transform: translateY(0px) rotate(6deg); }
+}
+
+@keyframes lp-float-4 {
+  0% { transform: translateY(0px) rotate(8deg); }
+  50% { transform: translateY(-11px) rotate(6deg); }
+  100% { transform: translateY(0px) rotate(8deg); }
+}
+
+@keyframes lp-float-5 {
+  0% { transform: translateY(0px) rotate(-4deg); }
+  50% { transform: translateY(-9px) rotate(-2deg); }
+  100% { transform: translateY(0px) rotate(-4deg); }
+}
+
+.lp-animate-float-1 {
+  animation: lp-float-1 7.5s ease-in-out infinite;
+}
+
+.lp-animate-float-2 {
+  animation: lp-float-2 9.5s ease-in-out infinite;
+}
+
+.lp-animate-float-3 {
+  animation: lp-float-3 8.5s ease-in-out infinite;
+}
+
+.lp-animate-float-4 {
+  animation: lp-float-4 10.5s ease-in-out infinite;
+}
+
+.lp-animate-float-5 {
+  animation: lp-float-5 9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-animate-float-1,
+  .lp-animate-float-2,
+  .lp-animate-float-3,
+  .lp-animate-float-4,
+  .lp-animate-float-5 {
+    animation: none !important;
+  }
+}
+
