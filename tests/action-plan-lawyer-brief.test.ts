@@ -169,7 +169,7 @@ describe("Phase 4: Action Plan & Lawyer Brief Test Suite", () => {
   // Test 9: Training reimbursement action generation
   it("9. produces pro-rata amortization proposal and invoice collection for training clawbacks", () => {
     const plan = generateDeterministicActionPlan(sampleInput);
-    const amortizeItem = plan.beforeSigning.find(
+    const amortizeItem = [...plan.urgentItems, ...plan.beforeSigning].find(
       (item) => item.title.toLowerCase().includes("amortization") || item.title.toLowerCase().includes("repayment")
     );
     expect(amortizeItem).toBeDefined();

@@ -108,6 +108,24 @@ Return a single valid JSON object adhering strictly to the ActionPlan schema.`,
 }
 
 /**
+ * Generates a stable, deterministic, unique action item ID based on document, category, discriminator, and finding.
+ */
+export function buildActionItemId(
+  documentId: string | undefined,
+  category: string,
+  discriminator: string,
+  findingId?: string
+): string {
+  const sanitize = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const docSlug = documentId ? sanitize(documentId).slice(-16) : "doc";
+  const catSlug = sanitize(category);
+  const findSlug = findingId ? sanitize(findingId).slice(-24) : "gen";
+  const discSlug = sanitize(discriminator);
+  return `act_${docSlug}_${catSlug}_${findSlug}_${discSlug}`;
+}
+
+/**
  * Deterministic generator that maps findings, evidence chains, and dates into
  * structured, safe, and actionable categories.
  */
@@ -173,7 +191,7 @@ export function generateDeterministicActionPlan(
     // 2. Questions to Ask Counterparty / HR / Drafting Party
     questionsToAsk.push(
       sanitizeActionItem({
-        id: `action-q-${finding.id}`,
+        id: buildActionItemId(input.documentId, "questions", "clarify", finding.id),
         title: `Clarify ${finding.title} with drafting party`,
         explanation: `Ask the drafting party to explain the intended operational scope of ${clauseSec} before execution.`,
         actionType: "ask_party",
@@ -192,7 +210,7 @@ export function generateDeterministicActionPlan(
     if (isRestrictiveCovenant) {
       beforeSigning.push(
         sanitizeActionItem({
-          id: `action-nc-narrow-${finding.id}`,
+          id: buildActionItemId(input.documentId, "before-signing", "nc-narrow", finding.id),
           title: "Request narrowing of non-compete geographic & temporal scope",
           explanation: `The current clause restricts competitive activity broadly. Ask drafting party to specify exact direct competitors and reduce the duration.`,
           actionType: "clarify",
@@ -209,7 +227,7 @@ export function generateDeterministicActionPlan(
 
       factsToConfirm.push(
         sanitizeActionItem({
-          id: `action-nc-fact-${finding.id}`,
+          id: buildActionItemId(input.documentId, "facts", "nc-fact", finding.id),
           title: "Confirm primary territory and prospective client boundaries",
           explanation: "Clarify whether remote work or out-of-state accounts are treated as competitive activity.",
           actionType: "confirm_fact",
@@ -226,7 +244,7 @@ export function generateDeterministicActionPlan(
     } else if (isTraining) {
       beforeSigning.push(
         sanitizeActionItem({
-          id: `action-train-cap-${finding.id}`,
+          id: buildActionItemId(input.documentId, "before-signing", "train-cap", finding.id),
           title: "Request pro-rata monthly amortization for training repayment",
           explanation: "The current clawback requires 100% repayment even if you depart in month 23. Request pro-rata reduction.",
           actionType: "clarify",
@@ -243,7 +261,7 @@ export function generateDeterministicActionPlan(
 
       documentsToCollect.push(
         sanitizeActionItem({
-          id: `action-train-doc-${finding.id}`,
+          id: buildActionItemId(input.documentId, "documents", "train-doc", finding.id),
           title: "Collect itemized receipts and written notices of approved training costs",
           explanation: "Ensure that only actual, third-party expenses paid by the employer can be claimed for reimbursement.",
           actionType: "collect_document",
@@ -260,7 +278,7 @@ export function generateDeterministicActionPlan(
     } else if (isIp) {
       beforeSigning.push(
         sanitizeActionItem({
-          id: `action-ip-exhibit-${finding.id}`,
+          id: buildActionItemId(input.documentId, "before-signing", "ip-exhibit", finding.id),
           title: "Attach written Exhibit A listing all pre-existing inventions",
           explanation: "Under broad invention assignment clauses, any personal projects created prior to signing could be claimed unless explicitly excluded.",
           actionType: "preserve_evidence",
@@ -277,7 +295,7 @@ export function generateDeterministicActionPlan(
 
       documentsToCollect.push(
         sanitizeActionItem({
-          id: `action-ip-doc-${finding.id}`,
+          id: buildActionItemId(input.documentId, "documents", "ip-doc", finding.id),
           title: "Gather repository commit logs and records of personal side projects",
           explanation: "Establish a clear verifiable timestamp of work completed independently outside company hours and company devices.",
           actionType: "collect_document",
@@ -294,7 +312,7 @@ export function generateDeterministicActionPlan(
     } else if (lowerTitle.includes("arbitration") || lowerTitle.includes("dispute")) {
       factsToConfirm.push(
         sanitizeActionItem({
-          id: `action-arb-fact-${finding.id}`,
+          id: buildActionItemId(input.documentId, "facts", "arb-fact", finding.id),
           title: "Confirm whether employer pays arbitration forum fees",
           explanation: "Under Delaware and federal arbitration standards, agreements requiring employees to split steep forum fees may be challenged as unconscionable.",
           actionType: "confirm_fact",
@@ -312,7 +330,7 @@ export function generateDeterministicActionPlan(
       // General finding
       beforeSigning.push(
         sanitizeActionItem({
-          id: `action-general-${finding.id}`,
+          id: buildActionItemId(input.documentId, "before-signing", `general-${index}`, finding.id),
           title: `Verify terms for ${finding.title}`,
           explanation: finding.plainEnglishSummary || finding.whyItMatters || finding.description || "Review finding terms before signing.",
           actionType: "clarify",
@@ -335,7 +353,7 @@ export function generateDeterministicActionPlan(
     const isImmediate = kd.date && new Date(kd.date).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000 && new Date(kd.date).getTime() > Date.now();
 
     const dateAction: ActionPlanItem = sanitizeActionItem({
-      id: `action-date-${idx}`,
+      id: buildActionItemId(input.documentId, isImmediate ? "urgent" : "followup", `date-${idx}`),
       title: `Monitor deadline: ${kd.label}`,
       explanation: `${kd.description}${kd.noticePeriodDays ? ` (Notice period: ${kd.noticePeriodDays} days)` : ""}`,
       actionType: "monitor_deadline",
@@ -355,11 +373,18 @@ export function generateDeterministicActionPlan(
     }
   });
 
-  // 5. If urgentItems is empty, elevate any high-priority pre-signing items
+  // 5. If urgentItems is empty, elevate any high-priority pre-signing items (MOVE, do not clone)
   if (urgentItems.length === 0) {
-    const urgentCandidate = beforeSigning.find((item) => item.priority === "urgent");
-    if (urgentCandidate) {
-      urgentItems.push(urgentCandidate);
+    const urgentCandidateIndex = beforeSigning.findIndex((item) => item.priority === "urgent");
+    if (urgentCandidateIndex !== -1) {
+      const [candidate] = beforeSigning.splice(urgentCandidateIndex, 1);
+      candidate.id = buildActionItemId(
+        input.documentId,
+        "urgent",
+        candidate.id.split("_").pop() || "elevated",
+        candidate.findingId
+      );
+      urgentItems.push(candidate);
     }
   }
 
@@ -367,7 +392,7 @@ export function generateDeterministicActionPlan(
   if (documentsToCollect.length === 0) {
     documentsToCollect.push(
       sanitizeActionItem({
-        id: "action-doc-default-offer",
+        id: buildActionItemId(input.documentId, "documents", "default-offer"),
         title: "Collect original offer letter and written job description",
         explanation: "Compare representations made during hiring with contractual duties and compensation terms.",
         actionType: "collect_document",
@@ -396,32 +421,113 @@ export function generateDeterministicActionPlan(
 }
 
 /**
- * Sanitizes all items against dangerous directives and removes duplicate action items.
+ * Validates that every ActionPlan item ID across all categories is strictly unique.
+ * Throws in test environment; logs error in production.
+ */
+export function assertUniqueActionIds(plan: ActionPlan): {
+  valid: boolean;
+  duplicates: string[];
+} {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  const allItems: ActionPlanItem[] = [
+    ...plan.urgentItems,
+    ...plan.beforeSigning,
+    ...plan.questionsToAsk,
+    ...plan.documentsToCollect,
+    ...plan.factsToConfirm,
+    ...plan.followUpItems,
+  ];
+
+  for (const item of allItems) {
+    if (seen.has(item.id)) {
+      duplicates.add(item.id);
+    } else {
+      seen.add(item.id);
+    }
+  }
+
+  if (duplicates.size > 0) {
+    const dupeArray = Array.from(duplicates);
+    const msg = `ActionPlan invariant violation: Found ${dupeArray.length} duplicate action item ID(s): ${dupeArray.join(", ")}`;
+    if (process.env.NODE_ENV === "test") {
+      throw new Error(msg);
+    } else {
+      console.error(msg);
+    }
+    return { valid: false, duplicates: dupeArray };
+  }
+
+  return { valid: true, duplicates: [] };
+}
+
+/**
+ * Sanitizes all items against dangerous directives, deduplicates globally across categories,
+ * and guarantees 100% unique IDs across the entire ActionPlan.
  */
 export function sanitizeAndDeduplicateActionPlan(plan: ActionPlan): ActionPlan {
-  const filterDedupe = (items: ActionPlanItem[]): ActionPlanItem[] => {
-    const seenTitles = new Set<string>();
+  const seenIds = new Set<string>();
+  const seenActionKeys = new Set<string>();
+
+  const dedupeItems = (items: ActionPlanItem[]): ActionPlanItem[] => {
     return items
       .map(sanitizeActionItem)
       .filter((item) => {
-        const key = item.title.trim().toLowerCase();
-        if (seenTitles.has(key)) {
+        // Semantic deduplication: findingId + actionType + normalized title
+        const normalizedTitle = item.title.trim().toLowerCase();
+        const actionKey = `${item.findingId || "gen"}::${item.actionType}::${normalizedTitle}`;
+
+        if (seenActionKeys.has(actionKey)) {
           return false;
         }
-        seenTitles.add(key);
+        seenActionKeys.add(actionKey);
+
+        // ID uniqueness guarantee across the whole plan
+        if (seenIds.has(item.id)) {
+          let suffix = 2;
+          while (seenIds.has(`${item.id}-${suffix}`)) {
+            suffix++;
+          }
+          item.id = `${item.id}-${suffix}`;
+        }
+        seenIds.add(item.id);
+
         return true;
       });
   };
 
-  return {
+  const urgentItems = dedupeItems(plan.urgentItems);
+  const beforeSigning = dedupeItems(plan.beforeSigning);
+  const questionsToAsk = dedupeItems(plan.questionsToAsk);
+  const documentsToCollect = dedupeItems(plan.documentsToCollect);
+  const factsToConfirm = dedupeItems(plan.factsToConfirm);
+  const followUpItems = dedupeItems(plan.followUpItems);
+
+  // Deduplicate professionalReviewTriggers
+  const seenTriggerKeys = new Set<string>();
+  const professionalReviewTriggers = plan.professionalReviewTriggers.filter((t) => {
+    const key = `${t.findingId}::${t.clauseSection}`;
+    if (seenTriggerKeys.has(key)) return false;
+    seenTriggerKeys.add(key);
+    return true;
+  });
+
+  const dedupedPlan: ActionPlan = {
     ...plan,
-    urgentItems: filterDedupe(plan.urgentItems),
-    beforeSigning: filterDedupe(plan.beforeSigning),
-    questionsToAsk: filterDedupe(plan.questionsToAsk),
-    documentsToCollect: filterDedupe(plan.documentsToCollect),
-    factsToConfirm: filterDedupe(plan.factsToConfirm),
-    followUpItems: filterDedupe(plan.followUpItems),
+    urgentItems,
+    beforeSigning,
+    questionsToAsk,
+    documentsToCollect,
+    factsToConfirm,
+    professionalReviewTriggers,
+    followUpItems,
   };
+
+  // Run validation invariant
+  assertUniqueActionIds(dedupedPlan);
+
+  return dedupedPlan;
 }
 
 /**

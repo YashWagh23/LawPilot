@@ -274,9 +274,9 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
             Relevant Clauses For Attorney Review
           </h3>
           <div className="space-y-3">
-            {brief.relevantClauses.map((clause) => (
+            {brief.relevantClauses.map((clause, idx) => (
               <div
-                key={clause.clauseId}
+                key={clause.clauseId ? `${clause.clauseId}-${idx}` : `clause-${idx}`}
                 className="p-4 rounded-xl bg-slate-800/20 border border-slate-800 print:border-gray-300 print:bg-transparent print:p-2 space-y-2"
               >
                 <div className="flex items-center justify-between text-xs">

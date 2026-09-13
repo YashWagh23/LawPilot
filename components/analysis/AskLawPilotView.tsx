@@ -115,7 +115,7 @@ export function AskLawPilotView({
 
     const nowIso = new Date().toISOString();
     const userMessage: AskConversationMessage = {
-      id: `user-${nowIso.replace(/[^0-9]/g, "")}`,
+      id: `user-${report.id}-${messages.length + 1}`,
       role: "user",
       content: textToSend,
       timestamp: nowIso,
@@ -145,7 +145,7 @@ export function AskLawPilotView({
 
       const structuredAnswer: AskAnswerStructure = data.answer;
       const assistantMessage: AskConversationMessage = {
-        id: structuredAnswer.id,
+        id: structuredAnswer?.id || `ans-${report.id}-${updatedMessages.length + 1}`,
         role: "assistant",
         content: structuredAnswer.answer,
         structuredAnswer,

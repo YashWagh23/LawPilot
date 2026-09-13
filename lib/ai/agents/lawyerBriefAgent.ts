@@ -147,25 +147,33 @@ export function generateDeterministicLawyerBrief(
     (f) => `[${f.severity.toUpperCase().replace("_", " ")}] ${f.title}: ${f.plainEnglishSummary || f.whyItMatters || f.description}`
   );
 
-  // 3. Relevant Clauses
-  const relevantClauses: LawyerBriefClause[] = findings.map((f, idx) => {
+  // 3. Relevant Clauses (Deduplicated by clauseId to guarantee unique attorney review items and React keys)
+  const seenClauseIds = new Set<string>();
+  const relevantClauses: LawyerBriefClause[] = [];
+
+  findings.forEach((f, idx) => {
     const clauseSec = f.clauseReference?.section || f.evidence?.section || `Section ${idx + 1}`;
-    const clauseId = f.clauseReference?.clauseId || f.clauseId || f.evidence?.clauseId || `clause-${idx + 1}`;
+    const rawClauseId = f.clauseReference?.clauseId || f.clauseId || f.evidence?.clauseId || `clause-${idx + 1}`;
+    const clauseId = seenClauseIds.has(rawClauseId) ? `${rawClauseId}-${idx + 1}` : rawClauseId;
+
+    if (seenClauseIds.has(clauseId)) return;
+    seenClauseIds.add(clauseId);
+
     const matchingClause = clauses.find(
-      (c) => c.id === clauseId || c.section === clauseSec || c.sectionNumber === clauseSec
+      (c) => c.id === rawClauseId || c.section === clauseSec || c.sectionNumber === clauseSec
     );
 
     const excerpt = matchingClause?.rawText || matchingClause?.clauseText || f.evidence?.quotedText || f.clauseReference?.exactQuote || f.plainEnglishSummary || f.description;
     const plainEnglish = f.plainEnglishSummary || matchingClause?.plainEnglish || f.whyItMatters || f.description;
 
-    return {
+    relevantClauses.push({
       clauseId,
       section: clauseSec,
       pageNumber: f.clauseReference?.pageNumber ?? f.evidence?.pageNumber ?? matchingClause?.pageNumber ?? null,
       excerpt,
       plainEnglish,
       importance: f.severity,
-    };
+    });
   });
 
   // 4. Verified Legal Context (Only verified sources from evidence chains)

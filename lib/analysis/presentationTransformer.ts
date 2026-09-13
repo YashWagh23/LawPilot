@@ -240,15 +240,26 @@ export function cleanFindingTitle(title: string): string {
  * Simplifies action plan into a clean numbered list
  */
 export function toSimpleActionPresentation(actionPlan: ActionPlan): SimpleActionItem[] {
-  const combined: ActionPlanItem[] = [
-    ...actionPlan.urgentItems,
-    ...actionPlan.beforeSigning,
-    ...actionPlan.questionsToAsk,
-    ...actionPlan.followUpItems,
+  const candidateItems: ActionPlanItem[] = [
+    ...(actionPlan.urgentItems || []),
+    ...(actionPlan.beforeSigning || []),
+    ...(actionPlan.questionsToAsk || []),
+    ...(actionPlan.followUpItems || []),
   ];
 
+  const seenIds = new Set<string>();
+  const uniqueItems: ActionPlanItem[] = [];
+
+  for (const item of candidateItems) {
+    if (!item || !item.id) continue;
+    if (!seenIds.has(item.id)) {
+      seenIds.add(item.id);
+      uniqueItems.push(item);
+    }
+  }
+
   // Take top 5-7 highest priority items
-  return combined.slice(0, 6).map((item, idx) => ({
+  return uniqueItems.slice(0, 6).map((item, idx) => ({
     id: item.id,
     number: idx + 1,
     title: item.title,
