@@ -24,9 +24,9 @@ export function ActScene() {
   return (
     <div
       ref={containerRef}
-      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[200vh]"}`}
+      className="relative h-auto py-14 sm:py-20 lg:h-[200vh] motion-reduce:lg:h-auto motion-reduce:lg:py-14"
     >
-      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
+      <div className="w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden motion-reduce:lg:static motion-reduce:lg:h-auto motion-reduce:lg:overflow-visible">
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 mb-4">
@@ -48,7 +48,7 @@ export function ActScene() {
           <div className="lg:col-span-7 space-y-3">
             {/* Top: The Initial Legal Problem Header */}
             <div
-              className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/40 p-4 flex items-center justify-between gap-3 shadow-xs transition-all duration-300"
+              className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/40 p-4 flex items-center justify-between gap-3 shadow-xs transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 opacity: 0.5 + problemProgress * 0.5,
               }}
@@ -71,7 +71,7 @@ export function ActScene() {
 
             {/* Checklist Item 1 */}
             <div
-              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-start gap-3 transition-all duration-300"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-start gap-3 transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${check1Slide}px)`,
                 opacity: check1Progress,
@@ -95,7 +95,7 @@ export function ActScene() {
 
             {/* Checklist Item 2 */}
             <div
-              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-start gap-3 transition-all duration-300"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-start gap-3 transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${check2Slide}px)`,
                 opacity: check2Progress,
@@ -119,7 +119,7 @@ export function ActScene() {
 
             {/* Checklist Item 3 */}
             <div
-              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-start gap-3 transition-all duration-300"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-start gap-3 transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${check3Slide}px)`,
                 opacity: check3Progress,
@@ -144,7 +144,7 @@ export function ActScene() {
 
           {/* Right: Lawyer-Ready Brief Card */}
           <div
-            className="lg:col-span-5 transition-all duration-300"
+            className="lg:col-span-5 transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
             style={{
               transform: `translateX(${briefSlide}px)`,
               opacity: briefProgress,

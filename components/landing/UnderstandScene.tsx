@@ -20,9 +20,9 @@ export function UnderstandScene() {
   return (
     <div
       ref={containerRef}
-      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[220vh]"}`}
+      className="relative h-auto py-14 sm:py-20 lg:h-[220vh] motion-reduce:lg:h-auto motion-reduce:lg:py-14"
     >
-      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
+      <div className="w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden motion-reduce:lg:static motion-reduce:lg:h-auto motion-reduce:lg:overflow-visible">
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 mb-4">
@@ -42,7 +42,7 @@ export function UnderstandScene() {
         <div className="relative w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center min-h-[420px]">
           {/* Left / Center: Contract Document Canvas */}
           <div
-            className="lg:col-span-7 transition-transform duration-100 ease-out"
+            className="lg:col-span-7 transition-transform duration-100 ease-out max-lg:!transform-none"
             style={{
               transform: `translateX(${docShift}%)`,
             }}
@@ -143,7 +143,7 @@ export function UnderstandScene() {
           <div className="lg:col-span-5 space-y-4">
             {/* Extracted Exposure Badge */}
             <div
-              className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/40 p-4 sm:p-5 shadow-lg backdrop-blur-md transition-all duration-300"
+              className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/40 p-4 sm:p-5 shadow-lg backdrop-blur-md transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${metricSlide}px)`,
                 opacity: metricOpacity,
@@ -167,7 +167,7 @@ export function UnderstandScene() {
 
             {/* Plain-English Breakdown Card */}
             <div
-              className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xl transition-all duration-300 relative overflow-hidden"
+              className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xl transition-all duration-300 relative overflow-hidden max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${plainCardSlide}px)`,
                 opacity: plainCardOpacity,

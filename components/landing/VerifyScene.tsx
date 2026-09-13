@@ -25,9 +25,9 @@ export function VerifyScene() {
   return (
     <div
       ref={containerRef}
-      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[240vh]"}`}
+      className="relative h-auto py-14 sm:py-20 lg:h-[240vh] motion-reduce:lg:h-auto motion-reduce:lg:py-14"
     >
-      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
+      <div className="w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden motion-reduce:lg:static motion-reduce:lg:h-auto motion-reduce:lg:overflow-visible">
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-violet-50 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80 mb-4">
@@ -48,7 +48,7 @@ export function VerifyScene() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative items-stretch">
             {/* ── Node 1: Finding ── */}
             <div
-              className="rounded-2xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-slate-900 p-6 shadow-xl relative transition-all duration-300 flex flex-col justify-between"
+              className="rounded-2xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-slate-900 p-6 shadow-xl relative transition-all duration-300 flex flex-col justify-between max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${node1Slide}px) scale(${0.95 + node1Progress * 0.05})`,
                 opacity: node1Progress,
@@ -77,7 +77,7 @@ export function VerifyScene() {
 
             {/* ── Node 2: Document Evidence ── */}
             <div
-              className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-white dark:bg-slate-900 p-6 shadow-xl relative transition-all duration-300 flex flex-col justify-between"
+              className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-white dark:bg-slate-900 p-6 shadow-xl relative transition-all duration-300 flex flex-col justify-between max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${node2Slide}px) scale(${0.95 + node2Progress * 0.05})`,
                 opacity: node2Progress,
@@ -106,7 +106,7 @@ export function VerifyScene() {
 
             {/* ── Node 3: Legal Source ── */}
             <div
-              className="rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-white dark:bg-slate-900 p-6 shadow-xl relative transition-all duration-300 flex flex-col justify-between"
+              className="rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-white dark:bg-slate-900 p-6 shadow-xl relative transition-all duration-300 flex flex-col justify-between max-lg:!opacity-100 max-lg:!transform-none"
               style={{
                 transform: `translateX(${node3Slide}px) scale(${0.95 + node3Progress * 0.05})`,
                 opacity: node3Progress,
@@ -168,7 +168,7 @@ export function VerifyScene() {
 
         {/* Resolved Chain Stamp Footer */}
         <div
-          className="mt-8 flex flex-wrap items-center justify-center gap-3 transition-opacity duration-300"
+          className="mt-8 flex flex-wrap items-center justify-center gap-3 transition-opacity duration-300 max-lg:!opacity-100"
           style={{ opacity: stampProgress }}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white dark:bg-white/10 dark:text-white border border-slate-800 dark:border-white/15 text-xs font-semibold shadow-md">

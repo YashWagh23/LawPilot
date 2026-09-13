@@ -24,9 +24,9 @@ export function CompareScene() {
   return (
     <div
       ref={containerRef}
-      className={`relative ${!isDesktop || reducedMotion ? "h-auto py-14 sm:py-20" : "h-[200vh]"}`}
+      className="relative h-auto py-14 sm:py-20 lg:h-[200vh] motion-reduce:lg:h-auto motion-reduce:lg:py-14"
     >
-      <div className={`${!isDesktop || reducedMotion ? "w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" : "sticky top-0 h-screen w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"}`}>
+      <div className="w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden motion-reduce:lg:static motion-reduce:lg:h-auto motion-reduce:lg:overflow-visible">
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-violet-50 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80 mb-4">
@@ -46,7 +46,7 @@ export function CompareScene() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 relative items-stretch mb-6">
           {/* Previous Version (Slides in from left) */}
           <div
-            className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300"
+            className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
             style={{
               transform: `translateX(${leftDocOffset}px)`,
               opacity: 0.4 + slideProgress * 0.6,
@@ -87,7 +87,7 @@ export function CompareScene() {
 
           {/* Revised Version (Slides in from right) */}
           <div
-            className="rounded-2xl border border-indigo-200 dark:border-indigo-900/80 bg-white/95 dark:bg-slate-900/95 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 relative overflow-hidden"
+            className="rounded-2xl border border-indigo-200 dark:border-indigo-900/80 bg-white/95 dark:bg-slate-900/95 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 relative overflow-hidden max-lg:!opacity-100 max-lg:!transform-none"
             style={{
               transform: `translateX(${rightDocOffset}px)`,
               opacity: 0.4 + slideProgress * 0.6,
@@ -151,7 +151,7 @@ export function CompareScene() {
 
         {/* Material Shift Progressive Badges */}
         <div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3 transition-all duration-300"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 transition-all duration-300 max-lg:!opacity-100 max-lg:!transform-none"
           style={{
             transform: `translateY(${chipsSlide}px)`,
             opacity: chipsProgress,

@@ -1,11 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function subscribeResize(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("resize", callback);
+  return () => window.removeEventListener("resize", callback);
 }
+
+function subscribeReducedMotion(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+  media.addEventListener("change", callback);
+  return () => media.removeEventListener("change", callback);
+}
+
+const getDesktopSnapshot = () =>
+  typeof window !== "undefined" ? window.innerWidth >= 1024 : true;
+const getDesktopServerSnapshot = () => true;
+
+const getReducedMotionSnapshot = () =>
+  typeof window !== "undefined"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    : false;
+const getReducedMotionServerSnapshot = () => false;
 
 /**
  * Tracks normalized scroll progress (0.0 to 1.0) through a tall sticky container.
@@ -19,78 +37,73 @@ export function useSceneScroll(): [
   boolean
 ] {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const rafRef = useRef<number | null>(null);
 
-  const [reducedMotion] = useState<boolean>(() => prefersReducedMotion());
-  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth >= 1024;
-  });
-  const [progress, setProgress] = useState<number>(() =>
-    prefersReducedMotion() ? 1.0 : 0.0
+  // Synchronized external stores: deterministic SSR + client hydration snapshots
+  const isDesktop = useSyncExternalStore(
+    subscribeResize,
+    getDesktopSnapshot,
+    getDesktopServerSnapshot
   );
 
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot
+  );
+
+  // Scroll progress starts deterministically at 0.0
+  const [progress, setProgress] = useState<number>(0.0);
+
   useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 1024);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize, { passive: true });
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const update = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
     if (!isDesktop || reducedMotion) {
-      setProgress(1.0);
       return;
     }
 
-    const rect = el.getBoundingClientRect();
-    const windowH = window.innerHeight;
-    const totalDistance = rect.height - windowH;
+    const update = () => {
+      const el = containerRef.current;
+      if (!el) return;
 
-    if (totalDistance <= 0) {
-      setProgress(1.0);
-      return;
-    }
+      const rect = el.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      const totalDistance = rect.height - windowH;
 
-    // Distance scrolled past the top of the container
-    const scrolled = -rect.top;
-    const raw = scrolled / totalDistance;
-    const clamped = Math.min(1.0, Math.max(0.0, raw));
-    setProgress(clamped);
-  }, [isDesktop, reducedMotion]);
+      if (totalDistance <= 0) {
+        setProgress(1.0);
+        return;
+      }
 
-  useEffect(() => {
-    if (reducedMotion || !isDesktop) return;
+      const scrolled = -rect.top;
+      const raw = scrolled / totalDistance;
+      const clamped = Math.min(1.0, Math.max(0.0, raw));
+      setProgress(clamped);
+    };
 
+    let rafId: number | null = null;
     const onScroll = () => {
-      if (rafRef.current !== null) return;
-      rafRef.current = requestAnimationFrame(() => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
         update();
-        rafRef.current = null;
+        rafId = null;
       });
     };
 
-    rafRef.current = requestAnimationFrame(() => {
+    // Calculate initial position asynchronously outside effect body
+    rafId = requestAnimationFrame(() => {
       update();
-      rafRef.current = null;
+      rafId = null;
     });
+
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
 
     return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
     };
-  }, [update, reducedMotion, isDesktop]);
+  }, [isDesktop, reducedMotion]);
 
   const effectiveProgress = !isDesktop || reducedMotion ? 1.0 : progress;
 
