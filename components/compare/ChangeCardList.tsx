@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import {
   Search,
-  ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 import type {
   ChangeSignificance,
@@ -17,25 +17,60 @@ interface ChangeCardListProps {
   onSelectChange: (change: ClauseComparisonItem) => void;
 }
 
-type FilterType = "ALL" | "HIGH" | "MEDIUM" | "LOW" | "ADDED" | "REMOVED" | "MODIFIED";
+export type FilterType =
+  | "ALL_CHANGES"
+  | "MATERIAL"
+  | "OTHER"
+  | "MODIFIED"
+  | "ADDED"
+  | "REMOVED"
+  | "UNCHANGED";
 
 export const ChangeCardList: React.FC<ChangeCardListProps> = ({
   changes,
   selectedChange,
   onSelectChange,
 }) => {
-  const [activeFilter, setActiveFilter] = useState<FilterType>("ALL");
+  const [activeFilter, setActiveFilter] = useState<FilterType>("ALL_CHANGES");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Computed counts across full set
+  const counts = useMemo(() => {
+    let changed = 0;
+    let material = 0;
+    let other = 0;
+    let modified = 0;
+    let added = 0;
+    let removed = 0;
+    let unchanged = 0;
+
+    for (const c of changes) {
+      if (c.changeType !== "UNCHANGED") changed++;
+      if (c.significance === "HIGH" || c.significance === "MEDIUM") material++;
+      if (c.significance === "LOW" || c.significance === "INFORMATIONAL") other++;
+      if (c.changeType === "MODIFIED") modified++;
+      if (c.changeType === "ADDED") added++;
+      if (c.changeType === "REMOVED") removed++;
+      if (c.changeType === "UNCHANGED") unchanged++;
+    }
+
+    return { changed, material, other, modified, added, removed, unchanged };
+  }, [changes]);
 
   const filteredChanges = useMemo(() => {
     return changes.filter((change) => {
       // Filter tab
-      if (activeFilter === "HIGH" && change.significance !== "HIGH") return false;
-      if (activeFilter === "MEDIUM" && change.significance !== "MEDIUM") return false;
-      if (activeFilter === "LOW" && change.significance !== "LOW") return false;
+      if (activeFilter === "ALL_CHANGES" && change.changeType === "UNCHANGED") return false;
+      if (activeFilter === "MATERIAL" && change.significance !== "HIGH" && change.significance !== "MEDIUM") {
+        return false;
+      }
+      if (activeFilter === "OTHER" && (change.significance === "HIGH" || change.significance === "MEDIUM" || change.changeType === "UNCHANGED")) {
+        return false;
+      }
+      if (activeFilter === "MODIFIED" && change.changeType !== "MODIFIED") return false;
       if (activeFilter === "ADDED" && change.changeType !== "ADDED") return false;
       if (activeFilter === "REMOVED" && change.changeType !== "REMOVED") return false;
-      if (activeFilter === "MODIFIED" && change.changeType !== "MODIFIED") return false;
+      if (activeFilter === "UNCHANGED" && change.changeType !== "UNCHANGED") return false;
 
       // Search query
       if (searchQuery.trim()) {
@@ -84,29 +119,42 @@ export const ChangeCardList: React.FC<ChangeCardListProps> = ({
   };
 
   const filters: { id: FilterType; label: string }[] = [
-    { id: "ALL", label: `All (${changes.length})` },
-    { id: "HIGH", label: "High" },
-    { id: "MEDIUM", label: "Medium" },
-    { id: "LOW", label: "Low" },
-    { id: "MODIFIED", label: "Modified" },
-    { id: "ADDED", label: "Added" },
-    { id: "REMOVED", label: "Removed" },
+    { id: "ALL_CHANGES", label: `All Changes (${counts.changed})` },
+    { id: "MATERIAL", label: `Material (${counts.material})` },
+    { id: "OTHER", label: `Other Edits (${counts.other})` },
+    { id: "MODIFIED", label: `Modified (${counts.modified})` },
+    { id: "ADDED", label: `Added (${counts.added})` },
+    ...(counts.unchanged > 0
+      ? [{ id: "UNCHANGED" as FilterType, label: `Unchanged (${counts.unchanged})` }]
+      : []),
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Controls & Search */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+    <div className="space-y-3.5">
+      {/* Search & Filter Controls */}
+      <div className="space-y-2.5">
+        {/* Search Input (Cleanly sized, no clipped placeholder) */}
+        <div className="relative w-full">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search changes..."
+            className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-sans"
+          />
+        </div>
+
+        {/* Filter Pills (Scrollable horizontally on mobile) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {filters.map((f) => (
             <button
               key={f.id}
               type="button"
               onClick={() => setActiveFilter(f.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
                 activeFilter === f.id
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               }`}
             >
@@ -114,22 +162,10 @@ export const ChangeCardList: React.FC<ChangeCardListProps> = ({
             </button>
           ))}
         </div>
-
-        {/* Search Box */}
-        <div className="relative sm:w-64">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter changes by keyword..."
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
       </div>
 
-      {/* Change Cards Container */}
-      <div className="space-y-2.5">
+      {/* Simplified, Scannable Clause List */}
+      <div className="space-y-2">
         {filteredChanges.length === 0 ? (
           <div className="p-8 text-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -139,74 +175,58 @@ export const ChangeCardList: React.FC<ChangeCardListProps> = ({
         ) : (
           filteredChanges.map((change) => {
             const isSelected = selectedChange?.id === change.id;
-            const isSectionMoved =
-              change.previousSection &&
-              change.currentSection &&
-              change.previousSection !== change.currentSection;
+            const isUnchanged = change.changeType === "UNCHANGED";
 
             return (
               <div
                 key={change.id}
+                data-testid="clause-change-item"
+                data-clause-id={change.id}
                 onClick={() => onSelectChange(change)}
-                className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                className={`p-3 rounded-xl border transition-all cursor-pointer ${
                   isSelected
-                    ? "border-blue-600 ring-2 ring-blue-500/20 bg-blue-50/30 dark:bg-blue-950/20"
+                    ? "border-indigo-600 bg-indigo-50/50 dark:border-indigo-500 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 shadow-xs"
+                    : isUnchanged
+                    ? "border-slate-200/60 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/20 hover:border-slate-300 dark:hover:border-slate-700 opacity-80"
                     : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getSignificanceBadge(
-                        change.significance
-                      )}`}
-                    >
-                      {change.significance}
-                    </span>
+                {/* Header line: Badges + Section */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {!isUnchanged && (
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${getSignificanceBadge(
+                          change.significance
+                        )}`}
+                      >
+                        {change.significance}
+                      </span>
+                    )}
 
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getChangeTypeBadge(
+                      className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${getChangeTypeBadge(
                         change.changeType
                       )}`}
                     >
                       {change.changeType}
                     </span>
-
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">
-                      {change.clauseTitle}
-                    </span>
                   </div>
 
-                  {/* Section indicator */}
-                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0">
-                    {isSectionMoved ? (
-                      <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold">
-                        <span>{change.previousSection}</span>
-                        <ArrowRight className="w-3 h-3" />
-                        <span>{change.currentSection}</span>
-                      </span>
-                    ) : (
-                      <span>{change.currentSection || change.previousSection}</span>
-                    )}
-                  </div>
+                  <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 shrink-0">
+                    {change.currentSection || change.previousSection}
+                  </span>
                 </div>
 
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                  {change.summary}
-                </p>
-
-                {change.semanticDetails && change.semanticDetails.length > 0 && (
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {change.semanticDetails.map((detail, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                      >
-                        {detail.parameter}: {detail.changeSummary}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* Main line: Clause Title */}
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {change.clauseTitle}
+                  </h4>
+                  {isUnchanged && (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  )}
+                </div>
               </div>
             );
           })

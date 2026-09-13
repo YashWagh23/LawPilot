@@ -85,6 +85,16 @@ export default function ComparePage() {
     showToast("Loaded sample redline comparison: Candidate Baseline vs HR Redline.");
   };
 
+  // Support direct ?demo=true or ?demo=1 link loading
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("demo") === "true" || params.get("demo") === "1") {
+        handleLoadDemo();
+      }
+    }
+  }, []);
+
   // Swap PREVIOUS <-> CURRENT versions
   const handleSwapVersions = () => {
     const tempPrev = { ...previousDoc };
@@ -232,10 +242,10 @@ export default function ComparePage() {
             <div className="lg:col-span-5 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Detected Clauses ({comparisonResult.changes.length})
+                  All Changes ({comparisonResult.summary.clausesChanged + comparisonResult.summary.clausesAdded + comparisonResult.summary.clausesRemoved})
                 </h3>
-                <span className="text-[11px] text-slate-500">
-                  Prioritized by Significance
+                <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                  {comparisonResult.topMaterialChanges.length} Material Changes
                 </span>
               </div>
 

@@ -1,3 +1,5 @@
+import React from "react";
+import { renderToString } from "react-dom/server";
 import { describe, it, expect } from "vitest";
 import {
   matchClausesSemantically,
@@ -29,7 +31,8 @@ import {
   getCompareActionItems,
   removeCompareActionItem,
 } from "@/lib/comparison/compareActionStore";
-import type { Clause, JurisdictionContext } from "@/types";
+import { ComparisonSummaryView, getConciseWhyItMatters } from "@/components/compare/ComparisonSummaryView";
+import type { Clause, JurisdictionContext, ClauseComparisonItem } from "@/types";
 
 describe("Phase 8: Compare Documents — Semantic Legal Change Analysis", () => {
   // 1. Clause Matching & Normalization
@@ -385,9 +388,9 @@ describe("Phase 8: Compare Documents — Semantic Legal Change Analysis", () => 
 
   // 6. Flagship Demo Consistency
   describe("Flagship Demo Data Integrity", () => {
-    it("matches exactly 5-7 meaningful changes in the India demo pair", () => {
-      expect(FLAGSHIP_DEMO_COMPARISON.summary.materialChangesCount).toBeGreaterThanOrEqual(5);
-      expect(FLAGSHIP_DEMO_COMPARISON.topMaterialChanges.length).toBeGreaterThanOrEqual(3);
+    it("matches exactly 5 material changes in the India demo pair", () => {
+      expect(FLAGSHIP_DEMO_COMPARISON.summary.materialChangesCount).toBe(5);
+      expect(FLAGSHIP_DEMO_COMPARISON.topMaterialChanges.length).toBe(5);
     });
 
     it("identifies added remote work clause", () => {
@@ -430,6 +433,92 @@ describe("Phase 8: Compare Documents — Semantic Legal Change Analysis", () => 
           currentFileName: "agreement.txt",
         })
       ).rejects.toThrow("validation failed");
+    });
+  });
+
+  // 8. UX Presentation Invariants & Scalability
+  describe("8. UX Presentation Invariants: Material Changes Visibility & Scaling", () => {
+    it("guarantees materialChangesCount equals visible topMaterialChanges length", () => {
+      const { summary, topMaterialChanges } = FLAGSHIP_DEMO_COMPARISON;
+      expect(summary.materialChangesCount).toBe(topMaterialChanges.length);
+      expect(topMaterialChanges).toHaveLength(5);
+    });
+
+    it("ComparisonSummaryView renders exactly all 5 material changes without truncation", () => {
+      const html = renderToString(
+        React.createElement(ComparisonSummaryView, {
+          summary: FLAGSHIP_DEMO_COMPARISON.summary,
+          jurisdictionComparison: FLAGSHIP_DEMO_COMPARISON.jurisdictionComparison,
+          topMaterialChanges: FLAGSHIP_DEMO_COMPARISON.topMaterialChanges,
+          onSelectChange: () => {},
+        })
+      );
+
+      const cleanHtml = html.replace(/<!--[\s\S]*?-->/g, "");
+      // Heading explicitly states "5 material changes"
+      expect(cleanHtml).toContain("5 material changes");
+      expect(cleanHtml).toContain("Worth Your Attention");
+
+      // Verifies all 5 flagship material changes are rendered visibly
+      expect(html).toContain("Training Bond");
+      expect(html).toContain("Notice Period");
+      expect(html).toContain("Non-Compete");
+      expect(html).toContain("Intellectual Property");
+      expect(html).toContain("Arbitrator Appointment");
+
+      // Verify no slice(0, 3) hiding items: all 5 inspect buttons exist
+      const inspectCount = (html.match(/Inspect/g) || []).length;
+      expect(inspectCount).toBe(5);
+    });
+
+    it("getConciseWhyItMatters provides punchy 1-sentence reasons for each change", () => {
+      for (const change of FLAGSHIP_DEMO_COMPARISON.topMaterialChanges) {
+        const concise = getConciseWhyItMatters(change);
+        expect(concise).toBeTruthy();
+        expect(concise.length).toBeLessThan(150);
+        expect(concise.length).toBeGreaterThan(10);
+      }
+    });
+
+    it("scales correctly for comparisons with 1, 3, 5, and 10 material changes", () => {
+      const baseItem = FLAGSHIP_DEMO_COMPARISON.topMaterialChanges[0];
+      const countsToTest = [1, 3, 5, 10];
+
+      for (const count of countsToTest) {
+        const mockItems: ClauseComparisonItem[] = Array.from({ length: count }, (_, i) => ({
+          ...baseItem,
+          id: `mock-change-${i}`,
+          clauseTitle: `Contract Clause ${i + 1}`,
+        }));
+
+        const mockSummary = {
+          ...FLAGSHIP_DEMO_COMPARISON.summary,
+          materialChangesCount: count,
+          clausesChanged: count,
+        };
+
+        const html = renderToString(
+          React.createElement(ComparisonSummaryView, {
+            summary: mockSummary,
+            jurisdictionComparison: FLAGSHIP_DEMO_COMPARISON.jurisdictionComparison,
+            topMaterialChanges: mockItems,
+            onSelectChange: () => {},
+          })
+        );
+
+        const cleanHtml = html.replace(/<!--[\s\S]*?-->/g, "");
+        // Heading matches the exact count
+        expect(cleanHtml).toContain(`${count} material ${count === 1 ? "change" : "changes"}`);
+
+        // Exactly 'count' inspect buttons rendered in the summary
+        const inspectMatches = (html.match(/Inspect/g) || []).length;
+        expect(inspectMatches).toBe(count);
+
+        // Every clause title rendered
+        for (let i = 0; i < count; i++) {
+          expect(html).toContain(`Contract Clause ${i + 1}`);
+        }
+      }
     });
   });
 });
