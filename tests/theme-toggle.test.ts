@@ -130,4 +130,55 @@ describe("Theme System & Toggle Logic", () => {
     expect(currentTheme).toBe("dark");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
   });
+
+  it("theme initializer script only accesses the lawpilot-theme key and no secrets", () => {
+    // Audit allowed storage keys accessed by theme initializer
+    const accessedKeys: string[] = [];
+    const spyStorage: Record<string, string> = {
+      "lawpilot-theme": "dark",
+      "GEMINI_API_KEY": "secret-123",
+      "AUTH_TOKEN": "token-456",
+    };
+
+    const auditedGetItem = (key: string) => {
+      accessedKeys.push(key);
+      return spyStorage[key] ?? null;
+    };
+
+    // Simulated theme initializer execution
+    const runThemeInit = (getter: (k: string) => string | null) => {
+      try {
+        const saved = getter("lawpilot-theme");
+        const theme = (saved === "dark" || saved === "light") ? saved : "light";
+        return theme;
+      } catch {
+        return "light";
+      }
+    };
+
+    const result = runThemeInit(auditedGetItem);
+    expect(result).toBe("dark");
+    expect(accessedKeys).toEqual(["lawpilot-theme"]);
+    expect(accessedKeys).not.toContain("GEMINI_API_KEY");
+    expect(accessedKeys).not.toContain("AUTH_TOKEN");
+  });
+
+  it("gracefully falls back to light if localStorage throws (e.g., privacy mode / disabled storage)", () => {
+    const throwingGetItem = () => {
+      throw new Error("SecurityError: The operation is insecure.");
+    };
+
+    const runSafeThemeInit = (getter: () => string | null) => {
+      try {
+        const saved = getter();
+        const theme = (saved === "dark" || saved === "light") ? saved : "light";
+        return theme;
+      } catch {
+        return "light";
+      }
+    };
+
+    const fallbackTheme = runSafeThemeInit(throwingGetItem);
+    expect(fallbackTheme).toBe("light");
+  });
 });

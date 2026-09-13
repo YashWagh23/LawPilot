@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Script from "next/script";
 import { GlobalDisclaimer } from "@/components/common/GlobalDisclaimer";
 import { Navbar } from "@/components/common/Navbar";
 import { Footer } from "@/components/common/Footer";
@@ -58,12 +59,12 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased light`}
     >
-      <head>
-        <script
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-[#0C0E14] dark:text-slate-100 font-sans">
+        <Script
+          id="lawpilot-theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeInitializerScript }}
         />
-      </head>
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-[#0C0E14] dark:text-slate-100 font-sans">
         <ThemeProvider>
           <GlobalDisclaimer />
           <Navbar />
