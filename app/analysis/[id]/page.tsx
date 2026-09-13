@@ -1,5 +1,5 @@
 import React from "react";
-import { getAnalysisReportById } from "@/lib/firebase/firestore";
+import { getAnalysisReportById } from "@/lib/storage/reportStore";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import { AnalysisLoader } from "@/components/analysis/AnalysisLoader";
 

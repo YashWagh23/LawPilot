@@ -8,7 +8,7 @@ import { ActScene } from "@/components/landing/ActScene";
 import { CompareScene } from "@/components/landing/CompareScene";
 import { Navbar } from "@/components/common/Navbar";
 import { Footer } from "@/components/common/Footer";
-import { DEMO_USER, getCurrentUser } from "@/lib/firebase/auth";
+import { DEMO_USER, getCurrentUser } from "@/lib/auth/user";
 
 const FORBIDDEN_COMPETITION_TERMS = [
   "competition",

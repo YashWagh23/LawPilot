@@ -1,8 +1,8 @@
 /**
- * LawPilot Authentication & User Context
+ * LawPilot Open-Access User Context
  * 
- * ARCHITECTURE PRINCIPLE:
- * LawPilot is engineered for frictionless, private access.
+ * ARCHITECTURAL PRINCIPLE:
+ * LawPilot is engineered for frictionless, local-first access.
  * It requires NO user accounts, NO logins, NO registration screens, and NO auth guards.
  * Users can immediately explore all capabilities without gating.
  */
@@ -28,4 +28,3 @@ export const DEMO_USER: LawPilotUser = {
 export function getCurrentUser(): LawPilotUser {
   return DEMO_USER;
 }
-

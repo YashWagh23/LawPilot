@@ -104,6 +104,23 @@ Action (Deterministic action checklists, negotiation prompts & counsel brief)
 
 ---
 
+## Tech Stack
+
+| Component | Technology | Role in Architecture |
+|---|---|---|
+| **Framework** | Next.js 16 (App Router) | High-performance server rendering and isolated API routes |
+| **UI Library** | React 19 | Modern declarative components and lifecycle |
+| **Language** | TypeScript 5 (Strict Mode) | Compile-time contract enforcement across domain types |
+| **Styling** | Tailwind CSS v4 | Clean design system tokens and responsive layouts |
+| **AI Intelligence** | Google Gemini API (`@google/genai`) | Server-side structured extraction and grounded legal Q&A |
+| **Schema Validation** | Zod | Runtime schema validation for AI payloads and contracts |
+| **Document Parsing** | `pdf-parse`, `pdf-lib`, `mammoth` | Server-side extraction for PDF, DOCX, and TXT files |
+| **Test Suite** | Vitest | Fast unit, integration, and invariant testing |
+| **Icons** | Lucide React | Accessible, lightweight SVG iconography |
+| **Session Persistence** | Browser `localStorage` | Client-side local storage for Action Plan checklists and chat history |
+
+---
+
 ## Features
 
 ### 1. 📄 Document Intelligence
@@ -288,18 +305,18 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` for local customization:
+The only application credential for active AI analysis is the Google Gemini API key:
+
+Create `.env.local`:
 
 ```env
 # Google Gemini API Key (Server-Side Only - Never exposed to browser)
 GEMINI_API_KEY=your_gemini_api_key_here
-
-# Firebase Web Configuration (Optional for cloud sync; prototype works zero-auth)
-NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
 ```
 
-> **Note on Offline Operation**: If `GEMINI_API_KEY` is not set, LawPilot automatically runs in safe offline/deterministic mode, fully analyzing uploaded agreements and providing complete interactive demo capabilities.
+> **Zero-Auth & Local-First**: No database or cloud authentication service is required. All session persistence (Action Plan checkboxes, Ask LawPilot chat history) operates locally in client browser storage.
+>
+> **Offline Operation**: If `GEMINI_API_KEY` is not set, LawPilot automatically runs in safe offline/deterministic mode, fully analyzing uploaded agreements and providing complete interactive demo capabilities.
 
 ---
 

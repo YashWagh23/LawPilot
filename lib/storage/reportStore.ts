@@ -3,20 +3,21 @@ import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import { getCachedAnalysisReport } from "@/lib/analysis/analysisOrchestrator";
 
 /**
- * Firestore Service Layer
- * Clean abstraction for document & report retrieval and persistence.
+ * In-Memory & Demo Report Store
+ * Provides fast retrieval of analysis reports from the active orchestrator cache
+ * and pre-packaged demo documents for zero-auth exploration.
  */
 
 export async function getAnalysisReportById(
   id: string
 ): Promise<AnalysisReport | null> {
-  // Check memory cache first (for newly uploaded and processed files)
+  // Check memory cache first (for newly uploaded and processed files in the current session)
   const cached = getCachedAnalysisReport(id);
   if (cached) {
     return cached;
   }
 
-  // Demo data fallback when running in preview or offline mode
+  // Pre-packaged demo reports available without external database calls
   if (
     id === "demo-employment-agreement" ||
     id === "demo-commercial-lease" ||
@@ -25,19 +26,17 @@ export async function getAnalysisReportById(
     return SAMPLE_ANALYSIS_REPORT;
   }
 
-  // Ready for live Firestore: getDoc(doc(db, "reports", id))
   return null;
 }
 
 export async function saveAnalysisReport(
   _report: AnalysisReport
 ): Promise<string> {
-  // Ready for live Firestore: setDoc(doc(db, "reports", report.id), report)
-  return "demo-saved-id";
+  return "local-session-saved";
 }
 
 export async function getRecentDocuments(): Promise<Document[]> {
-  // Returns safe sample documents
+  // Sample reference agreements for workspace exploration
   return [
     {
       id: "demo-commercial-lease",

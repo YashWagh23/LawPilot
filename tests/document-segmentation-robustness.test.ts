@@ -6,7 +6,7 @@ import {
   segmentDocumentIntoClauses,
 } from "@/lib/documents/clauseSegmenter";
 import { orchestrateDocumentAnalysis } from "@/lib/analysis/analysisOrchestrator";
-import { getAnalysisReportById } from "@/lib/firebase/firestore";
+import { getAnalysisReportById } from "@/lib/storage/reportStore";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import path from "path";
 

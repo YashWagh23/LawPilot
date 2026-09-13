@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { AnalysisReport } from "@/types";
 import type { AskConversationMessage } from "@/types/ask";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
-import { getAnalysisReportById } from "@/lib/firebase/firestore";
+import { getAnalysisReportById } from "@/lib/storage/reportStore";
 import { getCachedAnalysisReport } from "@/lib/analysis/analysisOrchestrator";
 import { askLawPilot } from "@/lib/ai/ask/askEngine";
 

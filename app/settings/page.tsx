@@ -4,13 +4,11 @@ import {
   Cpu,
   Database,
   CheckCircle2,
-  FileCheck,
   AlertTriangle,
   Scale,
 } from "lucide-react";
 import { LEGAL_SAFETY_RULES } from "@/lib/safety/safetyRules";
 import { DETAILED_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
-import { isFirebaseConfigured } from "@/lib/firebase/config";
 
 export default function SettingsPage() {
   const isGeminiConfigured = Boolean(process.env.GEMINI_API_KEY);
@@ -23,26 +21,24 @@ export default function SettingsPage() {
           <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             System & Governance
           </span>
-          <span className="text-xs text-slate-700 dark:text-slate-300">·</span>
-          <span className="text-xs text-slate-700 dark:text-slate-300">Settings & Compliance</span>
         </div>
-        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          LawPilot Safety, Privacy & AI Architecture
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+          Platform Architecture & Legal Safety Guardrails
         </h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          LawPilot is engineered under a strict legal safety foundation to deliver grounded assistance while preventing unauthorized practice of law and citation hallucinations.
+        <p className="text-sm text-slate-700 dark:text-slate-300 mt-2 max-w-3xl leading-relaxed">
+          LawPilot is an informational legal assistance system engineered for transparent, auditable contract intelligence. Review the active system configuration, processing boundaries, and the foundational safety rules enforcing professional legal standards.
         </p>
       </div>
 
       {/* System Status Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {/* Gemini AI Integration */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Google Gemini AI Service */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <Cpu className="w-4 h-4 text-brand-600 dark:text-brand-400" />
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Gemini GenAI Engine
+                Google Gemini Intelligence
               </h2>
             </div>
             {isGeminiConfigured ? (
@@ -53,13 +49,13 @@ export default function SettingsPage() {
             ) : (
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 rounded">
                 <AlertTriangle className="w-3 h-3" />
-                Demo Sandbox Active
+                Offline Mode (Deterministic Fallback)
               </span>
             )}
           </div>
           <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
             <p>
-              <strong>Default Reasoning:</strong> Gemini 2.5 Flash / Pro
+              <strong>Active Model:</strong> Gemini 2.5 Flash / Pro (Deterministic synthesis active when key is unset).
             </p>
             <p>
               <strong>Prompt Security:</strong> Server-side execution only. Zero client-side API key exposure.
@@ -70,36 +66,29 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Firebase Cloud Infrastructure */}
+        {/* Local-First Sandbox & Data Privacy */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Firebase Firestore & Storage
+                Local-First Sandbox & Data Privacy
               </h2>
             </div>
-            {isFirebaseConfigured ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded">
-                <CheckCircle2 className="w-3 h-3" />
-                Firebase Connected
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded">
-                <FileCheck className="w-3 h-3" />
-                Local Demo Mode
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded">
+              <CheckCircle2 className="w-3 h-3" />
+              Active Sandbox
+            </span>
           </div>
           <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
             <p>
-              <strong>Document Storage:</strong> Encrypted document bucket storage.
+              <strong>Zero-Auth Access:</strong> No account creation, login, or personal profile tracking required.
             </p>
             <p>
-              <strong>Data Isolation:</strong> User agreements isolated per tenant.
+              <strong>Local-First Storage:</strong> Action Plan states and Ask LawPilot session history persist strictly in client local storage.
             </p>
             <p>
-              <strong>Model Training:</strong> Customer contracts are never utilized to train public foundation models.
+              <strong>Ephemeral Processing:</strong> Uploaded documents are processed in-memory and never utilized to train public foundation models.
             </p>
           </div>
         </div>

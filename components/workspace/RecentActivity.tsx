@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getRecentDocuments } from "@/lib/firebase/firestore";
+import { getRecentDocuments } from "@/lib/storage/reportStore";
 import { FileText, ArrowUpRight, Clock, ShieldAlert, CheckCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
