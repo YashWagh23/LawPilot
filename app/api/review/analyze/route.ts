@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import { orchestrateDocumentAnalysis } from "@/lib/analysis/analysisOrchestrator";
 import { sanitizeFileName, MAX_FILE_SIZE_BYTES } from "@/lib/documents/fileValidator";
-
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
+import { saveCachedAnalysisReport } from "@/lib/storage/reportStore";
 
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get("content-type") || "";
 
-    // Case 1: Demo document analysis trigger
+    // Case 1: Demo document analysis trigger (instant verified response)
     if (contentType.includes("application/json")) {
       let body: { isDemo?: boolean } = {};
       try {
@@ -22,25 +19,7 @@ export async function POST(req: NextRequest) {
         );
       }
       if (body.isDemo) {
-        const demoPdfPath = path.join(process.cwd(), "public", "employment_agreement_demo.pdf");
-        if (fs.existsSync(demoPdfPath)) {
-          try {
-            const buffer = fs.readFileSync(demoPdfPath);
-            const report = await orchestrateDocumentAnalysis(
-              buffer,
-              "employment_agreement_demo.pdf"
-            );
-            return NextResponse.json({
-              success: true,
-              reportId: report.id,
-              report,
-            });
-          } catch (demoErr) {
-            console.warn("Dynamically analyzing demo PDF encountered an issue, serving pre-verified demo report:", demoErr);
-          }
-        }
-
-        // Guaranteed fallback for serverless environments where public assets are served by CDN
+        saveCachedAnalysisReport(SAMPLE_ANALYSIS_REPORT);
         return NextResponse.json({
           success: true,
           reportId: SAMPLE_ANALYSIS_REPORT.id,
@@ -74,6 +53,10 @@ export async function POST(req: NextRequest) {
       const safeFileName = sanitizeFileName(file.name);
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
+
+      const { orchestrateDocumentAnalysis } = await import(
+        "@/lib/analysis/analysisOrchestrator"
+      );
 
       const report = await orchestrateDocumentAnalysis(buffer, safeFileName);
 

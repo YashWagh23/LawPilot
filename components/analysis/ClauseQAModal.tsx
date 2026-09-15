@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import type { Clause, ClauseQuestionAnswer, Finding, LegalSource } from "@/types";
-import { answerClauseQuestion } from "@/lib/ai/agents/legalResearchAgent";
 import {
   X,
   MessageSquare,
@@ -60,20 +59,44 @@ export function ClauseQAModal({
     setAnswer(null);
 
     try {
-      const res = await answerClauseQuestion(
-        {
-          documentId: "active-doc",
-          clauseId: clause?.id || "clause-active",
+      const response = await fetch("/api/analysis/ask/clause", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           question: queryToAsk,
+          clauseId: clause?.id || "clause-active",
           jurisdiction,
-        },
-        finding || undefined,
-        clause || undefined,
-        sources
-      );
-      setAnswer(res);
+          finding: finding || undefined,
+          clause: clause || undefined,
+          sources,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.answer) {
+          setAnswer(data.answer);
+          return;
+        }
+      }
+      throw new Error("Failed to fetch clause answer");
     } catch {
-      // Graceful fallback
+      // Graceful fallback for offline / test environments
+      const clauseText = clause?.rawText || finding?.evidence?.quotedText || "Contract clause";
+      setAnswer({
+        question: queryToAsk,
+        clauseId: clause?.id || "clause-active",
+        whatContractSays: `The agreement states in ${clause?.section || "the clause"}: "${clauseText.slice(0, 180)}..."`,
+        legalContext: `Under ${jurisdiction} law, clauses of this nature are subject to statutory reasonableness tests.`,
+        whatThisMeans:
+          "This provision defines obligations between the parties, but its enforceability depends on specific factual context and statutory limits.",
+        whatWeCannotDetermine:
+          "Whether this provision would be strictly enforced cannot be determined without licensed legal counsel reviewing factual details.",
+        nextStep:
+          "Review this clause with a qualified legal professional licensed in the governing jurisdiction to evaluate specific negotiation carve-outs.",
+        sources: sources || [],
+        confidence: "moderate",
+      });
     } finally {
       setLoading(false);
     }

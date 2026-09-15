@@ -219,9 +219,8 @@ export async function orchestrateDocumentAnalysis(
     timestamp: new Date().toISOString(),
   });
 
-  let actionPlan: ActionPlan | undefined = undefined;
-  try {
-    actionPlan = await generateActionPlan({
+  const [actionPlanResult, detailedLawyerBriefResult] = await Promise.all([
+    generateActionPlan({
       documentId,
       documentTitle: factExtraction.metadata?.title || validation.sanitizedFileName,
       documentSummary: factExtraction.metadata?.title
@@ -232,25 +231,9 @@ export async function orchestrateDocumentAnalysis(
       findings: mappedFindings,
       evidenceChains,
       keyDates: factExtraction.dates,
-    });
-  } catch {
-    actionPlan = undefined;
-  }
+    }).catch(() => undefined),
 
-  if (actionPlan) {
-    actionPlan.items = [
-      ...actionPlan.urgentItems,
-      ...actionPlan.beforeSigning,
-      ...actionPlan.questionsToAsk,
-      ...actionPlan.documentsToCollect,
-      ...actionPlan.factsToConfirm,
-      ...actionPlan.followUpItems,
-    ];
-  }
-
-  let detailedLawyerBrief: DetailedLawyerBrief | undefined = undefined;
-  try {
-    detailedLawyerBrief = await generateDetailedLawyerBrief({
+    generateDetailedLawyerBrief({
       documentId,
       documentTitle: factExtraction.metadata?.title || validation.sanitizedFileName,
       documentType: factExtraction.metadata?.documentType || "Agreement",
@@ -266,12 +249,22 @@ export async function orchestrateDocumentAnalysis(
       findings: mappedFindings,
       clauses: segmentedClauses,
       evidenceChains,
-      keyDates: factExtraction.dates,
-      actionPlan,
-    });
-  } catch {
-    detailedLawyerBrief = undefined;
+    }).catch(() => undefined),
+  ]);
+
+  const actionPlan: ActionPlan | undefined = actionPlanResult;
+  if (actionPlan) {
+    actionPlan.items = [
+      ...actionPlan.urgentItems,
+      ...actionPlan.beforeSigning,
+      ...actionPlan.questionsToAsk,
+      ...actionPlan.documentsToCollect,
+      ...actionPlan.factsToConfirm,
+      ...actionPlan.followUpItems,
+    ];
   }
+
+  const detailedLawyerBrief: DetailedLawyerBrief | undefined = detailedLawyerBriefResult;
 
   // Backward-compatible action items
   const backwardCompatibleActionItems: ActionItem[] = actionPlan?.items && actionPlan.items.length > 0

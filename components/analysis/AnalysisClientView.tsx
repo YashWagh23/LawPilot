@@ -30,8 +30,8 @@ import {
 } from "lucide-react";
 import { ActionPlanView } from "@/components/action-plan/ActionPlan";
 import { LawyerBriefView } from "@/components/lawyer-brief/LawyerBrief";
-import { generateDeterministicActionPlan } from "@/lib/ai/agents/actionPlanningAgent";
-import { generateDeterministicLawyerBrief } from "@/lib/ai/agents/lawyerBriefAgent";
+import { generateDeterministicActionPlan } from "@/lib/analysis/deterministicActionPlan";
+import { generateDeterministicLawyerBrief } from "@/lib/analysis/deterministicLawyerBrief";
 import { AskLawPilotView } from "./AskLawPilotView";
 
 interface AnalysisClientViewProps {
@@ -92,6 +92,44 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
       null
     );
   }, [presentationFindings, activeFindingId]);
+
+  // Memoized action plan (uses report.actionPlan or client-safe deterministic fallback)
+  const resolvedActionPlan = useMemo(() => {
+    return (
+      report.actionPlan ||
+      generateDeterministicActionPlan({
+        documentId: report.documentId,
+        documentTitle: report.metadata.title,
+        documentSummary: report.summary.keyTakeaway,
+        parties: report.metadata.parties.map((p) => p.name),
+        jurisdiction: report.metadata.jurisdiction || report.metadata.governingLaw || undefined,
+        findings: report.findings,
+        evidenceChains: report.evidenceChains,
+        keyDates: report.keyDates,
+      })
+    );
+  }, [report]);
+
+  // Memoized lawyer brief (uses report.detailedLawyerBrief or client-safe deterministic fallback)
+  const resolvedLawyerBrief = useMemo(() => {
+    return (
+      report.detailedLawyerBrief ||
+      generateDeterministicLawyerBrief({
+        documentId: report.documentId,
+        documentTitle: report.metadata.title,
+        documentType: report.metadata.documentType,
+        date: report.metadata.effectiveDate || undefined,
+        parties: report.metadata.parties.map((p) => p.name),
+        jurisdiction: report.metadata.jurisdiction || report.metadata.governingLaw || undefined,
+        documentSummary: report.summary.keyTakeaway,
+        findings: report.findings,
+        clauses: report.clauses,
+        evidenceChains: report.evidenceChains,
+        keyDates: report.keyDates,
+        actionPlan: report.actionPlan,
+      })
+    );
+  }, [report]);
 
   // Handle jump to clause in document viewer
   const handleJumpToClause = (clauseId: string) => {
@@ -543,19 +581,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           {/* Action Plan */}
           {actSubTab === "actions" && (
             <ActionPlanView
-              actionPlan={
-                report.actionPlan ||
-                generateDeterministicActionPlan({
-                  documentId: report.documentId,
-                  documentTitle: report.metadata.title,
-                  documentSummary: report.summary.keyTakeaway,
-                  parties: report.metadata.parties.map((p) => p.name),
-                  jurisdiction: report.metadata.jurisdiction || report.metadata.governingLaw || undefined,
-                  findings: report.findings,
-                  evidenceChains: report.evidenceChains,
-                  keyDates: report.keyDates,
-                })
-              }
+              actionPlan={resolvedActionPlan}
               onSelectFinding={(findingId) => {
                 const matched = presentationFindings.find((f) => f.id === findingId);
                 if (matched) handleJumpToClause(matched.clauseId);
@@ -567,23 +593,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           {/* Lawyer Brief */}
           {actSubTab === "brief" && (
             <LawyerBriefView
-              brief={
-                report.detailedLawyerBrief ||
-                generateDeterministicLawyerBrief({
-                  documentId: report.documentId,
-                  documentTitle: report.metadata.title,
-                  documentType: report.metadata.documentType,
-                  date: report.metadata.effectiveDate || undefined,
-                  parties: report.metadata.parties.map((p) => p.name),
-                  jurisdiction: report.metadata.jurisdiction || report.metadata.governingLaw || undefined,
-                  documentSummary: report.summary.keyTakeaway,
-                  findings: report.findings,
-                  clauses: report.clauses,
-                  evidenceChains: report.evidenceChains,
-                  keyDates: report.keyDates,
-                  actionPlan: report.actionPlan,
-                })
-              }
+              brief={resolvedLawyerBrief}
               onNavigateToActionPlan={() => setActSubTab("actions")}
               onSelectFinding={(findingId) => {
                 const matched = presentationFindings.find((f) => f.id === findingId);

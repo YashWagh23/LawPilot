@@ -58,9 +58,11 @@ export async function compareDocumentBuffers(
     throw new Error(`Current Version validation failed: ${currVal.errorMessage}`);
   }
 
-  // 3. Extract text from both documents
-  const prevExtracted = await extractDocumentContent(previousBuffer, prevVal.fileType);
-  const currExtracted = await extractDocumentContent(currentBuffer, currVal.fileType);
+  // 3. Extract text from both documents concurrently
+  const [prevExtracted, currExtracted] = await Promise.all([
+    extractDocumentContent(previousBuffer, prevVal.fileType),
+    extractDocumentContent(currentBuffer, currVal.fileType),
+  ]);
 
   if (!prevExtracted.rawText || prevExtracted.rawText.trim().length === 0) {
     throw new Error("Previous Version is empty or contains no extractable text.");
