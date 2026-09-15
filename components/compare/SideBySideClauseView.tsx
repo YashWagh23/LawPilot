@@ -12,7 +12,11 @@ import {
 import type {
   ClauseComparisonItem,
 } from "@/types";
-import { addCompareActionItem } from "@/lib/comparison/compareActionStore";
+import {
+  addCompareActionItem,
+  isCompareActionItemAdded,
+  COMPARE_ACTION_EVENT,
+} from "@/lib/comparison/compareActionStore";
 
 interface SideBySideClauseViewProps {
   change: ClauseComparisonItem;
@@ -25,15 +29,50 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
   onAskLawPilot,
   onActionAdded,
 }) => {
-  const [hasAddedAction, setHasAddedAction] = useState(false);
+  const actionItem = change.suggestedActionItem;
+
+  const [prevItemId, setPrevItemId] = useState(actionItem?.id);
+  // Real persistent saved state from compareActionStore
+  const [isSaved, setIsSaved] = useState(() => {
+    if (typeof window === "undefined" || !actionItem) return false;
+    return isCompareActionItemAdded(actionItem.id, actionItem.title);
+  });
+
+  // Adjust state synchronously during render when the selected change changes
+  if (actionItem?.id !== prevItemId) {
+    setPrevItemId(actionItem?.id);
+    setIsSaved(actionItem ? isCompareActionItemAdded(actionItem.id, actionItem.title) : false);
+  }
+
+  // Separate transient confirmation animation
+  const [justAdded, setJustAdded] = useState(false);
   const [isEvidenceExpanded, setIsEvidenceExpanded] = useState(false);
   const [mobileView, setMobileView] = useState<"stacked" | "previous" | "current">("stacked");
 
+  // Synchronize saved state on external store updates or cross-tab storage events
+  React.useEffect(() => {
+    const syncSavedState = () => {
+      if (!actionItem) return;
+      setIsSaved(isCompareActionItemAdded(actionItem.id, actionItem.title));
+    };
+
+    window.addEventListener(COMPARE_ACTION_EVENT, syncSavedState);
+    window.addEventListener("storage", syncSavedState);
+    return () => {
+      window.removeEventListener(COMPARE_ACTION_EVENT, syncSavedState);
+      window.removeEventListener("storage", syncSavedState);
+    };
+  }, [actionItem]);
+
   const handleAddToActionPlan = () => {
-    addCompareActionItem(change.suggestedActionItem);
-    setHasAddedAction(true);
-    onActionAdded?.(change.suggestedActionItem.title);
-    setTimeout(() => setHasAddedAction(false), 3000);
+    if (isSaved || !actionItem) return;
+    const added = addCompareActionItem(actionItem);
+    if (added) {
+      setIsSaved(true);
+      setJustAdded(true);
+      onActionAdded?.(actionItem.title);
+      setTimeout(() => setJustAdded(false), 2000); // Resets transient animation only, not isSaved
+    }
   };
 
   const firstDetail = change.semanticDetails?.[0];
@@ -86,16 +125,18 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
             <button
               type="button"
               onClick={handleAddToActionPlan}
-              className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[40px] ${
-                hasAddedAction
-                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs"
-              }`}
+              disabled={isSaved}
+              aria-pressed={isSaved}
+              className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all min-h-[40px] ${
+                isSaved
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 cursor-default"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs cursor-pointer"
+              } ${justAdded ? "scale-[1.02] ring-2 ring-emerald-500/50" : ""}`}
             >
-              {hasAddedAction ? (
+              {isSaved ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Added to Plan!</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
+                  <span>Saved to Action Plan</span>
                 </>
               ) : (
                 <>
@@ -332,9 +373,14 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
         <button
           type="button"
           onClick={handleAddToActionPlan}
-          className="font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer"
+          disabled={isSaved}
+          className={`font-semibold transition-colors ${
+            isSaved
+              ? "text-emerald-600 dark:text-emerald-400 cursor-default"
+              : "text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer"
+          }`}
         >
-          {hasAddedAction ? "Saved to Plan" : "Add to Plan"}
+          {isSaved ? "Saved to Plan" : "Add to Plan"}
         </button>
       </div>
     </div>

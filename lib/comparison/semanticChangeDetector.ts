@@ -671,8 +671,13 @@ export function analyzeClauseDifference(
     }
   }
 
+  const changeSlug = (clauseTitle || "clause")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
   const suggestedActionItem: ActionPlanItem = {
-    id: `action-compare-${index}-${Date.now()}`,
+    id: `action-compare-${index}-${changeSlug || "clause"}`,
     title: suggestedActionTitle,
     explanation: suggestedActionExplanation,
     actionType: "clarify",

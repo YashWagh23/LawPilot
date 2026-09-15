@@ -39,6 +39,7 @@ export interface SimpleActionItem {
   clauseReference?: string;
   findingTitle?: string;
   priority: "urgent" | "important" | "recommended";
+  isFromCompare?: boolean;
 }
 
 export interface TopChangeHighlight {

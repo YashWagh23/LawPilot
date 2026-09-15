@@ -1,13 +1,21 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import type { ActionPlan } from "@/types";
-import { toSimpleActionPresentation } from "@/lib/analysis/presentationTransformer";
+import React, { useState, useMemo, useEffect } from "react";
+import type { ActionPlan, ActionPlanItem } from "@/types";
+import { toSimpleActionPresentation, SimpleActionItem } from "@/lib/analysis/presentationTransformer";
+import {
+  getCompareActionItems,
+  removeCompareActionItem,
+  toggleCompareActionItemCompleted,
+  COMPARE_ACTION_EVENT,
+} from "@/lib/comparison/compareActionStore";
 import {
   Check,
   ChevronDown,
   Copy,
   Briefcase,
+  GitCompare,
+  X,
 } from "lucide-react";
 
 interface ActionPlanProps {
@@ -23,38 +31,126 @@ export const ActionPlanView: React.FC<ActionPlanProps> = ({
 }) => {
   const storageKey = `lawpilot_action_progress_${actionPlan.documentId || actionPlan.id}`;
 
+  // 1. Comparison-derived items from compareActionStore
+  const [compareItems, setCompareItems] = useState<ActionPlanItem[]>(() => {
+    return getCompareActionItems();
+  });
+
+  // Keep compare items synchronized if added/removed across components or tabs
+  useEffect(() => {
+    const syncCompare = () => {
+      setCompareItems(getCompareActionItems());
+    };
+    window.addEventListener(COMPARE_ACTION_EVENT, syncCompare);
+    window.addEventListener("storage", syncCompare);
+    return () => {
+      window.removeEventListener(COMPARE_ACTION_EVENT, syncCompare);
+      window.removeEventListener("storage", syncCompare);
+    };
+  }, []);
+
+  // 2. Report-derived items from transformer
+  const baseReportItems = useMemo(() => {
+    return toSimpleActionPresentation(actionPlan);
+  }, [actionPlan]);
+
+  // 3. Unified action items: report items + comparison items, deduplicated deterministically
+  const simpleItems = useMemo(() => {
+    const seenTitles = new Set<string>();
+    const seenIds = new Set<string>();
+    const unified: SimpleActionItem[] = [];
+
+    // Add base report items first (preserves existing report action items exactly)
+    for (const item of baseReportItems) {
+      if (!item || !item.id) continue;
+      seenIds.add(item.id);
+      seenTitles.add(item.title.toLowerCase().trim());
+      unified.push(item);
+    }
+
+    // Append comparison items if not already present
+    for (const cItem of compareItems) {
+      if (!cItem || !cItem.id) continue;
+      const normalizedTitle = (cItem.title || "").toLowerCase().trim();
+      if (seenIds.has(cItem.id) || seenTitles.has(normalizedTitle)) {
+        continue;
+      }
+      seenIds.add(cItem.id);
+      seenTitles.add(normalizedTitle);
+
+      unified.push({
+        id: cItem.id,
+        number: unified.length + 1,
+        title: cItem.title,
+        whyRecommended: cItem.explanation || "Clarification recommended based on document comparison delta.",
+        practicalAdvice: cItem.practicalAdvice,
+        clauseReference: cItem.clauseSection ? `From Comparison · ${cItem.clauseSection}` : "From Comparison",
+        findingTitle: undefined,
+        priority: cItem.priority === "urgent" ? "urgent" : cItem.priority === "important" ? "important" : "recommended",
+        isFromCompare: true,
+      });
+    }
+
+    // Renumber sequentially 1..N
+    return unified.map((item, idx) => ({
+      ...item,
+      number: idx + 1,
+    }));
+  }, [baseReportItems, compareItems]);
+
   const [completedMap, setCompletedMap] = useState<Record<string, boolean>>(() => {
-    if (typeof window === "undefined") return {};
+    const initial: Record<string, boolean> = {};
+    if (typeof window === "undefined") return initial;
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        Object.assign(initial, JSON.parse(saved));
+      }
     } catch {
       // Storage parse fail
     }
-    return {};
+    // Also merge comparison store completion states if present
+    try {
+      const cItems = getCompareActionItems();
+      for (const ci of cItems) {
+        if (ci.completed && initial[ci.id] === undefined) {
+          initial[ci.id] = true;
+        }
+      }
+    } catch {
+      // Storage read fail
+    }
+    return initial;
   });
 
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [copiedScriptId, setCopiedScriptId] = useState<string | null>(null);
   const [copiedChecklist, setCopiedChecklist] = useState(false);
 
-  // Simplified action list
-  const simpleItems = useMemo(() => {
-    return toSimpleActionPresentation(actionPlan);
-  }, [actionPlan]);
-
   const toggleCheck = (id: string) => {
     setCompletedMap((prev) => {
-      const updated = { ...prev, [id]: !prev[id] };
+      const nextStatus = !prev[id];
+      const updated = { ...prev, [id]: nextStatus };
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem(storageKey, JSON.stringify(updated));
         } catch {
           // Storage write fail
         }
+        // If this is a compare item, also update completion in compare store
+        try {
+          toggleCompareActionItemCompleted(id, nextStatus);
+        } catch {
+          // Ignore
+        }
       }
       return updated;
     });
+  };
+
+  const handleRemoveCompareItem = (id: string) => {
+    removeCompareActionItem(id);
+    setCompareItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const toggleExpand = (id: string) => {
@@ -172,20 +268,48 @@ export const ActionPlanView: React.FC<ActionPlanProps> = ({
 
                 {/* Step Content */}
                 <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-mono text-xs font-bold text-slate-400">
-                      {item.number}.
-                    </span>
-                    <h3
-                      className={`text-sm font-bold leading-snug ${
-                        isDone
-                          ? "line-through text-slate-400 dark:text-slate-500"
-                          : "text-slate-900 dark:text-white"
-                      }`}
-                    >
-                      {item.title}
-                    </h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-mono text-xs font-bold text-slate-400">
+                        {item.number}.
+                      </span>
+                      <h3
+                        className={`text-sm font-bold leading-snug ${
+                          isDone
+                            ? "line-through text-slate-400 dark:text-slate-500"
+                            : "text-slate-900 dark:text-white"
+                        }`}
+                      >
+                        {item.title}
+                      </h3>
+                    </div>
+
+                    {item.isFromCompare && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCompareItem(item.id)}
+                        className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                        aria-label={`Remove "${item.title}" from Action Plan`}
+                        title="Remove comparison item from Action Plan"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
+
+                  {item.isFromCompare && (
+                    <div className="pt-0.5 pb-0.5">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+                        <GitCompare className="w-3 h-3" />
+                        <span>Added from Comparison</span>
+                        {item.clauseReference && (
+                          <span className="font-mono text-[9px] text-indigo-500 dark:text-indigo-400">
+                            · {item.clauseReference}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Progressive Disclosure Link */}
                   <button
