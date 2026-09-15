@@ -219,7 +219,7 @@ export async function orchestrateDocumentAnalysis(
     timestamp: new Date().toISOString(),
   });
 
-  const [actionPlanResult, detailedLawyerBriefResult] = await Promise.all([
+  const [actionPlanSettled, briefSettled] = await Promise.allSettled([
     generateActionPlan({
       documentId,
       documentTitle: factExtraction.metadata?.title || validation.sanitizedFileName,
@@ -231,7 +231,7 @@ export async function orchestrateDocumentAnalysis(
       findings: mappedFindings,
       evidenceChains,
       keyDates: factExtraction.dates,
-    }).catch(() => undefined),
+    }),
 
     generateDetailedLawyerBrief({
       documentId,
@@ -249,10 +249,18 @@ export async function orchestrateDocumentAnalysis(
       findings: mappedFindings,
       clauses: segmentedClauses,
       evidenceChains,
-    }).catch(() => undefined),
+      keyDates: factExtraction.dates,
+    }),
   ]);
 
-  const actionPlan: ActionPlan | undefined = actionPlanResult;
+  let actionPlan: ActionPlan | undefined = undefined;
+  if (actionPlanSettled.status === "fulfilled") {
+    actionPlan = actionPlanSettled.value;
+  } else {
+    console.warn("Failed to generate action plan during analysis:", actionPlanSettled.reason);
+    actionPlan = undefined;
+  }
+
   if (actionPlan) {
     actionPlan.items = [
       ...actionPlan.urgentItems,
@@ -264,7 +272,13 @@ export async function orchestrateDocumentAnalysis(
     ];
   }
 
-  const detailedLawyerBrief: DetailedLawyerBrief | undefined = detailedLawyerBriefResult;
+  let detailedLawyerBrief: DetailedLawyerBrief | undefined = undefined;
+  if (briefSettled.status === "fulfilled") {
+    detailedLawyerBrief = briefSettled.value;
+  } else {
+    console.warn("Failed to generate detailed lawyer brief during analysis:", briefSettled.reason);
+    detailedLawyerBrief = undefined;
+  }
 
   // Backward-compatible action items
   const backwardCompatibleActionItems: ActionItem[] = actionPlan?.items && actionPlan.items.length > 0
