@@ -5,7 +5,7 @@ import type {
   DetailedLawyerBrief,
   EvidenceChain,
 } from "@/types";
-import { validateDocumentFile } from "@/lib/documents/fileValidator";
+import { validateDocumentFile, DocumentInputError } from "@/lib/documents/fileValidator";
 import { extractDocumentContent } from "@/lib/documents/textExtractor";
 import { normalizeDocumentContent } from "@/lib/documents/documentNormalizer";
 import { segmentDocumentIntoClauses } from "@/lib/documents/clauseSegmenter";
@@ -80,7 +80,7 @@ export async function orchestrateDocumentAnalysis(
       timestamp: new Date().toISOString(),
       error: validation.errorMessage,
     });
-    throw new Error(validation.errorMessage);
+    throw new DocumentInputError(validation.errorMessage);
   }
 
   // Stage 1: Reading document
@@ -107,7 +107,7 @@ export async function orchestrateDocumentAnalysis(
       timestamp: new Date().toISOString(),
       error: emptyErr,
     });
-    throw new Error(emptyErr);
+    throw new DocumentInputError(emptyErr);
   }
 
   const normalized = normalizeDocumentContent(
@@ -315,7 +315,13 @@ export async function orchestrateDocumentAnalysis(
   const report: AnalysisReport = {
     id: documentId,
     documentId,
+    // Both fields carry the same detected jurisdiction: `jurisdiction` is the original field name,
+    // `jurisdictionContext` is what several consumers (askEngine, contextBuilder,
+    // AnalysisClientView) actually read. Leaving `jurisdictionContext` unset here previously made
+    // those consumers silently fall back to a hardcoded default jurisdiction for every real
+    // (non-demo) analyzed document.
     jurisdiction: detectedJurisdiction,
+    jurisdictionContext: detectedJurisdiction,
     metadata: {
       ...factExtraction.metadata,
       pageCount: extractedContent.totalPageCount,

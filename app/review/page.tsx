@@ -16,6 +16,7 @@ import {
   File,
   ChevronDown,
 } from "lucide-react";
+import { addRecentDocument } from "@/lib/storage/recentDocumentsStore";
 
 export type IntakeState = "idle" | "selected" | "uploading" | "validating" | "analyzing" | "complete" | "error";
 
@@ -178,6 +179,16 @@ export default function ReviewPage() {
 
       if (typeof window !== "undefined" && result.report && result.reportId) {
         try { localStorage.setItem(`lawpilot_report_${result.reportId}`, JSON.stringify(result.report)); } catch { /* quota */ }
+        addRecentDocument({
+          id: result.reportId,
+          title: selectedFile.name.replace(/\.(pdf|docx|txt)$/i, ""),
+          fileName: selectedFile.name,
+          fileSizeBytes: selectedFile.size,
+          fileType: selectedFile.type as "application/pdf" | "text/plain" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          uploadedAt: new Date().toISOString(),
+          analysisId: result.reportId,
+          status: "analyzed",
+        });
       }
 
       setTimeout(() => { router.push(`/analysis/${result.reportId}`); }, 400);

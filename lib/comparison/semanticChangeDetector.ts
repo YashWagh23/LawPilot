@@ -379,6 +379,13 @@ function assessChangeSignificance(
 
 /**
  * Builds calibrated "Why This Matters", "What to Verify", and "What to Ask"
+ *
+ * `isIndianJurisdiction` gates the India-specific statutory narrative (Indian Contract Act,
+ * Copyright Act, Arbitration and Conciliation Act) in the training/notice/non-compete/IP/
+ * arbitration branches below. Those statutory claims are only accurate for an Indian-governed
+ * agreement; asserting them for a document governed by a different jurisdiction would be
+ * misleading. When the jurisdiction is not confirmed Indian, a jurisdiction-neutral explanation is
+ * used instead — still substantive, but without inventing an inapplicable legal conclusion.
  */
 function buildWhyThisMatters(
   title: string,
@@ -387,7 +394,8 @@ function buildWhyThisMatters(
   changeType: ChangeType,
   _significance: ChangeSignificance,
   _prevClause: Clause | null,
-  _currClause: Clause | null
+  _currClause: Clause | null,
+  isIndianJurisdiction: boolean = true
 ): {
   whyItMatters: string;
   whatToVerify: string[];
@@ -403,8 +411,9 @@ function buildWhyThisMatters(
     const amountDiff = details.find((d) => d.parameter.includes("Financial"));
     const amountStr = amountDiff ? amountDiff.changeSummary : "increased amount";
     return {
-      whyItMatters:
-        `The employee's potential contractual financial exposure is substantially higher (${amountStr}). In Indian employment contracts, liquidated damages clauses are enforceable only to the extent of actual expenses incurred by the employer, not as arbitrary penalties.`,
+      whyItMatters: isIndianJurisdiction
+        ? `The employee's potential contractual financial exposure is substantially higher (${amountStr}). In Indian employment contracts, liquidated damages clauses are enforceable only to the extent of actual expenses incurred by the employer, not as arbitrary penalties.`
+        : `The employee's potential contractual financial exposure is substantially higher (${amountStr}). Whether a fixed reimbursement or liquidated-damages figure like this is enforceable, and whether it must be tied to actual costs incurred, depends on the law that governs this agreement.`,
       whatToVerify: [
         "Itemized actual costs incurred by the employer for external training programs",
         "Clear pro-rata amortization schedule reducing the liability monthly over the tenure",
@@ -416,8 +425,9 @@ function buildWhyThisMatters(
       suggestedActionTitle: "Clarify revised training reimbursement amount and request amortization schedule",
       suggestedActionExplanation:
         "Request written confirmation of itemized training costs and ask whether the bond amortizes proportionally over time rather than as a lump sum cliff.",
-      suggestedAskQuestion:
-        "What changed in the training reimbursement clause, and what should I verify regarding actual expenses under Indian law?",
+      suggestedAskQuestion: isIndianJurisdiction
+        ? "What changed in the training reimbursement clause, and what should I verify regarding actual expenses under Indian law?"
+        : "What changed in the training reimbursement clause, and what should I verify regarding actual expenses under the governing law of this agreement?",
     };
   }
 
@@ -438,38 +448,42 @@ function buildWhyThisMatters(
         "Can we confirm whether notice buyout or early waiver is permitted if project handovers are completed satisfactorily?",
       suggestedActionTitle: "Verify notice period buy-out and early relief terms with HR",
       suggestedActionExplanation:
-        "Confirm whether the extended 90-day notice can be shortened via mutual agreement or notice buy-out if handover is completed.",
+        "Confirm whether the extended notice period can be shortened via mutual agreement or notice buy-out if handover is completed.",
       suggestedAskQuestion:
-        "What are the practical and legal implications of the notice period increase from 60 to 90 days?",
+        `What are the practical and legal implications of the notice period change (${noticeStr})?`,
     };
   }
 
   // 3. Non-Compete / Restrictive Covenant
   if (normTitle.includes("non-compete") || category === "restriction") {
     return {
-      whyItMatters:
-        "The post-employment restriction has been broadened in geographic reach and duration. Under Section 27 of the Indian Contract Act, 1872, post-employment non-compete covenants are generally void as restraints of trade, regardless of reasonableness.",
+      whyItMatters: isIndianJurisdiction
+        ? "The post-employment restriction has been broadened in geographic reach and duration. Under Section 27 of the Indian Contract Act, 1872, post-employment non-compete covenants are generally void as restraints of trade, regardless of reasonableness."
+        : "The post-employment restriction has been broadened in geographic reach and/or duration. Whether a restraint like this is enforceable — and to what geographic scope and duration — depends heavily on the law governing this agreement; some jurisdictions void post-employment non-competes outright, while others test them for reasonableness.",
       whatToVerify: [
         "Scope of restricted technological domains and named competing enterprises",
         "Whether non-solicitation of clients is distinguished from general industry employment",
-        "Applicability of Section 27 of the Indian Contract Act, 1872",
+        "Whether post-employment non-compete restraints are enforceable at all under the agreement's governing law, and if so, under what reasonableness standard",
         "Absence of garden leave compensation during the restricted period",
       ],
-      whatToAsk:
-        "Could we clarify the specific list of direct competitors and align the clause with standard Indian statutory non-solicitation guidelines?",
+      whatToAsk: isIndianJurisdiction
+        ? "Could we clarify the specific list of direct competitors and align the clause with standard Indian statutory non-solicitation guidelines?"
+        : "Could we clarify the specific list of direct competitors and narrow the restriction's geographic and time scope?",
       suggestedActionTitle: "Seek clarification on non-compete scope and define specific competitor list",
       suggestedActionExplanation:
-        "Request that the broad all-India non-compete be narrowed to a specific direct competitor list or focused on non-solicitation of active clients.",
-      suggestedAskQuestion:
-        "Is the revised post-employment non-compete enforceable under Section 27 of the Indian Contract Act?",
+        "Request that the broadened non-compete be narrowed to a specific direct competitor list or focused on non-solicitation of active clients.",
+      suggestedAskQuestion: isIndianJurisdiction
+        ? "Is the revised post-employment non-compete enforceable under Section 27 of the Indian Contract Act?"
+        : "Is the revised post-employment non-compete enforceable under the law governing this agreement?",
     };
   }
 
   // 4. Intellectual Property Assignment
   if (normTitle.includes("intellectual") || normTitle.includes("inventions") || category === "intellectual_property") {
     return {
-      whyItMatters:
-        "The assignment reach has been expanded to encompass software created outside business hours and on personal hardware. Under Section 17(c) of the Copyright Act, 1957, employer ownership ordinarily attaches to works authored in the course of employment.",
+      whyItMatters: isIndianJurisdiction
+        ? "The assignment reach has been expanded to encompass software created outside business hours and on personal hardware. Under Section 17(c) of the Copyright Act, 1957, employer ownership ordinarily attaches to works authored in the course of employment."
+        : "The assignment reach has been expanded to encompass software or inventions created outside business hours and on personal hardware. Whether employer ownership extends that far — versus being limited to work authored in the course of employment — depends on the law and any specific carve-outs governing this agreement.",
       whatToVerify: [
         "Carve-outs for pre-existing open-source contributions and personal side projects",
         "Requirement to disclose personal intellectual property developed on personal time",
@@ -482,28 +496,30 @@ function buildWhyThisMatters(
       suggestedActionExplanation:
         "Prepare an exhibit of prior inventions and open-source repositories to explicitly exclude from company assignment.",
       suggestedAskQuestion:
-        "Does the revised IP assignment clause overreach regarding software developed outside work hours?",
+        "Does the revised IP assignment clause overreach regarding software or inventions developed outside work hours?",
     };
   }
 
   // 5. Arbitration & Dispute Resolution
   if (normTitle.includes("arbitrat") || normTitle.includes("dispute") || category === "dispute_resolution") {
     return {
-      whyItMatters:
-        "The dispute resolution mechanism has shifted from mutual agreement to unilateral appointment by the company Managing Director. Indian Supreme Court precedent (e.g. Perkins Eastman) has established that an interested party cannot unilaterally appoint a sole arbitrator.",
+      whyItMatters: isIndianJurisdiction
+        ? "The dispute resolution mechanism has shifted from mutual agreement to unilateral appointment by the company Managing Director. Indian Supreme Court precedent (e.g. Perkins Eastman) has established that an interested party cannot unilaterally appoint a sole arbitrator."
+        : "The dispute resolution mechanism has shifted from mutual agreement to unilateral appointment by company leadership. Whether an interested party may unilaterally appoint a sole arbitrator depends on the arbitration law and rules governing this agreement.",
       whatToVerify: [
         "Whether arbitrator appointment requires mutual consensus between both parties",
-        "Applicability of Section 12(5) and the Seventh Schedule of the Arbitration and Conciliation Act, 1996",
+        "Whether an interested party (e.g. a company officer) may unilaterally appoint the arbitrator under the agreement's governing arbitration law",
         "Arbitration seat and administrative venue designations",
         "Cost-sharing provisions for arbitrator fees and administrative institutional charges",
       ],
       whatToAsk:
-        "Could we update Section 11 to provide for arbitrator appointment by mutual consent or through a recognized arbitral institution?",
+        "Could we update this clause to provide for arbitrator appointment by mutual consent or through a recognized arbitral institution?",
       suggestedActionTitle: "Request mutual appointment mechanism for sole arbitrator in dispute clause",
       suggestedActionExplanation:
-        "Propose standard bilateral appointment language or institutional arbitration (e.g. MCIA) in place of unilateral appointment by company MD.",
-      suggestedAskQuestion:
-        "Is unilateral appointment of a sole arbitrator by the company leadership permissible under Indian arbitration law?",
+        "Propose standard bilateral appointment language or institutional arbitration in place of unilateral appointment by company leadership.",
+      suggestedAskQuestion: isIndianJurisdiction
+        ? "Is unilateral appointment of a sole arbitrator by the company leadership permissible under Indian arbitration law?"
+        : "Is unilateral appointment of a sole arbitrator by the company leadership permissible under the arbitration law governing this agreement?",
     };
   }
 
@@ -572,7 +588,8 @@ function buildWhyThisMatters(
  */
 export function analyzeClauseDifference(
   pair: MatchedClausePair,
-  index: number
+  index: number,
+  isIndianJurisdiction: boolean = true
 ): ClauseComparisonItem {
   const { previousClause, currentClause, previousSection, currentSection, isSectionMoved } = pair;
 
@@ -642,7 +659,8 @@ export function analyzeClauseDifference(
     changeType,
     significance,
     previousClause,
-    currentClause
+    currentClause,
+    isIndianJurisdiction
   );
 
   // Construct brief summary
@@ -717,6 +735,9 @@ export function analyzeClauseDifference(
 /**
  * Analyzes all matched pairs and generates a prioritized comparison list
  */
-export function analyzeAllClauseDifferences(pairs: MatchedClausePair[]): ClauseComparisonItem[] {
-  return pairs.map((pair, idx) => analyzeClauseDifference(pair, idx));
+export function analyzeAllClauseDifferences(
+  pairs: MatchedClausePair[],
+  isIndianJurisdiction: boolean = true
+): ClauseComparisonItem[] {
+  return pairs.map((pair, idx) => analyzeClauseDifference(pair, idx, isIndianJurisdiction));
 }

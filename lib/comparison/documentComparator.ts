@@ -4,11 +4,11 @@ import type {
   DocumentComparisonResult,
   JurisdictionComparison,
 } from "@/types";
-import { validateDocumentFile } from "@/lib/documents/fileValidator";
+import { validateDocumentFile, DocumentInputError } from "@/lib/documents/fileValidator";
 import { extractDocumentContent } from "@/lib/documents/textExtractor";
 import { normalizeDocumentContent } from "@/lib/documents/documentNormalizer";
 import { segmentDocumentIntoClauses } from "@/lib/documents/clauseSegmenter";
-import { detectJurisdiction } from "@/lib/jurisdiction/jurisdictionDetector";
+import { detectJurisdiction, isIndianJurisdiction } from "@/lib/jurisdiction/jurisdictionDetector";
 import { GLOBAL_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
 import { matchClausesSemantically } from "./clauseMatcher";
 import { analyzeAllClauseDifferences } from "./semanticChangeDetector";
@@ -42,7 +42,7 @@ export async function compareDocumentBuffers(
   const currHash = hashBuffer(currentBuffer);
 
   if (prevHash === currHash) {
-    throw new Error(
+    throw new DocumentInputError(
       "Identical document selected for both Previous and Current versions. Please upload two distinct drafts or revisions to run a semantic legal comparison."
     );
   }
@@ -50,12 +50,12 @@ export async function compareDocumentBuffers(
   // 2. Validate both documents using Phase 2 file validator
   const prevVal = validateDocumentFile(previousBuffer, previousFileName);
   if (!prevVal.isValid) {
-    throw new Error(`Previous Version validation failed: ${prevVal.errorMessage}`);
+    throw new DocumentInputError(`Previous Version validation failed: ${prevVal.errorMessage}`);
   }
 
   const currVal = validateDocumentFile(currentBuffer, currentFileName);
   if (!currVal.isValid) {
-    throw new Error(`Current Version validation failed: ${currVal.errorMessage}`);
+    throw new DocumentInputError(`Current Version validation failed: ${currVal.errorMessage}`);
   }
 
   // 3. Extract text from both documents concurrently
@@ -65,15 +65,15 @@ export async function compareDocumentBuffers(
   ]);
 
   if (!prevExtracted.rawText || prevExtracted.rawText.trim().length === 0) {
-    throw new Error("Previous Version is empty or contains no extractable text.");
+    throw new DocumentInputError("Previous Version is empty or contains no extractable text.");
   }
   if (!currExtracted.rawText || currExtracted.rawText.trim().length === 0) {
-    throw new Error("Current Version is empty or contains no extractable text.");
+    throw new DocumentInputError("Current Version is empty or contains no extractable text.");
   }
 
   // Check normalized text equality
   if (prevExtracted.rawText.trim() === currExtracted.rawText.trim()) {
-    throw new Error(
+    throw new DocumentInputError(
       "The text content of both files is completely identical. Please upload two distinct document revisions to compare."
     );
   }
@@ -95,10 +95,10 @@ export async function compareDocumentBuffers(
   );
 
   if (previousClauses.length === 0) {
-    throw new Error("Failed to identify any distinct clauses in Previous Version.");
+    throw new DocumentInputError("Failed to identify any distinct clauses in Previous Version.");
   }
   if (currentClauses.length === 0) {
-    throw new Error("Failed to identify any distinct clauses in Current Version.");
+    throw new DocumentInputError("Failed to identify any distinct clauses in Current Version.");
   }
 
   // 6. Detect jurisdictions
@@ -119,8 +119,14 @@ export async function compareDocumentBuffers(
   // 7. Match clauses semantically
   const matchedPairs = matchClausesSemantically(previousClauses, currentClauses);
 
-  // 8. Analyze semantic differences
-  const rawChanges = analyzeAllClauseDifferences(matchedPairs);
+  // 8. Analyze semantic differences. The India-specific statutory narrative (Indian Contract Act,
+  // Copyright Act, Arbitration and Conciliation Act) is only surfaced when the current document is
+  // actually detected as Indian-governed; other jurisdictions get jurisdiction-neutral explanations
+  // instead of an inapplicable Indian legal conclusion.
+  const rawChanges = analyzeAllClauseDifferences(
+    matchedPairs,
+    isIndianJurisdiction(currJurisdiction)
+  );
 
   // 9. Integrate legal context & Evidence Chains
   const changes = integrateLegalContext(rawChanges, jurisdictionComparison);

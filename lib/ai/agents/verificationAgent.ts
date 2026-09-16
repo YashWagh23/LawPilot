@@ -123,15 +123,28 @@ export function runHardVerificationGate(
   }
 
   // CHECK 3: Jurisdiction check
+  // "general"/"unknown"/empty targets fall back to the generic US baseline (Delaware/federal)
+  // sources without penalty, since no specific jurisdiction was ever asserted. A document that
+  // *does* assert a specific, different jurisdiction (e.g. "california", "united kingdom") must
+  // not be silently treated as a Delaware/federal match — that would mislabel wrong-jurisdiction
+  // citations as verified.
+  const targetIsGenericOrUS =
+    targetJurisdiction === "general" ||
+    targetJurisdiction === "unknown" ||
+    targetJurisdiction.trim().length === 0 ||
+    targetJurisdiction.includes("delaware") ||
+    targetJurisdiction.includes("federal") ||
+    targetJurisdiction.includes("united states");
+
   const hasJurisdictionMatch = verifiedSources.some((s) => {
     const sJur = s.jurisdiction.toLowerCase();
-    return (
-      sJur.includes(targetJurisdiction) ||
-      targetJurisdiction.includes(sJur) ||
-      sJur.includes("delaware") || // demo baseline support
-      sJur.includes("federal") ||
-      sJur.includes("united states")
-    );
+    if (sJur.includes(targetJurisdiction) || targetJurisdiction.includes(sJur)) {
+      return true;
+    }
+    if (targetIsGenericOrUS && (sJur.includes("delaware") || sJur.includes("federal") || sJur.includes("united states"))) {
+      return true;
+    }
+    return false;
   });
 
   if (!hasJurisdictionMatch && targetJurisdiction !== "general") {
@@ -323,7 +336,8 @@ export async function verifyAndAssembleEvidence(
           (s.relevance.toLowerCase().includes("copyright") ||
             s.relevance.toLowerCase().includes("invention") ||
             s.title.includes("17"))) ||
-        (catLower.includes("arbitrat") && s.relevance.toLowerCase().includes("arbitrat")) ||
+        ((catLower.includes("arbitrat") || catLower.includes("dispute")) &&
+          s.relevance.toLowerCase().includes("arbitrat")) ||
         (catLower.includes("notice") && s.relevance.toLowerCase().includes("notice")) ||
         s.notes?.includes(finding.id)
     );
@@ -332,6 +346,14 @@ export async function verifyAndAssembleEvidence(
       relatedSources = input.sources.filter((s) => {
         const sTitle = s.title.toLowerCase();
         const sRel = s.relevance.toLowerCase();
+        if (
+          clauseTextLower.includes("arbitrat") ||
+          clauseTextLower.includes("dispute resolution") ||
+          titleLower.includes("arbitrat") ||
+          titleLower.includes("dispute")
+        ) {
+          return sRel.includes("arbitrat") || sTitle.includes("arbitrat");
+        }
         if (
           clauseTextLower.includes("non-compete") ||
           clauseTextLower.includes("competing business") ||
@@ -358,9 +380,10 @@ export async function verifyAndAssembleEvidence(
       });
     }
 
-    if (relatedSources.length === 0 && input.sources.length > 0) {
-      relatedSources = [input.sources[0]];
-    }
+    // Note: deliberately no longer falls back to an arbitrary/first available source when no
+    // category or content match is found. Attaching an unrelated legal source and letting it flow
+    // through the verification gate as "verified" would misrepresent evidence-chain grounding.
+    // An empty relatedSources here correctly yields "insufficient_context" below.
 
     // Filter claims associated with this finding
     const candidateClaims = (input.claims || []).filter(
@@ -383,12 +406,15 @@ export async function verifyAndAssembleEvidence(
       });
     }
 
-    // Run the 10-point hard verification gate
+    // Run the 10-point hard verification gate. When no relevant source was found for this
+    // specific finding, pass an empty source list rather than the entire unfiltered source pool —
+    // the gate correctly reports "insufficient_context" for an empty list, whereas passing every
+    // available source would let it pick an arbitrary, unrelated "verified" citation.
     const gateResult = runHardVerificationGate(
       finding,
       clause,
       candidateClaims,
-      relatedSources.length > 0 ? relatedSources : input.sources,
+      relatedSources,
       input.jurisdiction || input.governingLaw || "Delaware"
     );
 

@@ -149,7 +149,7 @@ export default function WorkspacePage() {
         <div className="flex items-center gap-4 text-xs font-medium text-slate-700 dark:text-slate-300 shrink-0">
           <span className="flex items-center gap-1.5">
             <FileCheck className="w-3.5 h-3.5 text-blue-500" />
-            3 Matters Cataloged
+            Zero-Auth, Local-First
           </span>
           <span>·</span>
           <span className="flex items-center gap-1.5">

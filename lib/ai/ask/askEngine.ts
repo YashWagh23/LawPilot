@@ -11,7 +11,7 @@ import type {
 } from "@/types/ask";
 import {
   ASK_LAWPILOT_SYSTEM_PROMPT,
-  type AskAnswerOutput,
+  AskAnswerSchema,
 } from "@/lib/ai/prompts/askPrompts";
 import { buildAskContext, sanitizeUserQuestion } from "./contextBuilder";
 import { classifyQuestion } from "./questionClassifier";
@@ -554,7 +554,14 @@ Respond ONLY in valid JSON matching this exact structure:
 
       const rawText = response.text?.trim();
       if (rawText) {
-        const parsed = JSON.parse(rawText) as AskAnswerOutput;
+        const jsonCandidate: unknown = JSON.parse(rawText);
+        const validation = AskAnswerSchema.safeParse(jsonCandidate);
+        if (!validation.success) {
+          throw new Error(
+            `Gemini returned a response that did not match the expected Ask LawPilot schema: ${validation.error.message}`
+          );
+        }
+        const parsed = validation.data;
 
         // Build citations from report
         const citations: AskAnswerCitation[] = [];

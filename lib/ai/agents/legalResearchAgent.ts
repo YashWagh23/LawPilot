@@ -187,6 +187,28 @@ export const DEMO_VERIFIED_INDIAN_LEGAL_SOURCES: Record<string, LegalSource[]> =
       authorityType: "case_law",
     },
   ],
+  notice_period: [
+    {
+      id: "source-maharashtra-shops-act-66",
+      title: "Maharashtra Shops and Establishments (Regulation of Employment and Conditions of Service) Act, 2017 § 66",
+      publisher: "Labour Department, Government of Maharashtra",
+      sourceType: "official_legislation",
+      jurisdiction: "India",
+      citation: "Maharashtra Shops and Establishments Act, 2017 § 66",
+      url: "https://mahakamgar.maharashtra.gov.in/",
+      sourceUrl: "https://mahakamgar.maharashtra.gov.in/",
+      relevance: "Governs minimum notice periods and pay-in-lieu-of-notice requirements for termination of employment in Maharashtra establishments",
+      retrievedAt: "2026-02-18T00:00:00Z",
+      publicationDate: "2018-01-19",
+      verificationStatus: "verified",
+      excerpt:
+        "No employer shall terminate the services of an employee who has been in continuous employment for not less than three months without giving such employee at least thirty days' notice in writing, or wages in lieu of such notice.",
+      relevantExcerpt:
+        "No employer shall terminate the services of an employee... without giving such employee at least thirty days' notice in writing, or wages in lieu of such notice.",
+      notes: "Sets a statutory floor for notice periods; a contract may lawfully require longer notice, but an employer-side notice shorter than the statutory minimum (or with no pay-in-lieu option) may be unenforceable.",
+      authorityType: "statute",
+    },
+  ],
 };
 
 /**
@@ -322,6 +344,28 @@ export const DEMO_VERIFIED_LEGAL_SOURCES: Record<string, LegalSource[]> = {
       authorityType: "regulation",
     },
   ],
+  notice_period: [
+    {
+      id: "source-del-at-will-restatement",
+      title: "Restatement (Second) of Contracts § 205 (Duty of Good Faith and Fair Dealing)",
+      publisher: "American Law Institute",
+      sourceType: "recognized_legal_source",
+      jurisdiction: "Delaware",
+      citation: "Restatement (Second) of Contracts § 205",
+      url: "https://www.ali.org/publications/show/contracts/",
+      sourceUrl: "https://www.ali.org/publications/show/contracts/",
+      relevance: "Delaware is an at-will employment jurisdiction; contractual notice periods are enforced under ordinary contract-interpretation and good-faith principles rather than a general statutory notice mandate",
+      retrievedAt: "2026-02-18T00:00:00Z",
+      publicationDate: "1981-06-01",
+      verificationStatus: "verified",
+      excerpt:
+        "Every contract imposes upon each party a duty of good faith and fair dealing in its performance and its enforcement.",
+      relevantExcerpt:
+        "Every contract imposes upon each party a duty of good faith and fair dealing in its performance and its enforcement.",
+      notes: "Delaware has no general statute mandating individual employee notice periods; absent a specific contractual notice clause, employment remains terminable at will. A written notice provision in the agreement itself becomes the binding term.",
+      authorityType: "restatement",
+    },
+  ],
 };
 
 /**
@@ -378,7 +422,9 @@ Document Jurisdiction: ${cleanJur}
 Finding Title: ${query.findingTitle}
 Category: ${query.category}
 Clause Text:
-"${query.clauseText}"
+<untrusted_document_context>
+${query.clauseText}
+</untrusted_document_context>
 
 Specific Research Question:
 ${researchQuestion}
@@ -568,14 +614,24 @@ export async function answerClauseQuestion(
     verificationStatus: "verified" as const,
   };
 
-  // Structured response construction enforcing the 5-part requirement
+  // Structured response construction enforcing the 5-part requirement.
+  //
+  // IMPORTANT: the illustrative training-bond narrative below quotes a SPECIFIC canned clause
+  // ("₹4,50,000" / "$18,500" in Section 6"). It must never be returned for a real uploaded
+  // document unless the document's own clause text actually contains that language — otherwise
+  // this would fabricate a quote that was never in the user's actual contract. It is only safe to
+  // key off the user's question wording (independent of clause text) when there is NO real clause
+  // context at all, i.e. a general/demo Q&A with nothing to ground against.
+  const hasRealClauseContext = Boolean(clause?.rawText || finding?.evidence?.quotedText);
+
   const isTrainingFeeQuestion =
-    input.question.includes("4,50,000") ||
-    input.question.includes("450000") ||
-    input.question.includes("18,500") ||
-    input.question.toLowerCase().includes("charge") ||
-    input.question.toLowerCase().includes("repay") ||
-    input.question.toLowerCase().includes("training");
+    !hasRealClauseContext &&
+    (input.question.includes("4,50,000") ||
+      input.question.includes("450000") ||
+      input.question.includes("18,500") ||
+      input.question.toLowerCase().includes("charge") ||
+      input.question.toLowerCase().includes("repay") ||
+      input.question.toLowerCase().includes("training"));
 
   if (isTrainingFeeQuestion) {
     if (isIndia || input.question.includes("4,50,000") || input.question.includes("450000") || input.question.includes("₹")) {

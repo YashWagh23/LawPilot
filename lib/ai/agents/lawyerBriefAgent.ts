@@ -40,6 +40,8 @@ export async function generateDetailedLawyerBrief(
                 text: `${LAWYER_BRIEF_SYSTEM_PROMPT}
 
 Generate a 1-2 page DetailedLawyerBrief for legal counsel:
+
+<untrusted_document_context>
 Document Title: ${input.documentTitle}
 Document Type: ${input.documentType}
 Date: ${input.date || "Not specified"}
@@ -75,6 +77,7 @@ ${JSON.stringify(
 
 IMPORTANT DATES:
 ${JSON.stringify(input.keyDates || [], null, 2)}
+</untrusted_document_context>
 
 Return a single valid JSON object adhering strictly to the DetailedLawyerBrief schema.`,
               },

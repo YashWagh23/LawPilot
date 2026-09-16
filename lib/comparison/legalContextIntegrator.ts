@@ -171,11 +171,17 @@ export function integrateLegalContext(
       },
       legalClaims: [legalClaim],
       legalSources: sources,
+      // Status is "partially_verified" (not "verified") because this pairing is a heuristic,
+      // clause-title keyword match to a curated authority rather than a clause-by-clause
+      // verification pass — the citations themselves are real, but their applicability to this
+      // specific revision has not been individually confirmed.
       verification: {
-        status: "verified",
+        status: "partially_verified",
         verifiedAt: new Date().toISOString(),
-        issues: [],
-        confidenceLevel: "high",
+        issues: [
+          "Legal context matched by clause-title keyword heuristic, not a full per-clause verification pass.",
+        ],
+        confidenceLevel: "moderate",
       },
       uncertainties: [uncertaintyText],
       nextSteps: [

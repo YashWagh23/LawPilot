@@ -6,6 +6,25 @@
 
 export const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB
 
+/**
+ * Rejects a request based on its declared `Content-Length` header before the body is read into
+ * memory (e.g. before `request.formData()`), when the header is present and honest. This does not
+ * stop a client that lies about Content-Length — the Node.js runtime on Vercel still has to read
+ * whatever bytes actually arrive — but it avoids unnecessarily buffering an entire oversized body
+ * for the (much more common) case of a legitimate/well-behaved client, and gives a fast, cheap
+ * rejection before any multipart parsing work begins.
+ */
+export function isDeclaredContentLengthTooLarge(
+  request: { headers: { get(name: string): string | null } },
+  maxTotalBytes: number
+): boolean {
+  const declared = request.headers.get("content-length");
+  if (!declared) return false;
+  const declaredBytes = Number(declared);
+  if (!Number.isFinite(declaredBytes) || declaredBytes < 0) return false;
+  return declaredBytes > maxTotalBytes;
+}
+
 export type SupportedFileType = "pdf" | "docx" | "txt";
 
 export interface ValidationSuccess {
@@ -27,6 +46,19 @@ export interface ValidationFailure {
 }
 
 export type FileValidationResult = ValidationSuccess | ValidationFailure;
+
+/**
+ * Marks an error as a known, expected client-input problem (bad/empty/unsupported/corrupt
+ * document) rather than an unexpected server-side failure. API routes use this distinction to
+ * return the correct HTTP status code (400 vs 500) instead of treating every exception as a
+ * client error.
+ */
+export class DocumentInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DocumentInputError";
+  }
+}
 
 /**
  * Sanitizes an untrusted filename, stripping directory traversal sequences,
@@ -80,21 +112,44 @@ function verifyMagicBytes(buffer: Buffer): SupportedFileType | null {
     return "docx";
   }
 
-  // TXT check: inspect first 512 bytes for absence of null bytes
-  const sampleLength = Math.min(buffer.length, 512);
+  // TXT check: the sample must be free of null bytes AND decode as text with a high ratio of
+  // printable/whitespace characters. A null-byte-only check lets many binary formats (which
+  // happen to have no 0x00 in their first bytes) masquerade as "text" and flow into the analysis
+  // pipeline as garbage; requiring mostly-printable content rejects that class of file.
+  const sampleLength = Math.min(buffer.length, 2048);
+  const sample = buffer.subarray(0, sampleLength);
+
   let hasNull = false;
-  for (let i = 0; i < sampleLength; i++) {
-    if (buffer[i] === 0x00) {
+  let printableOrWhitespaceCount = 0;
+  for (let i = 0; i < sample.length; i++) {
+    const byte = sample[i];
+    if (byte === 0x00) {
       hasNull = true;
       break;
     }
+    // Printable ASCII (0x20-0x7E), or common whitespace (tab, LF, CR), or high bytes that are
+    // plausibly part of a valid UTF-8 multi-byte sequence (extended Latin/Unicode text).
+    if (
+      (byte >= 0x20 && byte <= 0x7e) ||
+      byte === 0x09 ||
+      byte === 0x0a ||
+      byte === 0x0d ||
+      byte >= 0x80
+    ) {
+      printableOrWhitespaceCount++;
+    }
   }
 
-  if (!hasNull) {
-    return "txt";
+  if (hasNull || sample.length === 0) {
+    return null;
   }
 
-  return null;
+  const printableRatio = printableOrWhitespaceCount / sample.length;
+  if (printableRatio < 0.95) {
+    return null;
+  }
+
+  return "txt";
 }
 
 /**

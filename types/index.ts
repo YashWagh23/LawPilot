@@ -442,6 +442,9 @@ export interface AnalysisReport {
   documentId: string;
   metadata: DocumentMetadata;
   createdAt: string;
+  // `jurisdiction` and `jurisdictionContext` are intentionally kept in sync (same value) by the
+  // orchestrator: `jurisdiction` is the original field name, `jurisdictionContext` is what most
+  // downstream consumers (askEngine, contextBuilder, AnalysisClientView) read. Always set both.
   jurisdiction?: JurisdictionContext;
   jurisdictionContext?: JurisdictionContext;
   status: "completed" | "processing" | "needs_clarification" | "error";

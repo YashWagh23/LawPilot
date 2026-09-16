@@ -1,5 +1,78 @@
+import { z } from "zod";
 import { getGeminiClient, GEMINI_CONFIG } from "@/lib/ai/gemini";
 import type { SituationAssessment } from "@/types";
+
+/**
+ * Validates the live Gemini Situation Navigator response. There is no uploaded document to
+ * ground this output against (unlike the document-analysis pipeline's hard verification gate),
+ * so this schema is the only structural safeguard against malformed or partial model output
+ * being trusted as a real assessment.
+ */
+const SituationQuestionSchema = z.object({
+  id: z.string(),
+  question: z.string().min(3),
+  whyItMatters: z.string().min(3),
+  responseType: z.enum(["text", "choice", "date", "boolean"]),
+  options: z.array(z.string()).nullish(),
+});
+
+const SituationAssessmentSchema = z.object({
+  id: z.string(),
+  userPrompt: z.string(),
+  // .nullish() (not just .optional()) because Gemini's structured JSON output commonly emits
+  // `null` for an inapplicable optional field rather than omitting the key entirely.
+  situationSummary: z.string().min(3).nullish(),
+  identifiedCategory: z.enum([
+    "employment_dispute",
+    "landlord_tenant",
+    "consumer_contract",
+    "freelance_unpaid_invoice",
+    "intellectual_property",
+    "business_partnership",
+    "insufficient_information",
+    "other",
+  ]),
+  jurisdictionEstimate: z.string().nullish(),
+  disclaimer: z.string().nullish(),
+  followUpQuestions: z.array(SituationQuestionSchema).max(3).default([]),
+  missingFacts: z.array(z.string()).default([]),
+  relevantLegalConcepts: z
+    .array(
+      z.object({
+        concept: z.string().min(1),
+        plainEnglishExplanation: z.string().min(1),
+        caveat: z.string().min(1),
+      })
+    )
+    .default([]),
+  possibleOptions: z
+    .array(
+      z.object({
+        title: z.string().min(1),
+        pros: z.array(z.string()).default([]),
+        risks: z.array(z.string()).default([]),
+        reversibility: z.enum(["high", "moderate", "low"]),
+      })
+    )
+    .default([]),
+  evidenceToCollect: z.array(z.string()).default([]),
+  questionsForLawyer: z.array(z.string()).default([]),
+  actionChecklist: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string().min(1),
+        description: z.string().default(""),
+        priority: z.enum(["high", "medium", "low"]),
+        partyResponsible: z.string().default("User"),
+        isReversible: z.boolean().default(true),
+        recommendedTimeline: z.string().default("As soon as practical"),
+        practicalAdvice: z.string().default(""),
+      })
+    )
+    .default([]),
+  createdAt: z.string(),
+});
 
 export const MAX_SITUATION_INPUT_LENGTH = 4000;
 
@@ -806,17 +879,34 @@ Return ONLY a valid JSON object matching this exact structure:
       return generateDeterministicSituationAssessment(sanitized);
     }
 
-    const parsed = JSON.parse(responseText) as SituationAssessment;
-
-    // Sanitize safety
-    if (parsed && parsed.identifiedCategory) {
-      if (!parsed.situationSummary) {
-        parsed.situationSummary = `Factual situation analysis regarding ${parsed.identifiedCategory.replace(/_/g, " ")}.`;
-      }
-      return parsed;
+    const jsonCandidate: unknown = JSON.parse(responseText);
+    const validation = SituationAssessmentSchema.safeParse(jsonCandidate);
+    if (!validation.success) {
+      console.warn(
+        "Gemini situation analysis returned a response that did not match the expected schema, falling back to deterministic engine:",
+        validation.error.message
+      );
+      return generateDeterministicSituationAssessment(sanitized);
     }
 
-    return generateDeterministicSituationAssessment(sanitized);
+    const parsed = validation.data;
+
+    // Normalize schema-level `null` (accepted above because Gemini sends it for inapplicable
+    // optional fields) down to `undefined` to match the SituationAssessment type exactly.
+    const situationSummary =
+      parsed.situationSummary ||
+      `Factual situation analysis regarding ${parsed.identifiedCategory.replace(/_/g, " ")}.`;
+
+    return {
+      ...parsed,
+      situationSummary,
+      jurisdictionEstimate: parsed.jurisdictionEstimate ?? undefined,
+      disclaimer: parsed.disclaimer ?? undefined,
+      followUpQuestions: parsed.followUpQuestions.map((q) => ({
+        ...q,
+        options: q.options ?? undefined,
+      })),
+    };
   } catch (err) {
     console.warn("Gemini situation analysis failed or timed out, falling back to deterministic engine:", err);
     return generateDeterministicSituationAssessment(sanitized);

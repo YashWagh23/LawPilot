@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sanitizeFileName, MAX_FILE_SIZE_BYTES } from "@/lib/documents/fileValidator";
+import {
+  sanitizeFileName,
+  MAX_FILE_SIZE_BYTES,
+  DocumentInputError,
+  isDeclaredContentLengthTooLarge,
+} from "@/lib/documents/fileValidator";
+
+// Allows for one file plus multipart boundaries/headers and small non-file form fields
+// (e.g. "role", "depth").
+const MAX_REQUEST_BYTES = MAX_FILE_SIZE_BYTES + 64 * 1024;
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import { saveCachedAnalysisReport } from "@/lib/storage/reportStore";
 
@@ -30,6 +39,17 @@ export async function POST(req: NextRequest) {
 
     // Case 2: Multipart form file upload
     if (contentType.includes("multipart/form-data")) {
+      // Reject early on a declared oversized body before it is fully buffered by formData().
+      if (isDeclaredContentLengthTooLarge(req, MAX_REQUEST_BYTES)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Uploaded file exceeds maximum allowed size of ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB.`,
+          },
+          { status: 413 }
+        );
+      }
+
       const formData = await req.formData();
       const file = formData.get("file") as File | null;
 
@@ -76,12 +96,18 @@ export async function POST(req: NextRequest) {
     );
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to analyze document";
+    // Known, expected input-validation failures (unsupported/corrupt/empty documents) are the
+    // client's fault (400). Anything else is an unexpected server-side failure (500) — treating
+    // every exception as 400 would hide real bugs and AI/provider outages from error monitoring.
+    const isClientInputError = err instanceof DocumentInputError;
     return NextResponse.json(
       {
         success: false,
-        error: errorMsg.slice(0, 300),
+        error: isClientInputError
+          ? errorMsg.slice(0, 300)
+          : "Document analysis failed due to an unexpected server error. Please try again.",
       },
-      { status: 400 }
+      { status: isClientInputError ? 400 : 500 }
     );
   }
 }

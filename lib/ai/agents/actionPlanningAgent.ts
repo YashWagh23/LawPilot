@@ -59,6 +59,7 @@ Summary: ${input.documentSummary}
 Jurisdiction: ${input.jurisdiction || "Unspecified"}
 Parties: ${(input.parties || []).join(", ") || "Unspecified"}
 
+<untrusted_document_context>
 FINDINGS:
 ${JSON.stringify(
   input.findings.map((f) => ({
@@ -76,6 +77,7 @@ ${JSON.stringify(
 
 KEY DATES & DEADLINES:
 ${JSON.stringify(input.keyDates || [], null, 2)}
+</untrusted_document_context>
 
 Return a single valid JSON object adhering strictly to the ActionPlan schema.`,
               },
