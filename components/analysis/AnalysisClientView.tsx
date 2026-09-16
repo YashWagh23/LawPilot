@@ -201,7 +201,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
               className={`px-4 py-2.5 text-xs border-b-2 transition-all cursor-pointer shrink-0 min-h-[44px] ${
                 activeTab === tab.id
                   ? "border-slate-900 dark:border-white font-semibold text-slate-900 dark:text-white"
-                  : "border-transparent font-medium text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"
+                  : "border-transparent font-medium text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
               {tab.label}
@@ -233,16 +233,17 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                 const isActive = activeFindingId === finding.id;
 
                 return (
-                  <button
+                  <div
                     key={finding.id}
-                    type="button"
-                    onClick={() => setActiveFindingId(finding.id)}
+                    className="lp-finding-row bg-white dark:bg-slate-900"
                     data-active={isActive}
-                    aria-pressed={isActive}
-                    aria-label={`${finding.severityLabel} severity finding: ${finding.title}`}
-                    className="lp-finding-row w-full text-left p-4 sm:p-5 bg-white dark:bg-slate-900"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFindingForModal(finding)}
+                      aria-pressed={isActive}
+                      className="w-full text-left p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
                       {/* Left: Severity + Title + Summary */}
                       <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -257,7 +258,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                           >
                             {finding.severityLabel}
                           </span>
-                          <span className="text-xs font-mono text-slate-400">
+                          <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                             {finding.clauseReference}
                           </span>
                           {finding.keyValue && (
@@ -267,33 +268,23 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                           )}
                         </div>
 
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                        {/* Use <p> not <h3> — findings are list items, not section headings */}
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
                           {finding.title}
-                        </h3>
+                        </p>
 
                         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed lp-text-pretty">
                           {finding.summary}
                         </p>
                       </div>
 
-                      {/* Right: Action */}
-                      <div className="shrink-0">
-                        <span
-                          role="button"
-                          tabIndex={-1}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedFindingForModal(finding);
-                          }}
-                          aria-label={`View details: why ${finding.title} matters`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer py-1"
-                        >
-                          Why this matters
-                          <ArrowRight className="w-3 h-3" />
-                        </span>
+                      {/* Right: Affordance */}
+                      <div className="shrink-0 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                        Why this matters
+                        <ArrowRight className="w-3 h-3" />
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 );
               })}
             </div>

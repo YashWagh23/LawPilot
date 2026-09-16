@@ -38,7 +38,7 @@ export function Footer() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-xs text-slate-400 hover:text-slate-900 dark:text-slate-500 dark:hover:text-white transition-colors"
+                    className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -50,11 +50,11 @@ export function Footer() {
 
         {/* Disclaimer */}
         <div className="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed max-w-2xl lp-text-pretty">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl lp-text-pretty">
             <strong className="font-medium text-slate-500 dark:text-slate-400">Notice:</strong>{" "}
             {GLOBAL_LEGAL_DISCLAIMER}
           </p>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+          <p className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
             © {new Date().getFullYear()} LawPilot
           </p>
         </div>
