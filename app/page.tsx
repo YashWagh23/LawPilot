@@ -18,28 +18,19 @@ export default function HomePage() {
       {/* Subtle gradient backdrop */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-white dark:from-[#0C0E14] dark:via-[#0C0E14] dark:to-[#0C0E14]"
+          className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-slate-50 via-white to-white dark:from-[#0C0E14] dark:via-[#0C0E14] dark:to-[#0C0E14]"
         />
 
-        {/* Dot-grid texture — 1px dots, 32px pitch, nearly invisible */}
+        {/* Dot-grid texture — 1px dots, 32px pitch, subconscious */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 lp-hero-grid"
+          className="pointer-events-none absolute inset-0 z-0 lp-hero-grid"
         />
 
-        {/* Edge vignette — darkens periphery, keeps center clean */}
+        {/* ColorBends — institutional palette, kept strictly behind headline */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse 80% 65% at 50% 35%, transparent 35%, rgba(15,23,42,0.04) 100%)",
-          }}
-        />
-
-        {/* ColorBends — institutional palette, raised to perceptible but calm */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.32] dark:opacity-[0.50] transition-opacity duration-700"
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-[0.30] dark:opacity-[0.45] transition-opacity duration-700"
         >
           <ColorBends
             colors={["#6366F1", "#475569", "#334155"]}
@@ -60,7 +51,19 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pt-20 md:pb-24">
+        {/* Text contrast protection wash — guarantees maximum readability over moving shader */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_65%_55%_at_50%_40%,rgba(255,255,255,0.42)_0%,transparent_75%)] dark:bg-[radial-gradient(ellipse_65%_55%_at_50%_40%,rgba(12,14,20,0.48)_0%,transparent_75%)]"
+        />
+
+        {/* Edge vignette — soft perimeter depth, dark-mode calibrated */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_80%_65%_at_50%_35%,transparent_40%,rgba(15,23,42,0.035)_100%)] dark:bg-[radial-gradient(ellipse_80%_65%_at_50%_35%,transparent_35%,rgba(0,0,0,0.50)_100%)]"
+        />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pt-20 md:pb-24">
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight text-slate-950 dark:text-white leading-[1.08] lp-text-balance lp-animate-fade-up">
             Legal documents weren&apos;t{" "}

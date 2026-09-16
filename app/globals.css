@@ -404,21 +404,21 @@ html.theme-transitioning *::after {
    All effects are additive and restrained.
    ============================================================ */
 
-/* Shared fine dot-grid: 1px dots on a 28px pitch, nearly invisible */
+/* Shared fine dot-grid: 1px dots on a 28px pitch, subconscious texture */
 .lp-dot-grid {
   background-image: radial-gradient(
     circle,
-    rgba(100, 116, 139, 0.18) 1px,
+    rgba(100, 116, 139, 0.065) 1px,
     transparent 1px
   );
   background-size: 28px 28px;
 }
 
-/* Dark-mode dot grid — lighter dots on dark surface */
+/* Dark-mode dot grid — lighter dots on dark surface, whisper quiet */
 .dark .lp-dot-grid {
   background-image: radial-gradient(
     circle,
-    rgba(148, 163, 184, 0.10) 1px,
+    rgba(148, 163, 184, 0.045) 1px,
     transparent 1px
   );
 }
@@ -439,32 +439,33 @@ html.theme-transitioning *::after {
   background: radial-gradient(
     ellipse 80% 70% at 50% 30%,
     transparent 40%,
-    rgba(0, 0, 0, 0.25) 100%
+    rgba(0, 0, 0, 0.45) 100%
   );
 }
 
 /* ── Scene tonal backgrounds ───────────────────────────────
-   Each scene alternates between white-based and slate-50 base
-   with a faint accent-tinted radial bloom at one corner.
-   This gives spatial variety without full-bleed color. */
+   Each scene alternates between slate-50 and white base
+   with a faint institutional indigo/slate bloom at one corner.
+   Dominant identity is strictly Indigo/Slate across all scenes;
+   emerald and amber remain purely functional within the UI cards. */
 
-/* Scene 01 — Understand (white base, faint indigo bloom top-right) */
+/* Scene 01 — Understand (slate-50 base, faint indigo bloom top-right) */
 .lp-scene-01 {
   background-color: #F8FAFC;
   background-image:
     radial-gradient(
       ellipse 55% 45% at 90% 8%,
-      rgba(99, 102, 241, 0.055) 0%,
+      rgba(99, 102, 241, 0.038) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 40% 35% at 5% 95%,
-      rgba(71, 85, 105, 0.04) 0%,
+      rgba(71, 85, 105, 0.030) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(100, 116, 139, 0.13) 1px,
+      rgba(100, 116, 139, 0.065) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
@@ -474,39 +475,39 @@ html.theme-transitioning *::after {
   background-image:
     radial-gradient(
       ellipse 55% 45% at 90% 8%,
-      rgba(99, 102, 241, 0.07) 0%,
+      rgba(99, 102, 241, 0.045) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 40% 35% at 5% 95%,
-      rgba(51, 65, 85, 0.08) 0%,
+      rgba(51, 65, 85, 0.055) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(148, 163, 184, 0.07) 1px,
+      rgba(148, 163, 184, 0.045) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
 }
 
-/* Scene 02 — Verify (very slight warm-slate, bloom top-left) */
+/* Scene 02 — Verify (white base, faint slate top-left, faint indigo bottom-right) */
 .lp-scene-02 {
   background-color: #FFFFFF;
   background-image:
     radial-gradient(
       ellipse 50% 50% at 10% 5%,
-      rgba(71, 85, 105, 0.045) 0%,
+      rgba(71, 85, 105, 0.032) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 35% 30% at 92% 90%,
-      rgba(99, 102, 241, 0.04) 0%,
+      rgba(99, 102, 241, 0.032) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(100, 116, 139, 0.13) 1px,
+      rgba(100, 116, 139, 0.065) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
@@ -516,39 +517,39 @@ html.theme-transitioning *::after {
   background-image:
     radial-gradient(
       ellipse 50% 50% at 10% 5%,
-      rgba(51, 65, 85, 0.10) 0%,
+      rgba(51, 65, 85, 0.055) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 35% 30% at 92% 90%,
-      rgba(99, 102, 241, 0.06) 0%,
+      rgba(99, 102, 241, 0.040) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(148, 163, 184, 0.07) 1px,
+      rgba(148, 163, 184, 0.045) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
 }
 
-/* Scene 03 — Act (slate-50 base, faint emerald-to-slate bloom) */
+/* Scene 03 — Act (slate-50 base, faint slate top-right, faint indigo bottom-left) */
 .lp-scene-03 {
   background-color: #F8FAFC;
   background-image:
     radial-gradient(
-      ellipse 45% 50% at 95% 10%,
-      rgba(16, 185, 129, 0.04) 0%,
+      ellipse 45% 50% at 92% 10%,
+      rgba(71, 85, 105, 0.032) 0%,
       transparent 70%
     ),
     radial-gradient(
-      ellipse 50% 40% at 0% 85%,
-      rgba(99, 102, 241, 0.04) 0%,
+      ellipse 50% 40% at 5% 85%,
+      rgba(99, 102, 241, 0.035) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(100, 116, 139, 0.13) 1px,
+      rgba(100, 116, 139, 0.065) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
@@ -557,40 +558,40 @@ html.theme-transitioning *::after {
   background-color: #0A0C12;
   background-image:
     radial-gradient(
-      ellipse 45% 50% at 95% 10%,
-      rgba(16, 185, 129, 0.05) 0%,
+      ellipse 45% 50% at 92% 10%,
+      rgba(51, 65, 85, 0.055) 0%,
       transparent 70%
     ),
     radial-gradient(
-      ellipse 50% 40% at 0% 85%,
-      rgba(99, 102, 241, 0.06) 0%,
+      ellipse 50% 40% at 5% 85%,
+      rgba(99, 102, 241, 0.045) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(148, 163, 184, 0.07) 1px,
+      rgba(148, 163, 184, 0.045) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
 }
 
-/* Scene 04 — Compare (white base, amber-faint bloom) */
+/* Scene 04 — Compare (white base, faint indigo top-left, faint slate bottom-right) */
 .lp-scene-04 {
   background-color: #FFFFFF;
   background-image:
     radial-gradient(
       ellipse 50% 40% at 8% 10%,
-      rgba(245, 158, 11, 0.04) 0%,
+      rgba(99, 102, 241, 0.032) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 40% 35% at 90% 88%,
-      rgba(99, 102, 241, 0.04) 0%,
+      rgba(71, 85, 105, 0.030) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(100, 116, 139, 0.13) 1px,
+      rgba(100, 116, 139, 0.065) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
@@ -600,17 +601,17 @@ html.theme-transitioning *::after {
   background-image:
     radial-gradient(
       ellipse 50% 40% at 8% 10%,
-      rgba(245, 158, 11, 0.05) 0%,
+      rgba(99, 102, 241, 0.040) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 40% 35% at 90% 88%,
-      rgba(99, 102, 241, 0.06) 0%,
+      rgba(51, 65, 85, 0.055) 0%,
       transparent 70%
     ),
     radial-gradient(
       circle,
-      rgba(148, 163, 184, 0.07) 1px,
+      rgba(148, 163, 184, 0.045) 1px,
       transparent 1px
     );
   background-size: auto, auto, 28px 28px;
@@ -620,7 +621,7 @@ html.theme-transitioning *::after {
 .lp-hero-grid {
   background-image: radial-gradient(
     circle,
-    rgba(100, 116, 139, 0.15) 1px,
+    rgba(100, 116, 139, 0.07) 1px,
     transparent 1px
   );
   background-size: 32px 32px;
@@ -628,7 +629,7 @@ html.theme-transitioning *::after {
 .dark .lp-hero-grid {
   background-image: radial-gradient(
     circle,
-    rgba(148, 163, 184, 0.09) 1px,
+    rgba(148, 163, 184, 0.045) 1px,
     transparent 1px
   );
   background-size: 32px 32px;
