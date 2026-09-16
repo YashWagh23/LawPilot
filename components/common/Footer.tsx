@@ -18,7 +18,7 @@ export function Footer() {
                 LawPilot
               </span>
             </Link>
-            <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed max-w-xs lp-text-pretty">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs lp-text-pretty">
               Legal document intelligence. Evidence chains, grounded citations, and practical action planning.
             </p>
           </div>

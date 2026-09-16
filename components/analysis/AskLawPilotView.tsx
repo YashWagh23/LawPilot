@@ -254,7 +254,7 @@ export function AskLawPilotView({
         {/* Suggested questions — text links, not pill buttons */}
         {messages.length === 0 && (
           <div>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-2">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
               Suggested:
             </p>
             <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -290,7 +290,7 @@ export function AskLawPilotView({
                 /* User Message — right-aligned, minimal */
                 <div className="flex justify-end">
                   <div className="max-w-xl space-y-0.5">
-                    <p className="text-[11px] text-slate-400 text-right">You</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 text-right">You</p>
                     <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-lg rounded-tr-sm">
                       <p className="text-sm text-slate-900 dark:text-white leading-relaxed whitespace-pre-wrap">
                         {msg.content}
@@ -301,7 +301,7 @@ export function AskLawPilotView({
               ) : (
                 /* Assistant Message — open layout, no card */
                 <div className="space-y-2">
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">LawPilot</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">LawPilot</p>
 
                   {/* Plain English Answer */}
                   <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap lp-text-pretty">
@@ -314,7 +314,7 @@ export function AskLawPilotView({
                       <button
                         type="button"
                         onClick={() => toggleDetails(msg.id)}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
                       >
                         <span>{expandedDetailsMap[msg.id] ? "Hide sources" : "Show contract quote & legal source"}</span>
                         <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expandedDetailsMap[msg.id] ? "rotate-180" : ""}`} />
@@ -348,7 +348,7 @@ export function AskLawPilotView({
 
                           {msg.structuredAnswer.whatToDoNext && (
                             <div className="space-y-0.5">
-                              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                              <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                                 Recommended next step
                               </p>
                               <p className="text-slate-600 dark:text-slate-300">

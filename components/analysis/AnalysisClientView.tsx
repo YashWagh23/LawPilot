@@ -238,52 +238,67 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                     className="lp-finding-row bg-white dark:bg-slate-900"
                     data-active={isActive}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFindingForModal(finding)}
-                      aria-pressed={isActive}
-                      className="w-full text-left p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                    >
-                      {/* Left: Severity + Title + Summary */}
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                              finding.severityLabel === "HIGH"
-                                ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900"
-                                : finding.severityLabel === "MEDIUM"
-                                ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900"
-                                : "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
-                            }`}
-                          >
-                            {finding.severityLabel}
-                          </span>
-                          <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                            {finding.clauseReference}
-                          </span>
-                          {finding.keyValue && (
-                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                              {finding.keyValue}
+                    {/*
+                     * Two sibling <button> elements — no nesting:
+                     * Left: activates the finding → Document Passage panel updates
+                     * Right: opens the detail modal
+                     * This satisfies both WCAG (no interactive-in-interactive) and product UX.
+                     */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-0">
+                      {/* Left area — sets active finding (updates Document Passage) */}
+                      <button
+                        type="button"
+                        onClick={() => setActiveFindingId(finding.id)}
+                        aria-pressed={isActive}
+                        aria-label={`Select ${finding.severityLabel} severity finding: ${finding.title}`}
+                        className="flex-1 min-w-0 text-left p-4 sm:pl-5 sm:py-5 sm:pr-2"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                finding.severityLabel === "HIGH"
+                                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900"
+                                  : finding.severityLabel === "MEDIUM"
+                                  ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900"
+                                  : "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
+                              }`}
+                            >
+                              {finding.severityLabel}
                             </span>
-                          )}
+                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                              {finding.clauseReference}
+                            </span>
+                            {finding.keyValue && (
+                              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                                {finding.keyValue}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                            {finding.title}
+                          </p>
+
+                          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed lp-text-pretty">
+                            {finding.summary}
+                          </p>
                         </div>
+                      </button>
 
-                        {/* Use <p> not <h3> — findings are list items, not section headings */}
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
-                          {finding.title}
-                        </p>
-
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed lp-text-pretty">
-                          {finding.summary}
-                        </p>
+                      {/* Right area — opens the detail modal */}
+                      <div className="shrink-0 px-4 sm:px-5 pb-3 sm:pb-0">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFindingForModal(finding)}
+                          aria-label={`View full details for: ${finding.title}`}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer py-1"
+                        >
+                          Why this matters
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
                       </div>
-
-                      {/* Right: Affordance */}
-                      <div className="shrink-0 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                        Why this matters
-                        <ArrowRight className="w-3 h-3" />
-                      </div>
-                    </button>
+                    </div>
                   </div>
                 );
               })}
@@ -296,7 +311,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
               <p className="text-sm font-medium text-slate-900 dark:text-white">
                 Ready to take action?
               </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Ask questions in plain English or follow your step-by-step preparation plan.
               </p>
             </div>
