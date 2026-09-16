@@ -4,14 +4,9 @@ import React, { useEffect, useRef } from "react";
 import type { FindingPresentation } from "@/lib/analysis/presentationTransformer";
 import {
   X,
-  AlertTriangle,
-  FileText,
-  HelpCircle,
-  CheckSquare,
-  Sparkles,
   ArrowRight,
   Eye,
-  Scale,
+  Sparkles,
 } from "lucide-react";
 
 interface FindingDetailModalProps {
@@ -109,33 +104,30 @@ export function FindingDetailModal({
         <div className="p-4 sm:p-6 overflow-y-auto space-y-5 sm:space-y-6 divide-y divide-slate-100 dark:divide-slate-800/80">
           {/* Section 1: Why We Flagged This */}
           <div className="space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-              <span>Why We Flagged This</span>
-            </div>
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              Why we flagged this
+            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed lp-text-pretty">
               {finding.whyWeFlagged}
             </p>
           </div>
 
           {/* Section 2: What the Contract Says */}
           <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <FileText className="w-3.5 h-3.5 text-indigo-500" />
-              <span>What the Contract Says</span>
-            </div>
-            <blockquote className="text-xs font-mono bg-slate-50 dark:bg-slate-950/80 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+            <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              What the contract says
+            </p>
+            <blockquote className="lp-quote">
               &ldquo;{finding.whatContractSays}&rdquo;
             </blockquote>
           </div>
 
           {/* Section 3: Why It May Matter */}
           <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <Scale className="w-3.5 h-3.5 text-blue-500" />
-              <span>Why It May Matter</span>
-            </div>
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              Why it may matter
+            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed lp-text-pretty">
               {finding.whyItMayMatter}
             </p>
           </div>
@@ -143,14 +135,13 @@ export function FindingDetailModal({
           {/* Section 4: What to Verify */}
           {finding.whatToVerify.length > 0 && (
             <div className="pt-5 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <HelpCircle className="w-3.5 h-3.5 text-purple-500" />
-                <span>What to Verify</span>
-              </div>
+              <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                What to verify
+              </p>
               <ul className="space-y-1.5">
                 {finding.whatToVerify.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                    <span className="text-purple-500 font-bold mt-0.5">•</span>
+                  <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <span className="text-slate-400 mt-0.5">·</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -161,14 +152,13 @@ export function FindingDetailModal({
           {/* Section 5: What to Do Next */}
           {finding.whatToDoNext.length > 0 && (
             <div className="pt-5 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
-                <span>What to Do Next</span>
-              </div>
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                What to do next
+              </p>
               <ul className="space-y-1.5">
                 {finding.whatToDoNext.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                    <span className="text-emerald-500 font-bold mt-0.5">•</span>
+                  <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <span className="text-emerald-500 mt-0.5">·</span>
                     <span>{item}</span>
                   </li>
                 ))}

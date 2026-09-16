@@ -30,15 +30,13 @@ export function VerifyScene() {
       <div className="w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden motion-reduce:lg:static motion-reduce:lg:h-auto motion-reduce:lg:overflow-visible">
         {/* Section Header */}
         <div className="max-w-2xl mb-8 sm:mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-violet-50 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80 mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-600 animate-pulse" />
-            <span>02 · VERIFY</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-950 dark:text-white leading-[1.1]">
-            LawPilot shows where <br className="hidden sm:inline" />
-            <span className="text-violet-600 dark:text-violet-400">the answer came from.</span>
+          <p className="text-xs font-mono text-slate-400 dark:text-slate-500 mb-4 tracking-wider">
+            02 / Verify
+          </p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-950 dark:text-white leading-[1.08] lp-text-balance">
+            LawPilot shows where the answer came from.
           </h2>
-          <p className="mt-3 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-lg leading-relaxed">
+          <p className="mt-3 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-lg leading-relaxed lp-text-pretty">
             No black-box answers. Findings connect through a transparent chain of verbatim contract quotes to official statutory authorities.
           </p>
         </div>

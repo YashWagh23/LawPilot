@@ -8,13 +8,9 @@ import type {
 } from "@/types/ask";
 import {
   Send,
-  Sparkles,
-  Bot,
-  User,
   Copy,
   Check,
   RotateCcw,
-  ArrowRight,
   ChevronDown,
   FileText,
   Scale,
@@ -57,7 +53,7 @@ export function AskLawPilotView({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Suggested questions tailored to non-lawyers
+  // Suggested questions — phrased as text links, not pills
   const suggestedQuestions = [
     "Why was this flagged?",
     "What does this clause mean?",
@@ -178,14 +174,14 @@ export function AskLawPilotView({
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Header — open, no card wrapping */}
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              Ask about your document
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Ask about {report.metadata.title}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
               Ask any question in plain English. LawPilot answers using only your agreement and verified Indian law.
             </p>
           </div>
@@ -194,154 +190,143 @@ export function AskLawPilotView({
             <button
               type="button"
               onClick={handleClearConversation}
-              className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 self-start sm:self-auto cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>Clear Chat</span>
+              Clear
             </button>
           )}
         </div>
 
-        {/* Suggested Question Pills */}
-        <div className="pt-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-            Suggested questions:
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {suggestedQuestions.map((q, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleSend(q)}
-                disabled={isLoading}
-                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-indigo-950/60 dark:hover:border-indigo-900 dark:hover:text-indigo-300 transition-colors cursor-pointer text-left"
-              >
-                <span>{q}</span>
-                <ArrowRight className="w-2.5 h-2.5 opacity-50" />
-              </button>
-            ))}
+        {/* Suggested questions — text links, not pill buttons */}
+        {messages.length === 0 && (
+          <div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-2">
+              Suggested:
+            </p>
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              {suggestedQuestions.map((q, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSend(q)}
+                  disabled={isLoading}
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Conversation Thread */}
-      <div className="space-y-4 min-h-[260px]">
+      <div className="space-y-6 min-h-[240px]">
         {messages.length === 0 ? (
-          /* Clean Empty State */
-          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 mx-auto">
-              <Bot className="w-5 h-5" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Have a question about {report.metadata.title}?
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                Type your question below or click one of the suggestions above.
-              </p>
-            </div>
+          /* Empty state — plain text, no icon in circle */
+          <div className="py-8 text-center">
+            <p className="text-sm text-slate-400 dark:text-slate-500">
+              Type your question below or click a suggestion above.
+            </p>
           </div>
         ) : (
           messages.map((msg: AskConversationMessage) => (
-            <div key={msg.id} className="space-y-3">
+            <div key={msg.id}>
               {msg.role === "user" ? (
-                /* User Message */
-                <div className="flex items-start justify-end gap-2">
-                  <div className="max-w-xl rounded-2xl rounded-tr-xs bg-indigo-600 text-white px-4 py-2.5 shadow-xs">
-                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
-                      {msg.content}
-                    </p>
-                  </div>
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0 text-xs font-bold">
-                    <User className="w-3.5 h-3.5" />
+                /* User Message — right-aligned, minimal */
+                <div className="flex justify-end">
+                  <div className="max-w-xl space-y-0.5">
+                    <p className="text-[11px] text-slate-400 text-right">You</p>
+                    <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-lg rounded-tr-sm">
+                      <p className="text-sm text-slate-900 dark:text-white leading-relaxed whitespace-pre-wrap">
+                        {msg.content}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : (
-                /* Assistant Message — Clean, direct, human */
-                <div className="flex items-start gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0 mt-0.5 shadow-xs">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                /* Assistant Message — open layout, no card */
+                <div className="space-y-2">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">LawPilot</p>
+
+                  {/* Plain English Answer */}
+                  <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap lp-text-pretty">
+                    {msg.content}
                   </div>
 
-                  <div className="flex-1 max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
-                    {/* Plain English Answer */}
-                    <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal whitespace-pre-wrap">
-                      {msg.content}
-                    </div>
-
-                    {/* Supporting Details (Collapsible progressive disclosure) */}
-                    {msg.structuredAnswer && (
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                          type="button"
-                          onClick={() => toggleDetails(msg.id)}
-                          className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                        >
-                          <span>{expandedDetailsMap[msg.id] ? "Hide supporting details" : "Show contract quote & legal source"}</span>
-                          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expandedDetailsMap[msg.id] ? "rotate-180" : ""}`} />
-                        </button>
-
-                        {expandedDetailsMap[msg.id] && (
-                          <div className="mt-3 pt-3 space-y-3 text-xs border-t border-slate-100 dark:border-slate-800/80 lp-animate-slide-down">
-                            {msg.structuredAnswer.whatDocumentSays && (
-                              <div className="space-y-1">
-                                <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                                  <FileText className="w-3 h-3 text-indigo-500" />
-                                  <span>Contract Quote:</span>
-                                </span>
-                                <p className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 font-mono text-[11px] text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800">
-                                  &ldquo;{msg.structuredAnswer.whatDocumentSays}&rdquo;
-                                </p>
-                              </div>
-                            )}
-
-                            {msg.structuredAnswer.legalContext && (
-                              <div className="space-y-1">
-                                <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                                  <Scale className="w-3 h-3 text-blue-500" />
-                                  <span>Legal Context:</span>
-                                </span>
-                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                                  {msg.structuredAnswer.legalContext}
-                                </p>
-                              </div>
-                            )}
-
-                            {msg.structuredAnswer.whatToDoNext && (
-                              <div className="space-y-1">
-                                <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                                  Recommended Next Step:
-                                </span>
-                                <p className="text-slate-700 dark:text-slate-300">
-                                  {msg.structuredAnswer.whatToDoNext}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Footer / Copy Action */}
-                    <div className="flex items-center justify-end pt-1">
+                  {/* Supporting Details (collapsible) */}
+                  {msg.structuredAnswer && (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
                       <button
                         type="button"
-                        onClick={() => handleCopyAnswer(msg.id, msg.content)}
-                        className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                        onClick={() => toggleDetails(msg.id)}
+                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                       >
-                        {copiedId === msg.id ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-600" />
-                            <span className="text-emerald-600 font-semibold">Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            <span>Copy</span>
-                          </>
-                        )}
+                        <span>{expandedDetailsMap[msg.id] ? "Hide sources" : "Show contract quote & legal source"}</span>
+                        <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expandedDetailsMap[msg.id] ? "rotate-180" : ""}`} />
                       </button>
+
+                      {expandedDetailsMap[msg.id] && (
+                        <div className="mt-3 space-y-3 text-xs lp-animate-slide-down">
+                          {msg.structuredAnswer.whatDocumentSays && (
+                            <div className="space-y-1">
+                              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                <FileText className="w-3 h-3 text-slate-400" />
+                                Contract quote
+                              </p>
+                              <blockquote className="lp-quote">
+                                &ldquo;{msg.structuredAnswer.whatDocumentSays}&rdquo;
+                              </blockquote>
+                            </div>
+                          )}
+
+                          {msg.structuredAnswer.legalContext && (
+                            <div className="space-y-1">
+                              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                <Scale className="w-3 h-3 text-blue-400" />
+                                Legal context
+                              </p>
+                              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                                {msg.structuredAnswer.legalContext}
+                              </p>
+                            </div>
+                          )}
+
+                          {msg.structuredAnswer.whatToDoNext && (
+                            <div className="space-y-0.5">
+                              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                                Recommended next step
+                              </p>
+                              <p className="text-slate-600 dark:text-slate-300">
+                                {msg.structuredAnswer.whatToDoNext}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
+                  )}
+
+                  {/* Copy action */}
+                  <div className="flex items-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleCopyAnswer(msg.id, msg.content)}
+                      className="inline-flex items-center gap-1 text-[11px] text-slate-300 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      {copiedId === msg.id ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-500" />
+                          <span className="text-emerald-600">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
@@ -349,32 +334,28 @@ export function AskLawPilotView({
           ))
         )}
 
-        {/* Loading Indicator */}
+        {/* Loading indicator — text, no spinner in circle */}
         {isLoading && (
-          <div className="flex items-start gap-2.5 lp-animate-fade-in">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0 mt-0.5">
-              <span className="h-3 w-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-              <p className="text-xs text-slate-500 dark:text-slate-400 animate-pulse">
-                LawPilot is analyzing your document and Indian legal authorities...
-              </p>
-            </div>
+          <div className="lp-animate-fade-in">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-1">LawPilot</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 animate-pulse">
+              Analyzing your document and applicable legal authorities...
+            </p>
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Error Notice if API fails */}
+      {/* Error */}
       {errorMessage && (
-        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-700 dark:text-red-300">
+        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-700 dark:text-red-300">
           {errorMessage}
         </div>
       )}
 
-      {/* Input Box — Sticky above mobile virtual keyboards */}
-      <div className="sticky bottom-3 z-10 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 dark:border-slate-800 dark:bg-slate-900/95 shadow-md focus-within:border-indigo-500 transition-colors">
+      {/* Input — clean, minimal */}
+      <div className="sticky bottom-3 z-10 border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg p-2.5 focus-within:border-indigo-400 dark:focus-within:border-indigo-700 transition-colors shadow-sm">
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -382,17 +363,17 @@ export function AskLawPilotView({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask anything about your document (e.g., 'What happens if I resign early?')"
-            className="flex-1 resize-none bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden py-1"
+            placeholder="Ask anything about your document..."
+            className="flex-1 resize-none bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden py-1"
           />
           <button
             type="button"
             disabled={!inputText.trim() || isLoading}
             onClick={() => handleSend()}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer shrink-0 shadow-xs"
+            className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-md bg-slate-900 text-white dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer shrink-0"
             aria-label="Send question"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

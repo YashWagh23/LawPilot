@@ -65,7 +65,7 @@ export const ComparisonSummaryView: React.FC<ComparisonSummaryViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Headline Card: WHAT CHANGED? */}
-      <div className="p-5 sm:p-6 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+      <div className="p-5 sm:p-6 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-1 border-b border-slate-100 dark:border-slate-800/80">
           <div>
             <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export const ComparisonSummaryView: React.FC<ComparisonSummaryViewProps> = ({
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {`${materialCount} material ${materialCount === 1 ? "change" : "changes"}`}
               </h2>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900 font-sans">
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900 font-sans">
                 Worth Your Attention
               </span>
             </div>

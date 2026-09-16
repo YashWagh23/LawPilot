@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { GitCompare, Sparkles } from "lucide-react";
+import { GitCompare } from "lucide-react";
 
 interface CompareHeaderProps {
   onLoadDemo: () => void;
@@ -30,12 +30,11 @@ export const CompareHeader: React.FC<CompareHeaderProps> = ({
           type="button"
           onClick={onLoadDemo}
           disabled={isLoadingDemo}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold transition-all shadow-xs hover:shadow cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition-colors shadow-xs cursor-pointer disabled:opacity-50"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
           <span>{isLoadingDemo ? "Loading Redline..." : "Load Sample Redline"}</span>
-          <span className="text-[10px] px-1 rounded bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800">
-            🇮🇳
+          <span className="text-[10px] font-mono px-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+            Demo
           </span>
         </button>
       </div>

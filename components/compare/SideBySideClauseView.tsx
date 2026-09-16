@@ -149,7 +149,7 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
             <button
               type="button"
               onClick={() => onAskLawPilot(change.suggestedAskQuestion)}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer min-h-[40px]"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 text-xs font-semibold shadow-xs transition-colors cursor-pointer min-h-[40px]"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               <span>Ask LawPilot</span>

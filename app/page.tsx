@@ -1,14 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import {
-  FileText,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  Lock,
-  Layers,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import ColorBends from "@/components/effects/ColorBends";
 import { UnderstandScene } from "@/components/landing/UnderstandScene";
 import { VerifyScene } from "@/components/landing/VerifyScene";
@@ -20,118 +12,82 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* ══════════════════════════════════════════════════════
-          ========== HERO PROMPT ==========
-          [MY HERO PROMPT WILL BE PROVIDED HERE]
-          ========== END HERO PROMPT ==========
+          HERO
       ══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden border-b border-slate-200 dark:border-slate-800/60">
+      <section className="relative overflow-hidden border-b border-slate-200 dark:border-slate-800/60 min-h-[100dvh] flex items-center">
         {/* Subtle gradient backdrop */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-50/70 via-white to-slate-50 dark:from-indigo-950/30 dark:via-slate-950 dark:to-slate-950"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/80 dark:from-[#0C0E14] dark:via-[#0C0E14] dark:to-[#0C0E14]"
         />
 
-        {/* ColorBends Interactive Shader Background */}
+        {/* ColorBends — reduced opacity, no purple tint */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden opacity-35 dark:opacity-60 transition-opacity duration-700"
+          className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.18] dark:opacity-[0.40] transition-opacity duration-700"
         >
           <ColorBends
-            colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+            colors={["#6366F1", "#0EA5E9", "#10B981"]}
             rotation={90}
-            speed={0.2}
+            speed={0.15}
             scale={1}
             frequency={1}
-            warpStrength={1}
-            mouseInfluence={1}
-            noise={0.15}
-            parallax={0.5}
+            warpStrength={0.8}
+            mouseInfluence={0.6}
+            noise={0.12}
+            parallax={0.3}
             iterations={1}
-            intensity={1.5}
+            intensity={1.2}
             bandWidth={6}
             transparent
             autoRotate={0}
-            color="#A855F7"
+            color="#6366F1"
           />
         </div>
-        {/* Faint grid pattern */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.025] dark:opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#4F46E5 1px, transparent 1px), linear-gradient(to right, #4F46E5 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 md:pt-28 md:pb-32 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white/10 dark:text-white border border-slate-800 dark:border-white/20 shadow-xs mb-8 tracking-wide lp-animate-fade-up">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-            <span>LawPilot · Understand. Verify. Act.</span>
-          </div>
-
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pt-20 md:pb-24">
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-[3.6rem] font-bold tracking-tight text-slate-950 dark:text-white leading-[1.1] lp-animate-fade-up lp-delay-1">
+          <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight text-slate-950 dark:text-white leading-[1.08] lp-text-balance lp-animate-fade-up">
             Legal documents weren&apos;t{" "}
-            <br className="hidden sm:block" />
             written for humans.
             <br />
             <span className="text-indigo-600 dark:text-indigo-400">LawPilot was.</span>
           </h1>
 
           {/* Sub-copy */}
-          <p className="mt-7 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed lp-animate-fade-up lp-delay-2">
+          <p className="mt-6 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed lp-text-pretty lp-animate-fade-up lp-delay-1">
             Deconstruct complex legal agreements into plain English, verify statutory
             context against official authorities, and determine practical next steps —
             without a law degree.
           </p>
 
           {/* CTAs */}
-          <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3 lp-animate-fade-up lp-delay-3">
+          <div className="mt-8 flex flex-col sm:flex-row items-start gap-3 lp-animate-fade-up lp-delay-2">
             <Link
-              href="/analysis/demo-employment-agreement"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              href="/review"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 transition-colors duration-150 hover:shadow-sm"
             >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Try the Demo</span>
-              <span className="text-[11px] font-normal px-1.5 py-0.5 rounded-md bg-indigo-700/80 text-indigo-100">
-                🇮🇳 Sample Agreement
-              </span>
+              Analyze a document
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
 
             <Link
-              href="/review"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white border border-slate-200 text-slate-800 font-semibold text-sm hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800 shadow-xs hover:shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              href="/analysis/demo-employment-agreement"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150"
             >
-              <FileText className="w-4 h-4" />
-              <span>Analyze a Document</span>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              See a sample analysis
             </Link>
           </div>
 
-          {/* Trust badges */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-slate-500 dark:text-slate-400 lp-animate-fade-up lp-delay-4">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              No Login Required
-            </span>
-            <span className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-indigo-500" />
-              Document Isolation
-            </span>
-            <span className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-indigo-500" />
-              Grounded Citations
-            </span>
-            <span className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              Auditable Evidence
-            </span>
+          {/* Trust signals — below CTAs, inline, minimal */}
+          <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400 dark:text-slate-500 lp-animate-fade-up lp-delay-3">
+            <span>No account required</span>
+            <span aria-hidden="true">·</span>
+            <span>Document isolation</span>
+            <span aria-hidden="true">·</span>
+            <span>Grounded citations</span>
+            <span aria-hidden="true">·</span>
+            <span>Auditable evidence chains</span>
           </div>
         </div>
       </section>

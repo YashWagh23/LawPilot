@@ -52,15 +52,13 @@ export function UnderstandScene() {
       <div className="w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden motion-reduce:lg:static motion-reduce:lg:h-auto motion-reduce:lg:overflow-visible">
         {/* Section Header */}
         <div className="max-w-2xl mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />
-            <span>01 · UNDERSTAND</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-950 dark:text-white leading-[1.1]">
-            See what your contract <br className="hidden sm:inline" />
-            <span className="text-indigo-600 dark:text-indigo-400">actually says.</span>
+          <p className="text-xs font-mono text-slate-400 dark:text-slate-500 mb-4 tracking-wider">
+            01 / Understand
+          </p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-950 dark:text-white leading-[1.08] lp-text-balance">
+            See what your contract actually says.
           </h2>
-          <p className="mt-2 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-lg leading-relaxed">
+          <p className="mt-3 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-lg leading-relaxed lp-text-pretty">
             Complex clauses become clear.
           </p>
         </div>

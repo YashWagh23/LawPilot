@@ -18,15 +18,10 @@ import { ClauseQAModal } from "@/components/analysis/ClauseQAModal";
 import { DocumentViewer } from "@/components/document/DocumentViewer";
 import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
 import {
-  Sparkles,
   Printer,
   ChevronDown,
   ArrowRight,
-  MessageSquare,
-  CheckSquare,
-  Briefcase,
   ShieldCheck,
-  Eye,
 } from "lucide-react";
 import { ActionPlanView } from "@/components/action-plan/ActionPlan";
 import { LawyerBriefView } from "@/components/lawyer-brief/LawyerBrief";
@@ -148,19 +143,17 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* ══════════════════════════════════════════════════════
-          1. MINIMAL, CALM DOCUMENT HEADER
-          Answers: What document is this? Where is it from?
+          1. DOCUMENT HEADER
       ══════════════════════════════════════════════════════ */}
       <div className="space-y-4">
-        {/* Subtle Breadcrumb & Status */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-slate-900 dark:text-white">Document</span>
-            <span>·</span>
-            <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
-              {formatJurisdictionBadge(jurisdictionContext)}
-            </span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+        {/* Metadata row */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-medium text-slate-700 dark:text-slate-200">Document</span>
+            <span aria-hidden="true">·</span>
+            <span>{formatJurisdictionBadge(jurisdictionContext)}</span>
+            <span aria-hidden="true">·</span>
+            <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
               <ShieldCheck className="w-3 h-3" />
               Verified
             </span>
@@ -170,105 +163,79 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             type="button"
             onClick={() => window.print()}
             title="Print or Export summary"
-            className="no-print inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="no-print inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Print / Export</span>
+            <span className="hidden sm:inline">Export</span>
           </button>
         </div>
 
-        {/* Document Title & Headline (The 3-Second Test) */}
+        {/* Document title */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white lp-text-balance">
             {report.metadata.title}
           </h1>
-          <p className="mt-2 text-base sm:text-lg font-medium text-indigo-600 dark:text-indigo-400">
-            {`LawPilot found ${presentationFindings.length} ${presentationFindings.length === 1 ? "thing" : "things"} worth your attention.`}
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            {presentationFindings.length} {presentationFindings.length === 1 ? "issue" : "issues"} flagged for your attention
           </p>
         </div>
 
-        {/* Navigation Tabs: Overview | Ask LawPilot | Next Steps */}
-        <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 pt-2 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab("overview")}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 min-h-[44px] ${
-              activeTab === "overview"
-                ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Overview</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("ask")}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 min-h-[44px] ${
-              activeTab === "ask"
-                ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Ask LawPilot</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("act");
-              setActSubTab("actions");
-            }}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 min-h-[44px] ${
-              activeTab === "act"
-                ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-            }`}
-          >
-            <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Next Steps</span>
-          </button>
+        {/* Navigation Tabs — text-only, weight-based active state */}
+        <div className="flex items-center gap-0 border-b border-slate-200 dark:border-slate-800">
+          {([
+            { id: "overview", label: "Overview" },
+            { id: "ask",      label: "Ask LawPilot" },
+            { id: "act",      label: "Next Steps" },
+          ] as const).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.id);
+                if (tab.id === "act") setActSubTab("actions");
+              }}
+              className={`px-4 py-2.5 text-xs border-b-2 transition-all cursor-pointer shrink-0 min-h-[44px] ${
+                activeTab === tab.id
+                  ? "border-slate-900 dark:border-white font-semibold text-slate-900 dark:text-white"
+                  : "border-transparent font-medium text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          TAB 1: OVERVIEW (LAYER 1 ESSENTIALS)
+          TAB 1: OVERVIEW
       ══════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (
         <div className="space-y-10">
-          {/* ── Section: Important Issues (Prioritized Finding Cards) ── */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Important Issues
-              </h2>
-              <span className="text-xs text-slate-400">
-                Prioritized by impact
-              </span>
+          {/* ── Section: Findings (divider list, not cards) ── */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                Findings · prioritized by impact
+              </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/70 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
               {presentationFindings.map((finding) => {
-                const isSelectedForPreview = activeFindingId === finding.id;
+                const isActive = activeFindingId === finding.id;
 
                 return (
                   <div
                     key={finding.id}
                     onClick={() => setActiveFindingId(finding.id)}
-                    className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
-                      isSelectedForPreview
-                        ? "border-indigo-500/50 bg-indigo-50/20 dark:border-indigo-500/40 dark:bg-indigo-950/20 shadow-xs"
-                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 shadow-xs"
-                    }`}
+                    data-active={isActive}
+                    className="lp-finding-row p-4 sm:p-5 bg-white dark:bg-slate-900"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      {/* Left: Severity + Title + Value + One-sentence summary */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      {/* Left: Severity + Title + Summary */}
                       <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
                               finding.severityLabel === "HIGH"
                                 ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900"
                                 : finding.severityLabel === "MEDIUM"
@@ -281,35 +248,33 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                           <span className="text-xs font-mono text-slate-400">
                             {finding.clauseReference}
                           </span>
-                        </div>
-
-                        <div className="flex flex-wrap items-baseline gap-2">
-                          <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
-                            {finding.title}
-                          </h3>
                           {finding.keyValue && (
-                            <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-                              · {finding.keyValue}
+                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                              {finding.keyValue}
                             </span>
                           )}
                         </div>
 
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                          {finding.title}
+                        </h3>
+
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed lp-text-pretty">
                           {finding.summary}
                         </p>
                       </div>
 
-                      {/* Right: Single clear action button */}
-                      <div className="shrink-0 pt-2 sm:pt-0 w-full sm:w-auto">
+                      {/* Right: Action */}
+                      <div className="shrink-0">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedFindingForModal(finding);
                           }}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-xs cursor-pointer min-h-[42px]"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer py-1"
                         >
-                          <span>Why this matters</span>
+                          Why this matters
                           <ArrowRight className="w-3 h-3" />
                         </button>
                       </div>
@@ -320,86 +285,74 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             </div>
           </section>
 
-          {/* ── Section: What Should I Do Next? (Direct Next Action Bar) ── */}
-          <section className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-200/60 dark:border-indigo-900/40 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="space-y-0.5 text-center sm:text-left">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+          {/* ── Section: Next actions prompt (plain, no gradient) ── */}
+          <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <div>
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
                 Ready to take action?
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                 Ask questions in plain English or follow your step-by-step preparation plan.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveTab("ask")}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors cursor-pointer shadow-xs min-h-[44px]"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer min-h-[36px]"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Ask LawPilot</span>
+                Ask LawPilot
               </button>
 
               <button
                 type="button"
-                onClick={() => {
-                  setActiveTab("act");
-                  setActSubTab("actions");
-                }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors cursor-pointer shadow-xs min-h-[44px]"
+                onClick={() => { setActiveTab("act"); setActSubTab("actions"); }}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded bg-slate-900 text-xs font-semibold text-white dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 transition-colors cursor-pointer min-h-[36px]"
               >
-                <CheckSquare className="w-3.5 h-3.5" />
-                <span>See Action Plan</span>
+                Action plan
+                <ArrowRight className="w-3 h-3" />
               </button>
             </div>
           </section>
 
-          {/* ── Section: Contextual Document Passage (Layer 2) ── */}
+          {/* ── Section: Document Passage ── */}
           <section id="document-section-anchor" className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Document Passage
-              </h2>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                Document passage
+              </p>
               <button
                 type="button"
                 onClick={() => setShowFullDocViewer(!showFullDocViewer)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
               >
-                <span>{showFullDocViewer ? "Hide Document Viewer" : "Open Full Document Viewer"}</span>
+                <span>{showFullDocViewer ? "Hide viewer" : "Full document"}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showFullDocViewer ? "rotate-180" : ""}`} />
               </button>
             </div>
 
             {/* Contextual snippet of the currently selected issue */}
             {activeFinding && !showFullDocViewer && (
-              <div className="p-5 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-3 lp-animate-fade-in">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">
-                      {activeFinding.clauseReference}
-                    </span>
-                    <span className="text-slate-400">·</span>
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {activeFinding.title}
-                    </span>
-                    {activeFinding.keyValue && (
-                      <span className="text-indigo-600 dark:text-indigo-400 font-bold">
-                        ({activeFinding.keyValue})
-                      </span>
-                    )}
-                  </div>
-
+              <div className="space-y-2 lp-animate-fade-in">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                    {activeFinding.clauseReference}
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">·</span>
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {activeFinding.title}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setSelectedFindingForModal(activeFinding)}
-                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer ml-auto"
                   >
                     Why this matters →
                   </button>
                 </div>
 
-                <blockquote className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/60 dark:border-slate-800 font-mono text-xs text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                <blockquote className="lp-quote">
                   &ldquo;{activeFinding.whatContractSays}&rdquo;
                 </blockquote>
               </div>
@@ -407,7 +360,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
 
             {/* Full Document Viewer when expanded */}
             {showFullDocViewer && (
-              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs overflow-hidden lp-animate-slide-down">
+              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden lp-animate-slide-down">
                 <DocumentViewer
                   clauses={report.clauses}
                   selectedClauseId={activeFinding?.clauseId || report.clauses[0]?.id}
@@ -423,38 +376,38 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             )}
           </section>
 
-          {/* ── Section: Why Should I Trust This? (Layer 3 Progressive Evidence) ── */}
-          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs overflow-hidden">
+          {/* ── Section: Evidence Chain (progressive disclosure) ── */}
+          <section className="border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setShowFullEvidence(!showFullEvidence)}
-              className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-left"
+              className="w-full flex items-center justify-between py-4 hover:opacity-75 transition-opacity cursor-pointer text-left"
             >
-              <div className="space-y-1">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              <div className="space-y-0.5">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Why should I trust this?
-                </h2>
-                <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
-                  <span>Document Passage</span>
-                  <span className="text-slate-300 dark:text-slate-600">→</span>
-                  <span>Factual Evidence</span>
-                  <span className="text-slate-300 dark:text-slate-600">→</span>
-                  <span>Legal Authority</span>
-                  <span className="text-slate-300 dark:text-slate-600">→</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Verified Grounding</span>
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                  <span>Document quote</span>
+                  <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">→</span>
+                  <span>Legal authority</span>
+                  <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">→</span>
+                  <span>Certainty assessment</span>
+                  <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">→</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Verified grounding</span>
                 </div>
               </div>
 
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                <span>{showFullEvidence ? "Hide evidence" : "Show full evidence"}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showFullEvidence ? "rotate-180" : ""}`} />
-              </div>
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 shrink-0 ml-4">
+                <span>{showFullEvidence ? "Hide" : "Show evidence"}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showFullEvidence ? "rotate-180" : ""}`} />
+              </span>
             </button>
 
             {showFullEvidence && (
-              <div className="p-6 border-t border-slate-100 dark:border-slate-800 space-y-4 lp-animate-slide-down">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Every issue detected by LawPilot links back to the original clause, statutory authorities (e.g. Indian Contract Act Section 27, Payment of Gratuity Act), and explicit uncertainty boundaries.
+              <div className="pb-4 space-y-4 lp-animate-slide-down">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  Every issue detected by LawPilot links back to the original clause, statutory authorities, and explicit uncertainty boundaries.
                 </p>
                 <div className="space-y-4">
                   {report.evidenceChains.map((chain) => (
@@ -465,41 +418,41 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             )}
           </section>
 
-          {/* ── Section: Extracted Clauses (Progressive Disclosure) ── */}
-          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs overflow-hidden">
+          {/* ── Section: Extracted Clauses ── */}
+          <section className="border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setShowExtractedClauses(!showExtractedClauses)}
-              className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-left"
+              className="w-full flex items-center justify-between py-4 hover:opacity-75 transition-opacity cursor-pointer text-left"
             >
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                  All Extracted Clauses ({report.clauses.length})
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  View raw clauses alongside plain English summaries.
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  All extracted clauses ({report.clauses.length})
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                  Raw text alongside plain English summaries.
                 </p>
               </div>
 
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                <span>{showExtractedClauses ? "Hide clauses" : "Show all clauses"}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showExtractedClauses ? "rotate-180" : ""}`} />
-              </div>
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 shrink-0 ml-4">
+                <span>{showExtractedClauses ? "Hide" : "Show clauses"}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showExtractedClauses ? "rotate-180" : ""}`} />
+              </span>
             </button>
 
             {showExtractedClauses && (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800 lp-animate-slide-down">
+              <div className="pb-4 divide-y divide-slate-100 dark:divide-slate-800 lp-animate-slide-down">
                 {report.clauses.map((clause) => (
-                  <div key={clause.id} className="p-5 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">
+                  <div key={clause.id} className="py-4 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-mono font-semibold text-slate-900 dark:text-white">
                         {clause.section}: {clause.title}
-                        {clause.pageNumber && (
-                          <span className="text-slate-400 font-normal ml-1.5">(Page {clause.pageNumber})</span>
-                        )}
                       </span>
+                      {clause.pageNumber && (
+                        <span className="text-slate-400">· p.{clause.pageNumber}</span>
+                      )}
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed lp-text-pretty">
                       {clause.plainEnglish}
                     </p>
                   </div>
@@ -509,20 +462,20 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           </section>
 
           {/* ── Concise Legal Disclaimer ── */}
-          <div className="text-center pt-2 pb-6">
+          <div className="pt-2 pb-6">
             <p className="text-xs text-slate-400 dark:text-slate-500">
               LawPilot provides legal information and document assistance, not legal advice.{" "}
               <button
                 type="button"
                 onClick={() => setShowLegalDisclosure(!showLegalDisclosure)}
-                className="text-slate-600 dark:text-slate-400 underline hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                className="underline hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
               >
-                Full legal disclosure
+                Full disclosure
               </button>
             </p>
 
             {showLegalDisclosure && (
-              <div className="mt-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-950 text-left text-xs text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 lp-animate-fade-in max-w-xl mx-auto space-y-1.5">
+              <div className="mt-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 lp-animate-fade-in space-y-1.5 max-w-xl">
                 <p className="font-semibold text-slate-700 dark:text-slate-300">Important Disclosure:</p>
                 <p>
                   LawPilot is an automated legal intelligence tool designed to help you understand contractual agreements, identify potential exposure, and prepare for discussions with counsel or HR. It is not a law firm and does not substitute for licensed legal representation.
@@ -550,32 +503,24 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
       {activeTab === "act" && (
         <div className="space-y-6">
           {/* Sub-tab picker */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setActSubTab("actions")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                actSubTab === "actions"
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              }`}
-            >
-              <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Next Steps</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActSubTab("brief")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                actSubTab === "brief"
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Prepare for a Lawyer</span>
-            </button>
+          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            {([
+              { id: "actions", label: "Next Steps" },
+              { id: "brief",   label: "Prepare for a Lawyer" },
+            ] as const).map((sub) => (
+              <button
+                key={sub.id}
+                type="button"
+                onClick={() => setActSubTab(sub.id)}
+                className={`px-4 py-2 rounded text-xs font-semibold transition-all cursor-pointer ${
+                  actSubTab === sub.id
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                }`}
+              >
+                {sub.label}
+              </button>
+            ))}
           </div>
 
           {/* Action Plan */}

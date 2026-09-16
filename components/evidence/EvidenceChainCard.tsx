@@ -8,7 +8,6 @@ import {
   BookOpen,
   HelpCircle,
   ArrowRight,
-  ShieldCheck,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -28,144 +27,133 @@ export function EvidenceChainCard({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-xs transition-all dark:border-slate-800 dark:bg-slate-900/70 overflow-hidden">
+    <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
       {/* Header / Finding Summary */}
-      <div className="p-5 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/90">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+      <div className="px-4 py-3.5 flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80">
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
             <SeverityBadge severity={chain.finding.severity} />
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <span className="text-xs text-slate-400 dark:text-slate-500">
               {chain.finding.category}
             </span>
-          </div>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 transition-colors"
-          >
-            <span>{isExpanded ? "Collapse Evidence Chain" : "Inspect Evidence Chain"}</span>
-            {isExpanded ? (
-              <ChevronUp className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5" />
-            )}
-          </button>
-        </div>
-
-        <h3 className="mt-2.5 text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100">
-          {chain.finding.title}
-        </h3>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          {chain.finding.summary}
-        </p>
-
-        {/* Jurisdiction & Legal Context Banner */}
-        <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
-              JURISDICTION
-            </span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+            <span aria-hidden="true" className="text-slate-200 dark:text-slate-700">·</span>
+            <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
               {chain.jurisdictionContext
                 ? formatJurisdictionBadge(chain.jurisdictionContext)
                 : chain.legalClaims[0]?.jurisdiction || "India · Maharashtra"}
             </span>
+            {chain.verification?.status && (
+              <>
+                <span aria-hidden="true" className="text-slate-200 dark:text-slate-700">·</span>
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  {chain.verification.status === "verified" ? "Verified" : "Contextual"}
+                </span>
+              </>
+            )}
           </div>
-          <span className="text-slate-300 dark:text-slate-700">·</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
-              LEGAL CONTEXT
-            </span>
-            <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">
-              {chain.verification?.status === "verified" ? "Verified" : "Contextual"}
-            </span>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug">
+            {chain.finding.title}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed lp-text-pretty">
+            {chain.finding.summary}
+          </p>
         </div>
+
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors shrink-0 mt-0.5 cursor-pointer"
+        >
+          <span>{isExpanded ? "Collapse" : "Inspect chain"}</span>
+          {isExpanded ? (
+            <ChevronUp className="w-3 h-3" />
+          ) : (
+            <ChevronDown className="w-3 h-3" />
+          )}
+        </button>
       </div>
 
-      {/* Expanded Interactive Chain Progression */}
+      {/* Expanded: Linear Evidence Trace */}
       {isExpanded && (
-        <div className="p-5 sm:p-6 space-y-6">
-          {/* Visual Step Indicator Label */}
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Transparent Reasoning & Grounded Evidence
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
-              Verified Chain
+        <div className="px-4 py-5 space-y-0">
+          {/* Header label */}
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+              Evidence trace
             </span>
           </div>
 
-          <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+          {/* The 5-step trace — uses lp-trace class for connecting line */}
+          <div className="lp-trace space-y-6">
             {/* Step 1: Document Evidence */}
             <div className="relative">
-              <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 text-xs font-medium">
-                <FileText className="w-3.5 h-3.5" />
+              {/* Step number indicator */}
+              <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400">
+                <FileText className="w-2.5 h-2.5" />
               </div>
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    1. Document Evidence
+
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                    Document evidence
                   </span>
-                  <span className="text-xs font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                     {chain.documentEvidence.section}
                     {chain.documentEvidence.pageNumber &&
-                      ` · Page ${chain.documentEvidence.pageNumber}`}
+                      ` · p.${chain.documentEvidence.pageNumber}`}
                   </span>
                 </div>
-                <div className="mt-2 p-3.5 rounded-lg bg-amber-500/5 border-l-2 border-amber-500/60 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed dark:bg-amber-950/20">
+                <blockquote className="lp-quote">
                   &ldquo;{chain.documentEvidence.exactQuote}&rdquo;
-                </div>
+                </blockquote>
               </div>
             </div>
 
-            {/* Step 2: Legal Source / Authoritative Context */}
+            {/* Step 2: Legal Authority */}
             {(() => {
               const legalSource = chain.legalSource || (chain.legalSources && chain.legalSources[0]);
               if (!legalSource) return null;
               return (
                 <div className="relative">
-                  <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs font-medium">
-                    <BookOpen className="w-3.5 h-3.5" />
+                  <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                    <BookOpen className="w-2.5 h-2.5" />
                   </div>
-                  <div>
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-blue-800 dark:text-blue-300">
-                        2. Authoritative Legal Context
+
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wide">
+                        Authoritative legal context
                       </span>
-                      <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-300">
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                         {legalSource.citation}
                       </span>
-                      <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                         {legalSource.jurisdiction || "India"}
                       </span>
                     </div>
 
-                    <div className="mt-2 p-3.5 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-800/60 dark:border-slate-700/80">
-                      <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    <div className="p-3 rounded border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/40">
+                      <p className="text-xs font-medium text-slate-900 dark:text-slate-100">
                         {legalSource.title}
                       </p>
-                      <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 italic">
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 italic leading-relaxed">
                         &ldquo;{legalSource.excerpt || legalSource.relevantExcerpt}&rdquo;
                       </p>
                       {legalSource.notes && (
-                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                          <strong className="text-slate-700 dark:text-slate-300">Analysis Note: </strong>
+                        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                          <strong className="font-medium text-slate-600 dark:text-slate-400">Note: </strong>
                           {legalSource.notes}
                         </p>
                       )}
                       {(legalSource.sourceUrl || legalSource.url) && (
-                        <div className="mt-2">
-                          <a
-                            href={legalSource.sourceUrl || legalSource.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                          >
-                            Official Authority Reference
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
+                        <a
+                          href={legalSource.sourceUrl || legalSource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          Official reference
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
                       )}
                     </div>
                   </div>
@@ -173,34 +161,35 @@ export function EvidenceChainCard({
               );
             })()}
 
-            {/* Step 3: Certainty / Verification Assessment */}
+            {/* Step 3: Certainty Assessment */}
             <div className="relative">
-              <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 text-xs font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+              <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="w-2.5 h-2.5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    3. Certainty Assessment
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                    Certainty assessment
                   </span>
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${
                       (chain.verification?.confidenceLevel || chain.confidence?.level) === "high"
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                         : (chain.verification?.confidenceLevel || chain.confidence?.level) === "moderate"
-                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
-                        : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                     }`}
                   >
-                    {((chain.verification?.confidenceLevel || chain.confidence?.level || "moderate") as string).toUpperCase()} CONFIDENCE
+                    {((chain.verification?.confidenceLevel || chain.confidence?.level || "moderate") as string).toLowerCase()} confidence
                   </span>
                   {chain.verification?.status && (
-                    <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
+                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
                       {chain.verification.status.replace("_", " ")}
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   {chain.confidence?.rationale ||
                     (chain.verification?.issues.length
                       ? chain.verification.issues.join("; ")
@@ -209,19 +198,18 @@ export function EvidenceChainCard({
               </div>
             </div>
 
-            {/* Step 4: What is Still Unknown (Rule 5: Transparent Uncertainty) */}
+            {/* Step 4: What is Unknown */}
             <div className="relative">
-              <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800 text-xs font-medium">
-                <HelpCircle className="w-3.5 h-3.5" />
+              <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                <HelpCircle className="w-2.5 h-2.5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                    4. What is Still Unknown / Factual Dependencies
-                  </span>
-                </div>
-                <div className="mt-1.5 p-3 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/50 space-y-2">
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide">
+                  What is still unknown
+                </span>
+                <div className="p-3 rounded border border-amber-200/60 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                     {chain.uncertainty?.explanation ||
                       (chain.uncertainties && chain.uncertainties.length > 0
                         ? chain.uncertainties[0]
@@ -229,13 +217,14 @@ export function EvidenceChainCard({
                   </p>
                   {((chain.uncertainty?.factualDependencies && chain.uncertainty.factualDependencies.length > 0) ||
                     (chain.uncertainties && chain.uncertainties.length > 1)) && (
-                    <div className="pt-1">
-                      <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                        Pending Facts:
-                      </span>
-                      <ul className="mt-1 list-disc list-inside text-xs text-slate-600 dark:text-slate-400 space-y-0.5">
+                    <div className="mt-2 pt-2 border-t border-amber-200/40 dark:border-amber-800/30">
+                      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">Pending facts:</p>
+                      <ul className="space-y-0.5">
                         {(chain.uncertainty?.factualDependencies || chain.uncertainties.slice(1)).map((fact, idx) => (
-                          <li key={idx}>{fact}</li>
+                          <li key={idx} className="text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1.5">
+                            <span className="text-amber-500 mt-0.5">·</span>
+                            <span>{fact}</span>
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -244,43 +233,46 @@ export function EvidenceChainCard({
               </div>
             </div>
 
-            {/* Step 5: Practical Next Step (Rule 10: Reversible Actions) */}
+            {/* Step 5: Practical Next Step */}
             {(() => {
               const nextStep = chain.practicalNextStep || (chain.nextSteps && chain.nextSteps[0]);
               if (!nextStep) return null;
               return (
                 <div className="relative">
-                  <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-medium">
-                    <ArrowRight className="w-3.5 h-3.5" />
+                  <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
+                    <ArrowRight className="w-2.5 h-2.5" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-100">
-                        5. Practical Next Step
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
+                        Practical next step
                       </span>
                       {nextStep.isReversible && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 font-medium">
-                          Reversible Action
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                          Reversible
                         </span>
                       )}
                     </div>
-                    <div className="mt-2 p-3.5 rounded-lg bg-slate-900 text-white dark:bg-slate-800 dark:text-slate-100">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <h4 className="text-sm font-semibold">
+                    <div className="p-3.5 rounded border-l-2 border-slate-900 dark:border-slate-100 bg-slate-50 dark:bg-slate-800">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
                           {nextStep.title}
                         </h4>
-                        <span className="text-[11px] text-slate-300">
-                          {nextStep.recommendedTimeline}
-                        </span>
+                        {nextStep.recommendedTimeline && (
+                          <span className="text-[11px] text-slate-400 shrink-0">
+                            {nextStep.recommendedTimeline}
+                          </span>
+                        )}
                       </div>
-                      <p className="mt-1 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                         {nextStep.description}
                       </p>
                       {nextStep.practicalAdvice && (
-                        <div className="mt-2.5 pt-2 border-t border-slate-800 dark:border-slate-700 flex items-start gap-1.5 text-xs text-slate-300">
-                          <strong className="text-white">Counsel Negotiation Tip:</strong>{" "}
+                        <p className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+                          <strong className="text-slate-700 dark:text-slate-300 font-medium">Negotiation tip: </strong>
                           {nextStep.practicalAdvice}
-                        </div>
+                        </p>
                       )}
                     </div>
                   </div>

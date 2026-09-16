@@ -170,10 +170,10 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-3 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
                 CURRENT VERSION
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                 Revised Redline
               </span>
             </div>
@@ -202,8 +202,8 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
           />
 
           {currentDoc.displayName ? (
-            <div className="rounded-lg border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/30 p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0 text-blue-700 dark:text-blue-300">
+            <div className="rounded-lg border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/30 dark:bg-indigo-950/20 p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-100/70 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 text-indigo-700 dark:text-indigo-300">
                 <FileText className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
@@ -253,14 +253,14 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
           onClick={onSwapVersions}
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 min-h-[44px] cursor-pointer"
         >
-          <ArrowRightLeft className="w-3.5 h-3.5 text-blue-600" />
+          <ArrowRightLeft className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
           <span>Swap Previous & Current Versions</span>
         </button>
       </div>
 
       {/* Error Message if any */}
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start gap-2.5 text-rose-700 dark:text-rose-300 text-xs">
+        <div className="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start gap-2.5 text-rose-700 dark:text-rose-300 text-xs">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
           <p className="leading-relaxed">{errorMessage}</p>
         </div>
@@ -272,7 +272,7 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
           type="button"
           onClick={onCompare}
           disabled={!isReadyToCompare || isComparing}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
         >
           {isComparing ? (
             <>

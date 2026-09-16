@@ -8,7 +8,6 @@ import {
   FileText,
   Shield,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   X,
@@ -195,41 +194,24 @@ export default function ReviewPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 sm:px-6 space-y-8">
       {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900">
-          Document Intake
-        </div>
+      <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Analyze a Legal Document
+          Analyze a legal document
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto">
+        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
           Upload a PDF, DOCX, or TXT. LawPilot extracts clauses, detects jurisdiction,
           builds evidence chains, and prepares an actionable brief.
         </p>
-      </div>
-
-      {/* Demo banner */}
-      <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 dark:border-indigo-900/60 dark:bg-indigo-950/20 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 shrink-0">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-900 dark:text-white">
-              Sample Agreement Analysis 🇮🇳
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              See a complete analysis instantly — no upload needed.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/analysis/demo-employment-agreement"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-indigo-600 text-xs font-semibold text-white hover:bg-indigo-700 shrink-0 transition-colors min-h-[44px]"
-        >
-          Explore Sample
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          Want to see an example first?{" "}
+          <Link
+            href="/analysis/demo-employment-agreement"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+          >
+            View the sample employment agreement analysis
+          </Link>
+          .
+        </p>
       </div>
 
       {/* Error banner */}
