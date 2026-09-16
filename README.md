@@ -133,6 +133,31 @@ No database, no authentication, no server-side session storage. `getCurrentUser(
 
 ---
 
+## Efficiency
+
+- **Selective AI invocation** — deterministic parsers handle clause segmentation, page mapping, and regex-based date/amount extraction *before* any Gemini call; the model is only asked to fill in what pattern-matching genuinely can't (`lib/ai/agents/extractionAgent.ts`).
+- **Parallelized, independent AI calls** — Action Plan and Lawyer Brief generation run concurrently via `Promise.allSettled` (`lib/analysis/analysisOrchestrator.ts`), not sequentially.
+- **Clause-level, not whole-document, prompts** — Ask LawPilot and legal research build a token-bounded context from only the matched clauses/findings/evidence chains relevant to the question (`lib/ai/ask/contextBuilder.ts`), instead of resubmitting the full report on every turn.
+- **Deterministic fallback path** — every AI-backed feature (extraction, Action Plan, Lawyer Brief, Ask, Situation Navigator) has a non-AI synthesizer that runs in milliseconds, used automatically on a missing key, malformed output, or provider failure — so the app is never blocked waiting on a retry loop.
+- **Client bundle size** — `components/effects/ColorBends.tsx` (the landing-page WebGL background) uses named imports from `three` instead of `import * as THREE`, enabling tree-shaking, and is loaded through `next/dynamic(..., { ssr: false })` via `ColorBendsLoader.tsx`. Verified in the production build output: the `three` chunk is excluded from the page's root/initial JS and is fetched as a separate, on-demand chunk.
+- **Idle animation cost control** — `ColorBends` pauses its render loop via `IntersectionObserver` (off-screen) and the `visibilitychange` event (backgrounded tab), and respects `prefers-reduced-motion` by rendering a single static frame instead of animating.
+- **Bounded request cost** — a per-route, per-client sliding-window rate limiter (`lib/safety/rateLimiter.ts`) and `Content-Length` pre-checks (`isDeclaredContentLengthTooLarge`, `lib/documents/fileValidator.ts`) reject oversized or abusive requests before they reach document parsing or Gemini, avoiding wasted compute and AI-token spend.
+- **Server-side-only parsing** — PDF/DOCX extraction (`unpdf`, `mammoth`) runs entirely in server code, keeping those libraries out of the client bundle entirely.
+
+---
+
+## Accessibility
+
+- **Semantic HTML** — heading hierarchies (`h1`–`h4`) and standard interactive elements (native `<button>`, `<a>`, `<input>`) are used throughout the analysis, compare, action-plan, and situation views rather than generic clickable `<div>`s.
+- **Modal dialog semantics** — every modal (`ClauseQAModal`, `FindingDetailModal`, `CompareAskModal`, `EvidenceChainDetailModal`, `SourceDetailModal`, `JurisdictionIndicator`) implements `role="dialog"` / `aria-modal="true"` and closes on `Escape`.
+- **Descriptive control labeling** — Action Plan checkboxes and remove buttons carry state-specific `aria-label`s (e.g. `Mark "..." as completed`, `Remove "..." from Action Plan`) rather than a generic label, so the accessible name reflects the current state.
+- **No color-only signaling** — severity and status indicators (`SeverityBadge`, verification-status pills) always pair an icon and a text label with their color, so information isn't conveyed by color alone.
+- **Reduced motion respected** — the landing page's scroll-driven scenes and the `ColorBends` background both check `prefers-reduced-motion` and fall back to a static, non-animated presentation.
+
+This reflects the accessibility patterns implemented in the code above; it is not a claim of formal WCAG conformance testing or a third-party audit.
+
+---
+
 ## Security & Privacy
 
 - **Server-side API key only** — `GEMINI_API_KEY` is read exclusively in server code (`lib/ai/gemini.ts`); it is never bundled into client JavaScript.
@@ -149,13 +174,59 @@ No database, no authentication, no server-side session storage. `getCurrentUser(
 ## Testing & Verification
 
 ```bash
-npm test          # Vitest — 18 test files, 235 tests
+npm test          # Vitest — 18 test files, 235 tests, all passing
 npx tsc --noEmit   # TypeScript strict mode — 0 errors
 npm run lint       # ESLint — 0 errors, 0 warnings
-npm run build      # Production build (Next.js/Turbopack) — verified to succeed
+npm run build      # Production build (Next.js/Turbopack) — succeeds
 ```
 
-Test coverage spans document extraction and clause segmentation, file-validation edge cases (corrupt/empty/oversized/misidentified files), the Evidence Chain verification gate, Compare's clause-matching and materiality scoring, Compare → Action Plan persistence and de-duplication, Ask LawPilot's grounding/citation behavior, jurisdiction detection, and Situation Navigator's fact-extraction and safety-language calibration.
+### Automated Suite (18 files · 235 tests)
+
+| Test file | Tests | Covers |
+|---|---|---|
+| `compare-documents.test.ts` | 29 | Clause matching, added/removed/modified/moved detection, materiality scoring |
+| `security-and-edge-cases.test.ts` | 23 | Magic-byte validation, file-size limits, prompt-injection boundary isolation |
+| `action-plan-lawyer-brief.test.ts` | 21 | Action Plan safety filters, reversible next steps, Lawyer Brief sections |
+| `ask-lawpilot-grounded-qa.test.ts` | 18 | Grounded Q&A, citation boundaries, missing-fact isolation |
+| `legal-research-verification.test.ts` | 18 | Statutory verification gate, source-priority hierarchy, jurisdiction grounding |
+| `document-intelligence.test.ts` | 17 | Extraction, clause mapping, entity recognition |
+| `situation-navigator.test.ts` | 16 | Fact extraction, legal-category routing, vague/health-input handling |
+| `frictionless-intake-and-demo.test.ts` | 12 | Zero-auth demo intake, sample report integrity, no secret exposure |
+| `jurisdiction-aware-intelligence.test.ts` | 12 | India/Maharashtra jurisdiction routing and statutory rules |
+| `e2e-critical-flows.test.ts` | 11 | Full pipeline on a real PDF, cross-feature data-consistency invariants |
+| `theme-toggle.test.ts` | 11 | Dark/light theme state, persistence |
+| `action-plan-unique-ids.test.ts` | 8 | Deterministic ID generation, duplicate-key regression prevention |
+| `compare-action-plan-integration.test.ts` | 8 | Compare → Action Plan save/complete/remove persistence and de-duplication |
+| `colorbends-lifecycle-and-mobile.test.ts` | 7 | Canvas lifecycle, WebGL-failure fallback, mobile resize handling |
+| `hydration-scene-scroll.test.ts` | 7 | SSR hydration safety, scroll-listener cleanup |
+| `presentation-simplification.test.ts` | 7 | Progressive-disclosure findings presentation |
+| `document-segmentation-robustness.test.ts` | 5 | Real multi-page PDF extraction and heading-pattern segmentation |
+| `brand-and-product-copy.test.ts` | 5 | Product-copy/naming consistency |
+
+### Manual Verification
+
+Beyond the automated suite, the core flows (Landing → Review → Analysis → Evidence Chain → Ask LawPilot → Compare → Action Plan, and Situation Navigator) were exercised in a real Chromium browser session against a running instance — including a live Gemini round trip — checking for console/hydration errors, correct persistence across navigation, and correct behavior under a simulated provider failure (503) and a live schema-validation rejection. This was manual, developer-run verification during this build, not an automated CI gate.
+
+---
+
+## Problem Statement Alignment: AI for Legal Assistance & Access
+
+| Requirement | LawPilot Capability | Implementation |
+|---|---|---|
+| Simplify legal documents | Plain-English clause summaries, progressive disclosure | `lib/analysis/presentationTransformer.ts`, `/analysis/[id]` |
+| Highlight important clauses | Severity-scored findings (`critical_attention` / `high_attention` / `review` / `informational`) | `lib/ai/agents/riskAnalysisAgent.ts`, `SeverityBadge.tsx` |
+| Identify risks / inconsistencies | Findings surface one-sided obligations, financial exposure, restrictive covenants | Finding cards, `FindingDetailModal.tsx` |
+| Compare legal documents | Semantic clause diff with added/removed/modified/moved classification | `/compare`, `lib/comparison/documentComparator.ts`, `clauseMatcher.ts` |
+| Detect meaningful changes | Materiality scoring (HIGH/MEDIUM/LOW/INFORMATIONAL) with jurisdiction-aware explanations | `lib/comparison/semanticChangeDetector.ts` |
+| Answer questions from documents | Grounded Q&A scoped to the uploaded document's own evidence chains | `lib/ai/ask/askEngine.ts`, `AskLawPilotView.tsx` |
+| Show evidence for findings | The Evidence Chain (document quote → source → verification → uncertainty) | `lib/ai/agents/verificationAgent.ts`, `components/evidence/` |
+| Connect findings to legal sources | Curated statute/precedent linking with an explicit no-match state | `lib/ai/agents/legalResearchAgent.ts` |
+| Communicate uncertainty clearly | Explicit `uncertainties[]` and non-`verified` statuses shown in the UI, not hidden | `EvidenceChain.verification`, `EvidenceChain.uncertainties` |
+| Suggest practical next steps | Reversible-only action items tied to each finding | `lib/ai/agents/actionPlanningAgent.ts` |
+| Produce actionable checklists | Categorized, persisted Action Plan with completion tracking | `components/action-plan/ActionPlan.tsx` |
+| Prepare questions for a lawyer | Structured Lawyer Brief with targeted counsel questions | `lib/ai/agents/lawyerBriefAgent.ts`, `LawyerBrief.tsx` |
+| Situation-based navigation (no document) | Structured assessment from a plain-English description alone | `/situation`, `lib/ai/situation/situationEngine.ts` |
+| Maintain professional boundaries | Global and per-view legal disclaimers; no definitive-legality language | `GlobalDisclaimer.tsx`, `lib/safety/safetyRules.ts`, `lib/safety/disclaimer.ts` |
 
 ---
 
