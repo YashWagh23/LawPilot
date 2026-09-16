@@ -4,12 +4,31 @@ import type { AskConversationMessage } from "@/types/ask";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import { getAnalysisReportById, getCachedAnalysisReport } from "@/lib/storage/reportStore";
 import { askLawPilot } from "@/lib/ai/ask/askEngine";
+import { checkRateLimit } from "@/lib/safety/rateLimiter";
+import { isDeclaredContentLengthTooLarge } from "@/lib/documents/fileValidator";
 
 const MAX_QUESTION_LENGTH = 2000;
 const MAX_HISTORY_LENGTH = 25;
+// Generous enough for a full clientReport fallback payload, small enough to block abuse.
+const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(request, "ask", 30, 60_000);
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please wait a moment before trying again." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
+    if (isDeclaredContentLengthTooLarge(request, MAX_REQUEST_BODY_BYTES)) {
+      return NextResponse.json(
+        { success: false, error: "Request body is too large." },
+        { status: 413 }
+      );
+    }
+
     const body = await request.json();
     const {
       documentId,

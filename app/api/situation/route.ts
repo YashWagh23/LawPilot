@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeSituation, sanitizeSituationInput } from "@/lib/ai/situation/situationEngine";
+import { checkRateLimit } from "@/lib/safety/rateLimiter";
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(request, "situation", 15, 60_000);
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please wait a moment before trying again." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     let body: Record<string, unknown> | null = null;
     try {
       body = await request.json();

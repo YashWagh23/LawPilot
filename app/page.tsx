@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import ColorBends from "@/components/effects/ColorBends";
+import ColorBends from "@/components/effects/ColorBendsLoader";
 import { UnderstandScene } from "@/components/landing/UnderstandScene";
 import { VerifyScene } from "@/components/landing/VerifyScene";
 import { ActScene } from "@/components/landing/ActScene";

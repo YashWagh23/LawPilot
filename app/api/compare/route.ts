@@ -6,12 +6,21 @@ import {
   DocumentInputError,
   isDeclaredContentLengthTooLarge,
 } from "@/lib/documents/fileValidator";
+import { checkRateLimit } from "@/lib/safety/rateLimiter";
 
 // Allows for two files plus multipart boundaries/headers.
 const MAX_REQUEST_BYTES = MAX_FILE_SIZE_BYTES * 2 + 64 * 1024;
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, "compare", 10, 60_000);
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please wait a moment before trying again." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     const contentType = req.headers.get("content-type") || "";
 
     // 1. Demo Mode
