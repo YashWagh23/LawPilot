@@ -43,6 +43,13 @@ export function FindingDetailModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Move focus into modal when it opens (focus trap entry point)
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      modalRef.current.focus();
+    }
+  }, [isOpen]);
+
   if (!isOpen || !finding) return null;
 
   return (
@@ -55,7 +62,8 @@ export function FindingDetailModal({
     >
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden lp-animate-scale-in"
+        tabIndex={-1}
+        className="relative w-full max-w-2xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden lp-animate-scale-in focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

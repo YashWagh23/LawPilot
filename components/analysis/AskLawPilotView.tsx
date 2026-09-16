@@ -50,8 +50,10 @@ export function AskLawPilotView({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [expandedDetailsMap, setExpandedDetailsMap] = useState<Record<string, boolean>>({});
+  const [confirmClear, setConfirmClear] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaId = `ask-textarea-${report.id}`;
 
   // Suggested questions — phrased as text links, not pills
   const suggestedQuestions = [
@@ -78,16 +80,21 @@ export function AskLawPilotView({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Clear conversation
+  // Clear conversation — uses inline confirm, not window.confirm()
   const handleClearConversation = () => {
-    if (confirm("Clear this conversation history?")) {
-      saveMessages([]);
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(storageKey);
-      }
-      setErrorMessage(null);
+    if (!confirmClear) {
+      setConfirmClear(true);
+      return;
     }
+    saveMessages([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(storageKey);
+    }
+    setErrorMessage(null);
+    setConfirmClear(false);
   };
+
+  const handleCancelClear = () => setConfirmClear(false);
 
   // Copy answer text
   const handleCopyAnswer = (msgId: string, answerText: string) => {
@@ -129,22 +136,46 @@ export function AskLawPilotView({
           documentId: report.id,
           question: textToSend,
           history: messages.slice(-4),
-          clientReport: report,
+          // Only send clientReport if needed for recovery from a 404
         }),
       });
 
+      // If document not found server-side, retry once with clientReport for local-first recovery
       let data: { success?: boolean; answer?: AskAnswerStructure; error?: string } = {};
-      try {
-        const text = await response.text();
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        throw new Error(
-          `The question service returned an unreadable response (HTTP ${response.status}). Please try again.`
-        );
-      }
-
-      if (!response.ok || !data.success || !data.answer) {
-        throw new Error(data.error || "Unable to get an answer from LawPilot.");
+      if (response.status === 404) {
+        const retryResponse = await fetch("/api/analysis/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            documentId: report.id,
+            question: textToSend,
+            history: messages.slice(-4),
+            clientReport: report,
+          }),
+        });
+        try {
+          const text = await retryResponse.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          throw new Error(
+            `The question service returned an unreadable response (HTTP ${retryResponse.status}). Please try again.`
+          );
+        }
+        if (!retryResponse.ok || !data.success || !data.answer) {
+          throw new Error(data.error || "Unable to get an answer from LawPilot.");
+        }
+      } else {
+        try {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          throw new Error(
+            `The question service returned an unreadable response (HTTP ${response.status}). Please try again.`
+          );
+        }
+        if (!response.ok || !data.success || !data.answer) {
+          throw new Error(data.error || "Unable to get an answer from LawPilot.");
+        }
       }
 
       const structuredAnswer = data.answer;
@@ -187,14 +218,36 @@ export function AskLawPilotView({
           </div>
 
           {messages.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearConversation}
-              className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Clear
-            </button>
+            <div className="flex items-center gap-2">
+              {confirmClear ? (
+                <>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Clear history?</span>
+                  <button
+                    type="button"
+                    onClick={handleClearConversation}
+                    className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                  >
+                    Yes, clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelClear}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleClearConversation}
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer shrink-0"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Clear
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -357,13 +410,18 @@ export function AskLawPilotView({
       {/* Input — clean, minimal */}
       <div className="sticky bottom-3 z-10 border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-lg p-2.5 focus-within:border-indigo-400 dark:focus-within:border-indigo-700 transition-colors shadow-sm">
         <div className="flex items-end gap-2">
+          <label htmlFor={textareaId} className="sr-only">
+            Ask a question about your document
+          </label>
           <textarea
+            id={textareaId}
             ref={textareaRef}
             rows={2}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask anything about your document..."
+            aria-label="Ask a question about your document"
             className="flex-1 resize-none bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden py-1"
           />
           <button

@@ -181,7 +181,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         </div>
 
         {/* Navigation Tabs — text-only, weight-based active state */}
-        <div className="flex items-center gap-0 border-b border-slate-200 dark:border-slate-800">
+        <div role="tablist" aria-label="Analysis sections" className="flex items-center gap-0 border-b border-slate-200 dark:border-slate-800">
           {([
             { id: "overview", label: "Overview" },
             { id: "ask",      label: "Ask LawPilot" },
@@ -190,6 +190,10 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`tabpanel-${tab.id}`}
               onClick={() => {
                 setActiveTab(tab.id);
                 if (tab.id === "act") setActSubTab("actions");
@@ -210,7 +214,12 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           TAB 1: OVERVIEW
       ══════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (
-        <div className="space-y-10">
+        <div
+          role="tabpanel"
+          id="tabpanel-overview"
+          aria-labelledby="tab-overview"
+          className="space-y-10"
+        >
           {/* ── Section: Findings (divider list, not cards) ── */}
           <section>
             <div className="flex items-center justify-between mb-3">
@@ -224,11 +233,14 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                 const isActive = activeFindingId === finding.id;
 
                 return (
-                  <div
+                  <button
                     key={finding.id}
+                    type="button"
                     onClick={() => setActiveFindingId(finding.id)}
                     data-active={isActive}
-                    className="lp-finding-row p-4 sm:p-5 bg-white dark:bg-slate-900"
+                    aria-pressed={isActive}
+                    aria-label={`${finding.severityLabel} severity finding: ${finding.title}`}
+                    className="lp-finding-row w-full text-left p-4 sm:p-5 bg-white dark:bg-slate-900"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       {/* Left: Severity + Title + Summary */}
@@ -266,20 +278,22 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
 
                       {/* Right: Action */}
                       <div className="shrink-0">
-                        <button
-                          type="button"
+                        <span
+                          role="button"
+                          tabIndex={-1}
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedFindingForModal(finding);
                           }}
+                          aria-label={`View details: why ${finding.title} matters`}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer py-1"
                         >
                           Why this matters
                           <ArrowRight className="w-3 h-3" />
-                        </button>
+                        </span>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -490,20 +504,26 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           TAB 2: ASK LAWPILOT
       ══════════════════════════════════════════════════════ */}
       {activeTab === "ask" && (
-        <AskLawPilotView
-          report={report}
-          onJumpToClause={(clauseId) => handleJumpToClause(clauseId)}
-          onOpenChain={(chain) => setSelectedChainForModal(chain)}
-        />
+        <div
+          role="tabpanel"
+          id="tabpanel-ask"
+          aria-labelledby="tab-ask"
+        >
+          <AskLawPilotView
+            report={report}
+            onJumpToClause={(clauseId) => handleJumpToClause(clauseId)}
+            onOpenChain={(chain) => setSelectedChainForModal(chain)}
+          />
+        </div>
       )}
 
       {/* ══════════════════════════════════════════════════════
           TAB 3: NEXT STEPS (Action Plan + Lawyer Brief)
       ══════════════════════════════════════════════════════ */}
       {activeTab === "act" && (
-        <div className="space-y-6">
+        <div role="tabpanel" id="tabpanel-act" aria-labelledby="tab-act" className="space-y-6">
           {/* Sub-tab picker */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <div role="tablist" aria-label="Next steps sections" className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
             {([
               { id: "actions", label: "Next Steps" },
               { id: "brief",   label: "Prepare for a Lawyer" },
@@ -511,6 +531,10 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
               <button
                 key={sub.id}
                 type="button"
+                role="tab"
+                id={`subtab-${sub.id}`}
+                aria-selected={actSubTab === sub.id}
+                aria-controls={`subtabpanel-${sub.id}`}
                 onClick={() => setActSubTab(sub.id)}
                 className={`px-4 py-2 rounded text-xs font-semibold transition-all cursor-pointer ${
                   actSubTab === sub.id
@@ -525,26 +549,30 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
 
           {/* Action Plan */}
           {actSubTab === "actions" && (
-            <ActionPlanView
-              actionPlan={resolvedActionPlan}
-              onSelectFinding={(findingId) => {
-                const matched = presentationFindings.find((f) => f.id === findingId);
-                if (matched) handleJumpToClause(matched.clauseId);
-              }}
-              onNavigateToBrief={() => setActSubTab("brief")}
-            />
+            <div role="tabpanel" id="subtabpanel-actions" aria-labelledby="subtab-actions">
+              <ActionPlanView
+                actionPlan={resolvedActionPlan}
+                onSelectFinding={(findingId) => {
+                  const matched = presentationFindings.find((f) => f.id === findingId);
+                  if (matched) handleJumpToClause(matched.clauseId);
+                }}
+                onNavigateToBrief={() => setActSubTab("brief")}
+              />
+            </div>
           )}
 
           {/* Lawyer Brief */}
           {actSubTab === "brief" && (
-            <LawyerBriefView
-              brief={resolvedLawyerBrief}
-              onNavigateToActionPlan={() => setActSubTab("actions")}
-              onSelectFinding={(findingId) => {
-                const matched = presentationFindings.find((f) => f.id === findingId);
-                if (matched) handleJumpToClause(matched.clauseId);
-              }}
-            />
+            <div role="tabpanel" id="subtabpanel-brief" aria-labelledby="subtab-brief">
+              <LawyerBriefView
+                brief={resolvedLawyerBrief}
+                onNavigateToActionPlan={() => setActSubTab("actions")}
+                onSelectFinding={(findingId) => {
+                  const matched = presentationFindings.find((f) => f.id === findingId);
+                  if (matched) handleJumpToClause(matched.clauseId);
+                }}
+              />
+            </div>
           )}
         </div>
       )}

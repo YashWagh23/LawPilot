@@ -2,7 +2,7 @@
 
 > **Understand. Verify. Act.**
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black) ![React](https://img.shields.io/badge/React-19-61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6) ![Tests](https://img.shields.io/badge/tests-235%20passing-brightgreen) ![Zero Auth](https://img.shields.io/badge/auth-none%20required-lightgrey)
+![Next.js](https://img.shields.io/badge/Next.js-16-black) ![React](https://img.shields.io/badge/React-19-61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6) ![Tests](https://img.shields.io/badge/tests-244%20passing-brightgreen) ![Zero Auth](https://img.shields.io/badge/auth-none%20required-lightgrey)
 
 **Live Demo:** [lawpilot-sepia.vercel.app](https://lawpilot-sepia.vercel.app/)
 
@@ -202,6 +202,7 @@ npm run build      # Production build (Next.js/Turbopack) — succeeds
 | `presentation-simplification.test.ts` | 7 | Progressive-disclosure findings presentation |
 | `document-segmentation-robustness.test.ts` | 5 | Real multi-page PDF extraction and heading-pattern segmentation |
 | `brand-and-product-copy.test.ts` | 5 | Product-copy/naming consistency |
+| `rate-limiter.test.ts` | 9 | Sliding-window rate limiter correctness, IP isolation, window expiry, graceful degradation |
 
 ### Manual Verification
 
@@ -227,6 +228,8 @@ Beyond the automated suite, the core flows (Landing → Review → Analysis → 
 | Prepare questions for a lawyer | Structured Lawyer Brief with targeted counsel questions | `lib/ai/agents/lawyerBriefAgent.ts`, `LawyerBrief.tsx` |
 | Situation-based navigation (no document) | Structured assessment from a plain-English description alone | `/situation`, `lib/ai/situation/situationEngine.ts` |
 | Maintain professional boundaries | Global and per-view legal disclaimers; no definitive-legality language | `GlobalDisclaimer.tsx`, `lib/safety/safetyRules.ts`, `lib/safety/disclaimer.ts` |
+| Track recent document history | Workspace view showing recently analyzed documents with quick re-access | `/workspace`, `lib/storage/recentDocumentsStore.ts`, `components/workspace/` |
+| Protect against API abuse | Per-route, per-client sliding-window rate limiter; content-length pre-checks before parsing | `lib/safety/rateLimiter.ts`, `isDeclaredContentLengthTooLarge` in all API routes |
 
 ---
 

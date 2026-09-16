@@ -38,11 +38,19 @@ export async function POST(req: NextRequest) {
       }
       if (body.isDemo) {
         saveCachedAnalysisReport(SAMPLE_ANALYSIS_REPORT);
-        return NextResponse.json({
-          success: true,
-          reportId: SAMPLE_ANALYSIS_REPORT.id,
-          report: SAMPLE_ANALYSIS_REPORT,
-        });
+        return NextResponse.json(
+          {
+            success: true,
+            reportId: SAMPLE_ANALYSIS_REPORT.id,
+            report: SAMPLE_ANALYSIS_REPORT,
+          },
+          {
+            headers: {
+              // Demo payload is deterministic — safe to cache at CDN/browser level
+              "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+            },
+          }
+        );
       }
     }
 

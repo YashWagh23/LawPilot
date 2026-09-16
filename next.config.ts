@@ -8,7 +8,17 @@ const securityHeaders = [
   // Limits how much referrer information is leaked to other origins when navigating away.
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Disables powerful browser APIs this app never uses.
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" },
+  // Forces HTTPS for 2 years, including subdomains, and opts into the preload list.
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  // Disables DNS prefetching to prevent information leakage.
+  { key: "X-DNS-Prefetch-Control", value: "off" },
+  // Prevents cross-origin documents from sharing a browsing context group (e.g. opener attacks).
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Restricts cross-origin resource sharing to same-origin only.
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  // Blocks Flash and Acrobat from accessing the page's resources cross-domain.
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
 ];
 
 // Applied only in production: dev-mode Turbopack HMR relies on eval() and websocket connections

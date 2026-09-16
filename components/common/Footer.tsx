@@ -24,7 +24,7 @@ export function Footer() {
           </div>
 
           {/* Navigation */}
-          <div>
+          <nav aria-label="Footer navigation">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-3">
               Tools
             </p>
@@ -45,7 +45,7 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
         </div>
 
         {/* Disclaimer */}

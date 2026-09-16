@@ -89,6 +89,7 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
               <button
                 type="button"
                 onClick={onClearPrevious}
+                aria-label="Remove previous document"
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1"
                 title="Clear previous document"
               >
@@ -181,6 +182,7 @@ export const DualDocumentUploader: React.FC<DualDocumentUploaderProps> = ({
               <button
                 type="button"
                 onClick={onClearCurrent}
+                aria-label="Remove current document"
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1"
                 title="Clear current document"
               >

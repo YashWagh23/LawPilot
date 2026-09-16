@@ -38,6 +38,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: true,
           comparison: FLAGSHIP_DEMO_COMPARISON,
+        }, {
+          headers: {
+            // Demo payload is deterministic — safe to cache at CDN/browser level
+            "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+          },
         });
       }
     }
