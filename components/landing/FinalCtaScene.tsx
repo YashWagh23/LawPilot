@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 
 export function FinalCtaScene() {
   return (
-    <section className="relative border-t border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#0C0E14]">
+    <section className="relative border-t border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#0C0E14] lp-scene-01">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
         {/* Editorial layout: left-aligned, no center-everything default */}
         <div className="max-w-2xl">

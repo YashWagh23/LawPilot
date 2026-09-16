@@ -15,30 +15,45 @@ export default function HomePage() {
           HERO
       ══════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden border-b border-slate-200 dark:border-slate-800/60 min-h-[100dvh] flex items-center">
-        {/* Subtle gradient backdrop */}
+      {/* Subtle gradient backdrop */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/80 dark:from-[#0C0E14] dark:via-[#0C0E14] dark:to-[#0C0E14]"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-white dark:from-[#0C0E14] dark:via-[#0C0E14] dark:to-[#0C0E14]"
         />
 
-        {/* ColorBends — reduced opacity, no purple tint */}
+        {/* Dot-grid texture — 1px dots, 32px pitch, nearly invisible */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.18] dark:opacity-[0.40] transition-opacity duration-700"
+          className="pointer-events-none absolute inset-0 lp-hero-grid"
+        />
+
+        {/* Edge vignette — darkens periphery, keeps center clean */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: "radial-gradient(ellipse 80% 65% at 50% 35%, transparent 35%, rgba(15,23,42,0.04) 100%)",
+          }}
+        />
+
+        {/* ColorBends — institutional palette, raised to perceptible but calm */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.32] dark:opacity-[0.50] transition-opacity duration-700"
         >
           <ColorBends
-            colors={["#6366F1", "#0EA5E9", "#10B981"]}
-            rotation={90}
-            speed={0.15}
-            scale={1}
-            frequency={1}
-            warpStrength={0.8}
-            mouseInfluence={0.6}
-            noise={0.12}
-            parallax={0.3}
+            colors={["#6366F1", "#475569", "#334155"]}
+            rotation={110}
+            speed={0.08}
+            scale={1.1}
+            frequency={0.9}
+            warpStrength={0.7}
+            mouseInfluence={0.4}
+            noise={0.08}
+            parallax={0.25}
             iterations={1}
-            intensity={1.2}
-            bandWidth={6}
+            intensity={1.0}
+            bandWidth={5}
             transparent
             autoRotate={0}
             color="#6366F1"

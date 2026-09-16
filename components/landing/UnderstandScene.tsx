@@ -47,7 +47,7 @@ export function UnderstandScene() {
     <div
       id="scene-understand"
       ref={containerRef}
-      className="relative h-auto py-14 sm:py-20 lg:h-[220vh] motion-reduce:lg:h-auto motion-reduce:lg:py-14"
+      className="relative h-auto py-14 sm:py-20 lg:h-[220vh] motion-reduce:lg:h-auto motion-reduce:lg:py-14 lp-scene-01"
     >
       <div className="w-full flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden motion-reduce:lg:static motion-reduce:lg:h-auto motion-reduce:lg:overflow-visible">
         {/* Section Header */}

@@ -397,3 +397,239 @@ html.theme-transitioning *::after {
     animation: none !important;
   }
 }
+
+/* ============================================================
+   LANDING PAGE — ATMOSPHERIC DEPTH SYSTEM
+   Pure CSS, no JS, no blobs, no neon.
+   All effects are additive and restrained.
+   ============================================================ */
+
+/* Shared fine dot-grid: 1px dots on a 28px pitch, nearly invisible */
+.lp-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(100, 116, 139, 0.18) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
+
+/* Dark-mode dot grid — lighter dots on dark surface */
+.dark .lp-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(148, 163, 184, 0.10) 1px,
+    transparent 1px
+  );
+}
+
+/* Edge vignette: darkens corners softly, centers stay clean */
+.lp-vignette::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 30%,
+    transparent 40%,
+    rgba(15, 23, 42, 0.035) 100%
+  );
+}
+.dark .lp-vignette::after {
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 30%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+}
+
+/* ── Scene tonal backgrounds ───────────────────────────────
+   Each scene alternates between white-based and slate-50 base
+   with a faint accent-tinted radial bloom at one corner.
+   This gives spatial variety without full-bleed color. */
+
+/* Scene 01 — Understand (white base, faint indigo bloom top-right) */
+.lp-scene-01 {
+  background-color: #F8FAFC;
+  background-image:
+    radial-gradient(
+      ellipse 55% 45% at 90% 8%,
+      rgba(99, 102, 241, 0.055) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 40% 35% at 5% 95%,
+      rgba(71, 85, 105, 0.04) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(100, 116, 139, 0.13) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+.dark .lp-scene-01 {
+  background-color: #0C0E14;
+  background-image:
+    radial-gradient(
+      ellipse 55% 45% at 90% 8%,
+      rgba(99, 102, 241, 0.07) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 40% 35% at 5% 95%,
+      rgba(51, 65, 85, 0.08) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(148, 163, 184, 0.07) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+
+/* Scene 02 — Verify (very slight warm-slate, bloom top-left) */
+.lp-scene-02 {
+  background-color: #FFFFFF;
+  background-image:
+    radial-gradient(
+      ellipse 50% 50% at 10% 5%,
+      rgba(71, 85, 105, 0.045) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 35% 30% at 92% 90%,
+      rgba(99, 102, 241, 0.04) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(100, 116, 139, 0.13) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+.dark .lp-scene-02 {
+  background-color: #0C0E14;
+  background-image:
+    radial-gradient(
+      ellipse 50% 50% at 10% 5%,
+      rgba(51, 65, 85, 0.10) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 35% 30% at 92% 90%,
+      rgba(99, 102, 241, 0.06) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(148, 163, 184, 0.07) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+
+/* Scene 03 — Act (slate-50 base, faint emerald-to-slate bloom) */
+.lp-scene-03 {
+  background-color: #F8FAFC;
+  background-image:
+    radial-gradient(
+      ellipse 45% 50% at 95% 10%,
+      rgba(16, 185, 129, 0.04) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 0% 85%,
+      rgba(99, 102, 241, 0.04) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(100, 116, 139, 0.13) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+.dark .lp-scene-03 {
+  background-color: #0A0C12;
+  background-image:
+    radial-gradient(
+      ellipse 45% 50% at 95% 10%,
+      rgba(16, 185, 129, 0.05) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 0% 85%,
+      rgba(99, 102, 241, 0.06) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(148, 163, 184, 0.07) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+
+/* Scene 04 — Compare (white base, amber-faint bloom) */
+.lp-scene-04 {
+  background-color: #FFFFFF;
+  background-image:
+    radial-gradient(
+      ellipse 50% 40% at 8% 10%,
+      rgba(245, 158, 11, 0.04) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 40% 35% at 90% 88%,
+      rgba(99, 102, 241, 0.04) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(100, 116, 139, 0.13) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+.dark .lp-scene-04 {
+  background-color: #0C0E14;
+  background-image:
+    radial-gradient(
+      ellipse 50% 40% at 8% 10%,
+      rgba(245, 158, 11, 0.05) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 40% 35% at 90% 88%,
+      rgba(99, 102, 241, 0.06) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle,
+      rgba(148, 163, 184, 0.07) 1px,
+      transparent 1px
+    );
+  background-size: auto, auto, 28px 28px;
+}
+
+/* Hero dot grid overlay — separate class so it composes with ColorBends */
+.lp-hero-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(100, 116, 139, 0.15) 1px,
+    transparent 1px
+  );
+  background-size: 32px 32px;
+}
+.dark .lp-hero-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(148, 163, 184, 0.09) 1px,
+    transparent 1px
+  );
+  background-size: 32px 32px;
+}
