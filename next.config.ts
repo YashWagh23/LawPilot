@@ -11,13 +11,37 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
 ];
 
+// Applied only in production: dev-mode Turbopack HMR relies on eval() and websocket connections
+// that a strict CSP would block, and this app has no way to test that combination live before
+// deploying. The app itself never loads third-party scripts/styles/fonts (next/font self-hosts
+// Google Fonts at build time — see app/layout.tsx), so 'self' covers every real asset origin.
+const productionOnlyHeaders =
+  process.env.NODE_ENV === "production"
+    ? [
+        {
+          key: "Content-Security-Policy",
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob:",
+            "font-src 'self' data:",
+            "connect-src 'self'",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+          ].join("; "),
+        },
+      ]
+    : [];
+
 const nextConfig: NextConfig = {
   devIndicators: false,
   async headers() {
     return [
       {
         source: "/:path*",
-        headers: securityHeaders,
+        headers: [...securityHeaders, ...productionOnlyHeaders],
       },
     ];
   },
