@@ -1,25 +1,19 @@
-import type { AnalysisReport, EvidenceChain, VerificationStatus, VerificationStatusLevel } from "@/types";
+import type {
+  AnalysisReport,
+  EvidenceChain,
+  LawyerBriefLegalContext,
+  ReportVerificationState,
+  VerificationBadge,
+  VerificationStatus,
+  VerificationStatusLevel,
+  VerificationTone,
+} from "@/types";
 
-export type VerificationTone = "verified" | "partial" | "unverified";
-
-export interface VerificationBadge {
-  tone: VerificationTone;
-  /** Short badge text. "Verified" is only ever returned when real verified sources back it. */
-  label: string;
-  /** One sentence explaining the state, suitable for a tooltip or caption. */
-  detail: string;
-}
-
-export interface ReportVerificationState extends VerificationBadge {
-  /** Distinct legal sources that backed a chain the verification gate marked verified. */
-  verifiedSourceCount: number;
-  verifiedChainCount: number;
-  totalChainCount: number;
-}
+export type { VerificationTone, VerificationBadge, ReportVerificationState };
 
 type AnyStatus = VerificationStatusLevel | VerificationStatus | string | undefined;
 
-const NO_VERIFIED_SOURCES_DETAIL =
+export const NO_VERIFIED_SOURCES_DETAIL =
   "No legal source could be verified for this document, so the findings rest on the document text alone.";
 
 /**
@@ -95,6 +89,59 @@ export function getReportVerificationState(
     tone: "partial",
     label: "Partially verified",
     detail: `${verifiedChains.length + partialChains.length} of ${chains.length} findings have a legal source behind them; the rest rely on the document text alone.`,
+  };
+}
+
+/**
+ * Lawyer-brief-level verification state. Reflects whether verified sources back any
+ * legal context section in the brief. Zero verified sources always yields "Not verified".
+ */
+export function getBriefVerificationState(
+  brief: {
+    verifiedLegalContext?: LawyerBriefLegalContext[];
+    verificationState?: ReportVerificationState;
+  }
+): ReportVerificationState {
+  if (brief.verificationState) {
+    return brief.verificationState;
+  }
+
+  const items = brief.verifiedLegalContext ?? [];
+  const verifiedItems = items.filter((lc) => lc.verificationStatus === "verified");
+  const partialItems = items.filter((lc) => lc.verificationStatus === "partially_verified");
+
+  const verifiedCitations = new Set<string>();
+  for (const item of verifiedItems) {
+    verifiedCitations.add(`${item.citation}|${item.jurisdiction}`);
+  }
+
+  const base: ReportVerificationState = {
+    verifiedSourceCount: verifiedCitations.size,
+    verifiedChainCount: verifiedItems.length,
+    totalChainCount: items.length,
+    tone: "unverified",
+    label: "Not verified",
+    detail: NO_VERIFIED_SOURCES_DETAIL,
+  };
+
+  if (verifiedItems.length === 0 && partialItems.length === 0) {
+    return base;
+  }
+
+  if (verifiedItems.length === items.length && items.length > 0) {
+    return {
+      ...base,
+      tone: "verified",
+      label: "Verified",
+      detail: `${verifiedCitations.size} verified legal ${verifiedCitations.size === 1 ? "source supports" : "sources support"} these findings.`,
+    };
+  }
+
+  return {
+    ...base,
+    tone: "partial",
+    label: "Partially verified",
+    detail: `${verifiedItems.length + partialItems.length} of ${items.length} legal context items have verified backing; the rest rely on document text alone.`,
   };
 }
 

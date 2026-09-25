@@ -4,6 +4,7 @@ import type {
   DocumentEvidence,
   EvidenceChain,
   Finding,
+  JurisdictionContext,
   LegalClaim,
   LegalEvidence,
   LegalSource,
@@ -24,6 +25,7 @@ export interface VerificationInput {
   claims?: LegalClaim[];
   jurisdiction?: string;
   governingLaw?: string;
+  jurisdictionContext?: JurisdictionContext;
 }
 
 export interface VerificationResult {
@@ -477,6 +479,7 @@ export async function verifyAndAssembleEvidence(
     // Assemble complete EvidenceChain
     const chain: EvidenceChain = {
       id: `chain-${finding.id}`,
+      jurisdictionContext: input.jurisdictionContext,
       finding,
       documentEvidence,
       legalClaims: gateResult.calibratedClaims,

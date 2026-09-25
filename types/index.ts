@@ -399,6 +399,23 @@ export interface LawyerBriefDate {
   isDeadline: boolean;
 }
 
+export type VerificationTone = "verified" | "partial" | "unverified";
+
+export interface VerificationBadge {
+  tone: VerificationTone;
+  /** Short badge text. "Verified" is only ever returned when real verified sources back it. */
+  label: string;
+  /** One sentence explaining the state, suitable for a tooltip or caption. */
+  detail: string;
+}
+
+export interface ReportVerificationState extends VerificationBadge {
+  /** Distinct legal sources that backed a chain the verification gate marked verified. */
+  verifiedSourceCount: number;
+  verifiedChainCount: number;
+  totalChainCount: number;
+}
+
 export interface DetailedLawyerBrief {
   id: string;
   generatedAt: string;
@@ -412,6 +429,7 @@ export interface DetailedLawyerBrief {
     jurisdictionContext?: JurisdictionContext;
   };
   jurisdictionContext?: JurisdictionContext;
+  verificationState?: ReportVerificationState;
   userConcerns: string[];
   relevantClauses: LawyerBriefClause[];
   verifiedLegalContext: LawyerBriefLegalContext[];

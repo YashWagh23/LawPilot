@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getSuggestedQuestions } from "@/lib/ai/ask/suggestedQuestions";
 import type { QuestionFocus } from "@/lib/ai/ask/relevance";
+import { getReportVerificationState } from "@/lib/analysis/verificationState";
 
 interface AskLawPilotViewProps {
   report: AnalysisReport;
@@ -34,6 +35,8 @@ export function AskLawPilotView({
   onJumpToClause: _onJumpToClause,
   onOpenChain: _onOpenChain,
 }: AskLawPilotViewProps) {
+  const verification = React.useMemo(() => getReportVerificationState(report), [report]);
+  const hasVerifiedSources = verification.verifiedSourceCount > 0;
   const storageKey = `lawpilot_ask_${report.id}`;
   const [messages, setMessages] = useState<AskConversationMessage[]>(() => {
     if (typeof window !== "undefined") {
@@ -227,7 +230,9 @@ export function AskLawPilotView({
               Ask about {report.metadata.title}
             </h2>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Ask any question in plain English. LawPilot answers using only your agreement and the verified legal sources linked to it.
+              {hasVerifiedSources
+                ? "Ask any question in plain English. LawPilot answers using only your agreement and the verified legal sources linked to it."
+                : "Ask any question in plain English. LawPilot answers using only your agreement text (no legal sources are verified for this document)."}
             </p>
           </div>
 

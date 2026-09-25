@@ -6,7 +6,11 @@ import { renderToString } from "react-dom/server";
 import { orchestrateDocumentAnalysis } from "@/lib/analysis/analysisOrchestrator";
 import { SAMPLE_ANALYSIS_REPORT } from "@/lib/demo/sampleAnalysis";
 import { identifyImportantClausesAndFindings } from "@/lib/ai/agents/riskAnalysisAgent";
-import { generateDeterministicLawyerBrief } from "@/lib/analysis/deterministicLawyerBrief";
+import {
+  generateDeterministicLawyerBrief,
+  LAWYER_BRIEF_STANDARD_DISCLAIMER,
+  LAWYER_BRIEF_UNVERIFIED_DISCLAIMER,
+} from "@/lib/analysis/deterministicLawyerBrief";
 import {
   buildKeyTakeaway,
   deriveOverallReadiness,
@@ -17,7 +21,9 @@ import {
 import { getChainVerificationBadge, getReportVerificationState } from "@/lib/analysis/verificationState";
 import { AnalysisClientView } from "@/components/analysis/AnalysisClientView";
 import { EvidenceChainCard } from "@/components/evidence/EvidenceChainCard";
-import { LawyerBriefView } from "@/components/lawyer-brief/LawyerBrief";
+import { EvidenceChainDetailModal } from "@/components/evidence/EvidenceChainDetailModal";
+import { LawyerBriefView, generateLawyerBriefMarkdown } from "@/components/lawyer-brief/LawyerBrief";
+import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
 import type { AnalysisReport, Clause, EvidenceChain } from "@/types";
 
 const fixture = (name: string) => fs.readFileSync(path.join(__dirname, "fixtures", name));
@@ -209,3 +215,187 @@ describe("Heuristic fallback is labelled as such", () => {
     expect(isHeuristicReport(report)).toBe(false);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────────────
+describe("Regression: US pet-sitting agreement under Oregon law with no matching curated legal source", () => {
+  it("satisfies all verification and jurisdiction invariants across orchestrator, UI, cards, modal, and brief", async () => {
+    const report = await orchestrateDocumentAnalysis(fixture("pet_sitting_oregon.txt"), "pet_sitting.txt");
+
+    // 1. Jurisdiction detection
+    expect(report.jurisdictionContext).toBeDefined();
+    expect(report.jurisdictionContext?.country).toBe("United States");
+    expect(report.jurisdictionContext?.stateOrUT).toBe("Oregon");
+    const formattedJurisdiction = formatJurisdictionBadge(report.jurisdictionContext);
+    expect(formattedJurisdiction).toBe("United States · Oregon");
+
+    // 2. Centralized verification state
+    const reportState = getReportVerificationState(report);
+    expect(reportState.tone).toBe("unverified");
+    expect(reportState.label).toBe("Not verified");
+    expect(reportState.verifiedSourceCount).toBe(0);
+
+    // 3. Evidence chains jurisdiction and verification status
+    expect(report.evidenceChains.length).toBeGreaterThan(0);
+    for (const chain of report.evidenceChains) {
+      expect(chain.verification.status).toBe("insufficient_context");
+      expect(chain.legalSources).toHaveLength(0);
+      expect(chain.jurisdictionContext).toBeDefined();
+      expect(formatJurisdictionBadge(chain.jurisdictionContext)).toBe("United States · Oregon");
+      const chainBadge = getChainVerificationBadge(chain);
+      expect(chainBadge.label).toBe("Not verified");
+      expect(chainBadge.tone).toBe("unverified");
+    }
+
+    // 4. AnalysisClientView (Header, Trust Strip, UI)
+    const clientHtml = html(React.createElement(AnalysisClientView, { report }));
+    const badge = headerBadge(clientHtml);
+    expect(badge).toContain("Not verified");
+    expect(badge).toContain('data-verification-state="unverified"');
+    expect(badge).not.toMatch(/>\s*Verified\s*</);
+    expect(badge).not.toMatch(/emerald/);
+
+    // Trust strip & UI checks
+    expect(clientHtml).toContain("Not verified");
+    expect(clientHtml).toContain("insufficient legal context");
+    expect(clientHtml).not.toMatch(/verified grounding/i);
+    expect(clientHtml).not.toMatch(/verified legal context/i);
+    expect(clientHtml).not.toContain("Jurisdiction not established");
+    expect(clientHtml).toContain("United States · Oregon");
+
+    // 5. EvidenceChainCard
+    const cardHtml = html(React.createElement(EvidenceChainCard, {
+      chain: report.evidenceChains[0],
+      defaultExpanded: true,
+      documentJurisdiction: report.jurisdictionContext,
+    }));
+    expect(cardHtml).toContain("United States · Oregon");
+    expect(cardHtml).toContain("Not verified");
+    expect(cardHtml).toContain("insufficient legal context");
+    expect(cardHtml).not.toContain("Jurisdiction not established");
+    expect(cardHtml).not.toMatch(/>\s*Verified\s*</);
+    expect(cardHtml).toContain("Authoritative verification was not found in the designated jurisdiction");
+
+    // 6. EvidenceChainDetailModal
+    const modalHtml = html(React.createElement(EvidenceChainDetailModal, {
+      chain: report.evidenceChains[0],
+      isOpen: true,
+      onClose: () => {},
+      documentJurisdiction: report.jurisdictionContext,
+      reportVerificationState: reportState,
+    }));
+    expect(modalHtml).toContain("United States · Oregon");
+    expect(modalHtml).not.toContain("Jurisdiction not established");
+    expect(modalHtml).toContain("2. Legal Context &amp; Authority");
+    expect(modalHtml).not.toContain("Supported Legal Source");
+    expect(modalHtml).toContain("insufficient context");
+    expect(modalHtml).toContain("NOT VERIFIED");
+    expect(modalHtml).toContain("(INSUFFICIENT CONFIDENCE)");
+    // Footer never claims grounded in verifiable legal authority when unverified
+    expect(modalHtml).not.toContain("Grounded in verifiable legal authority");
+    expect(modalHtml).toContain("Factual clause analysis (no verified legal authority)");
+
+    // 7. LawyerBriefView
+    const brief = report.detailedLawyerBrief!;
+    expect(brief).toBeDefined();
+    expect(brief.document.jurisdiction).toBe("United States · Oregon");
+    expect(brief.verifiedLegalContext).toHaveLength(0);
+    // Disclaimer never claims verified statutory context when unverified
+    expect(brief.disclaimer).toBe(LAWYER_BRIEF_UNVERIFIED_DISCLAIMER);
+    expect(brief.disclaimer).not.toContain("verified statutory context");
+    expect(brief.disclaimer).toContain("no legal authority was verified");
+
+    const briefHtml = html(React.createElement(LawyerBriefView, { brief }));
+    expect(briefHtml).toContain("United States · Oregon");
+    expect(briefHtml).not.toContain("Jurisdiction not established");
+    // Subtitle must not say "verified legal context"
+    expect(briefHtml).not.toContain("verified legal context");
+    expect(briefHtml).toContain("factual clause analysis");
+    // Section 5 title must not say "Verified Legal Context"
+    expect(briefHtml).toContain("Legal Context &amp; Authorities");
+    expect(briefHtml).not.toContain("Verified Legal Context");
+    // Section 5 badge & empty text
+    expect(briefHtml).toContain("Not verified");
+    expect(briefHtml).toContain("insufficient legal context");
+    expect(briefHtml).not.toContain("✓ Verified");
+    // Section 10 disclaimer rendered in HTML
+    expect(briefHtml).toContain("no legal authority was verified");
+    expect(briefHtml).not.toContain("verified statutory context");
+
+    // 8. Lawyer Brief Markdown export
+    const briefMd = generateLawyerBriefMarkdown(brief);
+    expect(briefMd).toContain("Jurisdiction:** United States · Oregon");
+    expect(briefMd).toContain("## 5. LEGAL CONTEXT & AUTHORITIES");
+    expect(briefMd).not.toContain("## 5. VERIFIED LEGAL CONTEXT & AUTHORITIES");
+    expect(briefMd).not.toMatch(/VERIFIED LEGAL CONTEXT/i);
+    expect(briefMd).toContain("Not verified: no legal source could be verified");
+    expect(briefMd).toContain("insufficient legal context");
+    expect(briefMd).not.toContain("verified statutory context");
+    expect(briefMd).toContain("no legal authority was verified");
+
+    // 9. Deterministic fallback brief with Oregon context preserves jurisdiction & unverified state
+    const fallbackBrief = generateDeterministicLawyerBrief({
+      documentId: report.documentId,
+      documentTitle: report.metadata.title,
+      documentType: report.metadata.documentType,
+      parties: [],
+      documentSummary: report.summary.keyTakeaway,
+      findings: report.findings,
+      clauses: report.clauses,
+      evidenceChains: report.evidenceChains,
+      heuristic: isHeuristicReport(report),
+      jurisdictionContext: report.jurisdictionContext,
+    });
+    expect(fallbackBrief.document.jurisdiction).toBe("United States · Oregon");
+    expect(fallbackBrief.verificationState?.tone).toBe("unverified");
+    expect(fallbackBrief.verificationState?.label).toBe("Not verified");
+    expect(fallbackBrief.verifiedLegalContext).toHaveLength(0);
+    expect(fallbackBrief.disclaimer).toBe(LAWYER_BRIEF_UNVERIFIED_DISCLAIMER);
+    expect(fallbackBrief.disclaimer).not.toContain("verified statutory context");
+    expect(fallbackBrief.disclaimer).toContain("no legal authority was verified");
+
+    const fallbackHtml = html(React.createElement(LawyerBriefView, { brief: fallbackBrief }));
+    expect(fallbackHtml).toContain("United States · Oregon");
+    expect(fallbackHtml).not.toContain("Verified Legal Context");
+    expect(fallbackHtml).toContain("Not verified");
+    expect(fallbackHtml).toContain("insufficient legal context");
+    expect(fallbackHtml).toContain("no legal authority was verified");
+    expect(fallbackHtml).not.toContain("verified statutory context");
+  });
+
+  it("the demo report (with verified sources) maintains standard disclaimer and grounded modal footer", () => {
+    const verifiedBrief = SAMPLE_ANALYSIS_REPORT.detailedLawyerBrief!;
+    expect(verifiedBrief.disclaimer).toContain("verified");
+    expect(verifiedBrief.disclaimer).toContain("statutory context");
+
+    const verifiedModalHtml = html(React.createElement(EvidenceChainDetailModal, {
+      chain: SAMPLE_ANALYSIS_REPORT.evidenceChains[0],
+      isOpen: true,
+      onClose: () => {},
+      documentJurisdiction: SAMPLE_ANALYSIS_REPORT.jurisdictionContext,
+      reportVerificationState: getReportVerificationState(SAMPLE_ANALYSIS_REPORT),
+    }));
+    expect(verifiedModalHtml).toContain("LawPilot Evidence Chain · Grounded in verifiable legal authority");
+    expect(verifiedModalHtml).not.toContain("no verified legal authority");
+
+    const usVerifiedBrief = generateDeterministicLawyerBrief({
+      documentId: "us-doc",
+      documentTitle: "Employment Agreement",
+      documentType: "employment_agreement",
+      parties: ["Company", "Employee"],
+      documentSummary: "Employment agreement.",
+      findings: SAMPLE_ANALYSIS_REPORT.findings,
+      clauses: SAMPLE_ANALYSIS_REPORT.clauses,
+      evidenceChains: SAMPLE_ANALYSIS_REPORT.evidenceChains,
+      jurisdiction: "Delaware",
+      jurisdictionContext: {
+        country: "United States",
+        stateOrUT: "Delaware",
+        confidence: "high",
+        source: "document",
+      },
+    });
+    expect(usVerifiedBrief.disclaimer).toBe(LAWYER_BRIEF_STANDARD_DISCLAIMER);
+    expect(usVerifiedBrief.disclaimer).toContain("verified statutory context");
+  });
+});
+

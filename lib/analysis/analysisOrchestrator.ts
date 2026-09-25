@@ -208,8 +208,12 @@ export async function orchestrateDocumentAnalysis(
       sources: legalSources,
       jurisdiction: formatJurisdictionBadge(detectedJurisdiction).replace("Unknown Jurisdiction", "Unknown"),
       governingLaw: detectedJurisdiction.governingLaw,
+      jurisdictionContext: detectedJurisdiction,
     });
-    evidenceChains = verificationResult.evidenceChains;
+    evidenceChains = verificationResult.evidenceChains.map((c) => ({
+      ...c,
+      jurisdictionContext: c.jurisdictionContext || detectedJurisdiction,
+    }));
   } catch (err) {
     // Non-fatal: fallback to empty chains if assembly encountered issues
     console.error("[analysis] evidence chain assembly failed:", err);

@@ -128,7 +128,8 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         documentType: report.metadata.documentType,
         date: report.metadata.effectiveDate || undefined,
         parties: report.metadata.parties.map((p) => p.name),
-        jurisdiction: report.metadata.jurisdiction || report.metadata.governingLaw || undefined,
+        jurisdiction: formatJurisdictionBadge(jurisdictionContext),
+        jurisdictionContext,
         documentSummary: report.summary.keyTakeaway,
         findings: report.findings,
         clauses: report.clauses,
@@ -138,7 +139,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         heuristic: isHeuristicReport(report),
       })
     );
-  }, [report]);
+  }, [report, jurisdictionContext]);
 
   // Selecting a finding syncs the Document Passage panel (and the full viewer) to its clause.
   const handleSelectFinding = (findingId: string) => {
@@ -495,7 +496,12 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                 </p>
                 <div className="space-y-4">
                   {report.evidenceChains.map((chain) => (
-                    <EvidenceChainCard key={chain.id} chain={chain} defaultExpanded={false} />
+                    <EvidenceChainCard
+                      key={chain.id}
+                      chain={chain}
+                      defaultExpanded={false}
+                      documentJurisdiction={jurisdictionContext}
+                    />
                   ))}
                 </div>
               </div>
@@ -684,6 +690,8 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         isOpen={!!selectedChainForModal}
         onClose={() => setSelectedChainForModal(null)}
         onViewInDocument={(clauseId) => handleJumpToClause(clauseId)}
+        documentJurisdiction={jurisdictionContext}
+        reportVerificationState={verification}
       />
 
       <ClauseQAModal

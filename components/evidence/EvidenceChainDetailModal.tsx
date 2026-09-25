@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import type { EvidenceChain, LegalSource } from "@/types";
+import type { EvidenceChain, JurisdictionContext, LegalSource, ReportVerificationState } from "@/types";
 import { SeverityBadge } from "./SeverityBadge";
 import { SourceDetailModal } from "./SourceDetailModal";
 import {
@@ -11,6 +11,7 @@ import {
   HelpCircle,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
   AlertCircle,
   Eye,
   GitCompare,
@@ -24,6 +25,8 @@ interface EvidenceChainDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onViewInDocument?: (clauseId: string) => void;
+  documentJurisdiction?: JurisdictionContext;
+  reportVerificationState?: ReportVerificationState;
 }
 
 export function EvidenceChainDetailModal({
@@ -31,6 +34,8 @@ export function EvidenceChainDetailModal({
   isOpen,
   onClose,
   onViewInDocument,
+  documentJurisdiction,
+  reportVerificationState,
 }: EvidenceChainDetailModalProps) {
   const [inspectedSource, setInspectedSource] = useState<LegalSource | null>(null);
 
@@ -52,6 +57,11 @@ export function EvidenceChainDetailModal({
   const verification = chain.verification;
   const isConflict = verification?.status === "conflicting";
   const verificationBadge = getChainVerificationBadge(chain);
+  const effectiveJurisdiction = chain.jurisdictionContext || documentJurisdiction;
+  const isChainUnverified =
+    reportVerificationState?.tone === "unverified" ||
+    verificationBadge.tone === "unverified" ||
+    !primarySource;
 
   const nextStep =
     chain.practicalNextStep || (chain.nextSteps && chain.nextSteps[0]);
@@ -89,8 +99,8 @@ export function EvidenceChainDetailModal({
                   JURISDICTION:
                 </span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-200/70 dark:bg-slate-800 px-2 py-0.5 rounded">
-                  {chain.jurisdictionContext
-                    ? formatJurisdictionBadge(chain.jurisdictionContext)
+                  {effectiveJurisdiction
+                    ? formatJurisdictionBadge(effectiveJurisdiction)
                     : primarySource?.jurisdiction || "Jurisdiction not established"}
                 </span>
                 <span className="text-slate-300 dark:text-slate-700">·</span>
@@ -160,17 +170,27 @@ export function EvidenceChainDetailModal({
 
               {/* LAYER 2: LEGAL CONTEXT */}
               <div className="relative">
-                <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 text-xs font-semibold">
+                <div className={`absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                  primarySource
+                    ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
+                    : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                }`}>
                   <BookOpen className="w-3.5 h-3.5" />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
-                      2. Supported Legal Context
+                    <span className={`text-xs font-bold uppercase tracking-wider ${
+                      primarySource ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"
+                    }`}>
+                      2. {primarySource ? "Supported Legal Context" : "Legal Context & Authority"}
                     </span>
-                    {primaryClaim?.supportLevel && (
+                    {primarySource && primaryClaim?.supportLevel ? (
                       <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
                         {primaryClaim.supportLevel.replace("_", " ")} support
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                        insufficient context
                       </span>
                     )}
                   </div>
@@ -213,7 +233,7 @@ export function EvidenceChainDetailModal({
                     </div>
                   ) : (
                     <div className="mt-2 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 italic">
-                      Sufficient authoritative verification was not found in the designated jurisdiction.
+                      Not verified: insufficient legal context. Sufficient authoritative verification was not found in the designated jurisdiction.
                     </div>
                   )}
                 </div>
@@ -221,8 +241,18 @@ export function EvidenceChainDetailModal({
 
               {/* LAYER 3: VERIFICATION GATE RESULT */}
               <div className="relative">
-                <div className="absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 text-xs font-semibold">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                <div className={`absolute -left-6 sm:-left-8 top-0.5 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                  verificationBadge.tone === "verified"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
+                    : verificationBadge.tone === "partial"
+                    ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
+                    : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                }`}>
+                  {verificationBadge.tone === "verified" ? (
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  ) : (
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -231,19 +261,15 @@ export function EvidenceChainDetailModal({
                     </span>
                     <span
                       className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                        verification?.status === "verified"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                          : verification?.status === "partially_verified"
-                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
-                          : verification?.status === "conflicting"
-                          ? "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
-                          : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                        VERIFICATION_TONE_CLASSES[verificationBadge.tone].pill
                       }`}
                     >
-                      {verification?.status?.replace("_", " ") || "VERIFIED"}
+                      {verificationBadge.tone === "unverified"
+                        ? "NOT VERIFIED"
+                        : verification?.status?.replace("_", " ") || verificationBadge.label.toUpperCase()}
                     </span>
                     <span className="text-xs text-slate-500 font-medium">
-                      ({(verification?.confidenceLevel || chain.confidence?.level || "high").toUpperCase()} CONFIDENCE)
+                      ({(verificationBadge.tone === "unverified" ? "insufficient" : (verification?.confidenceLevel || chain.confidence?.level || "high")).toUpperCase()} CONFIDENCE)
                     </span>
                   </div>
 
@@ -356,7 +382,9 @@ export function EvidenceChainDetailModal({
           {/* Footer */}
           <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex items-center justify-between gap-3">
             <span className="text-[11px] text-slate-500">
-              LawPilot Evidence Chain · Grounded in verifiable legal authority
+              {isChainUnverified
+                ? "LawPilot Evidence Chain · Factual clause analysis (no verified legal authority)"
+                : "LawPilot Evidence Chain · Grounded in verifiable legal authority"}
             </span>
             <button
               type="button"

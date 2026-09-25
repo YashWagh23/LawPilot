@@ -9,6 +9,7 @@ import {
   FileText,
   BookOpen,
   ShieldCheck,
+  ShieldAlert,
   ExternalLink,
   MessageSquare,
   HelpCircle,
@@ -182,7 +183,11 @@ export function SplitEvidenceView({
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className={`w-4 h-4 ${VERIFICATION_TONE_CLASSES[activeChain ? getChainVerificationBadge(activeChain).tone : "unverified"].text}`} />
+                {activeChain && getChainVerificationBadge(activeChain).tone === "verified" ? (
+                  <ShieldCheck className={`w-4 h-4 ${VERIFICATION_TONE_CLASSES.verified.text}`} />
+                ) : (
+                  <ShieldAlert className={`w-4 h-4 ${VERIFICATION_TONE_CLASSES[activeChain ? getChainVerificationBadge(activeChain).tone : "unverified"].text}`} />
+                )}
                 <span className={`text-xs font-semibold ${VERIFICATION_TONE_CLASSES[activeChain ? getChainVerificationBadge(activeChain).tone : "unverified"].text}`}>
                   {activeChain ? getChainVerificationBadge(activeChain).label : "Not verified"}
                 </span>
@@ -227,7 +232,7 @@ export function SplitEvidenceView({
               </div>
             ) : (
               <div className="p-3 rounded-xl bg-white dark:bg-slate-900 text-xs text-slate-500 italic">
-                Sufficient authoritative verification was not found in the designated jurisdiction.
+                Not verified: insufficient legal context. Sufficient authoritative verification was not found in the designated jurisdiction.
               </div>
             )}
 

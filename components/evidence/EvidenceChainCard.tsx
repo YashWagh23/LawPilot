@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import type { EvidenceChain } from "@/types";
+import type { EvidenceChain, JurisdictionContext } from "@/types";
 import { SeverityBadge } from "./SeverityBadge";
 import {
   FileText,
@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
 import { getChainVerificationBadge, VERIFICATION_TONE_CLASSES } from "@/lib/analysis/verificationState";
@@ -19,14 +20,17 @@ import { getChainVerificationBadge, VERIFICATION_TONE_CLASSES } from "@/lib/anal
 interface EvidenceChainCardProps {
   chain: EvidenceChain;
   defaultExpanded?: boolean;
+  documentJurisdiction?: JurisdictionContext;
 }
 
 export function EvidenceChainCard({
   chain,
   defaultExpanded = true,
+  documentJurisdiction,
 }: EvidenceChainCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const verificationBadge = getChainVerificationBadge(chain);
+  const effectiveJurisdiction = chain.jurisdictionContext || documentJurisdiction;
 
   return (
     <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
@@ -40,8 +44,8 @@ export function EvidenceChainCard({
             </span>
             <span aria-hidden="true" className="text-slate-200 dark:text-slate-700">·</span>
             <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
-              {chain.jurisdictionContext
-                ? formatJurisdictionBadge(chain.jurisdictionContext)
+              {effectiveJurisdiction
+                ? formatJurisdictionBadge(effectiveJurisdiction)
                 : chain.legalClaims[0]?.jurisdiction || "Jurisdiction not established"}
             </span>
             {chain.verification?.status && (
@@ -116,7 +120,30 @@ export function EvidenceChainCard({
             {/* Step 2: Legal Authority */}
             {(() => {
               const legalSource = chain.legalSource || (chain.legalSources && chain.legalSources[0]);
-              if (!legalSource) return null;
+              if (!legalSource) {
+                return (
+                  <div className="relative">
+                    <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      <BookOpen className="w-2.5 h-2.5" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          Legal context
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                          {effectiveJurisdiction ? formatJurisdictionBadge(effectiveJurisdiction) : "Jurisdiction not established"}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-500 dark:text-slate-400 italic">
+                        Not verified: insufficient legal context. Authoritative verification was not found in the designated jurisdiction.
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
               return (
                 <div className="relative">
                   <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
@@ -168,8 +195,18 @@ export function EvidenceChainCard({
 
             {/* Step 3: Certainty Assessment */}
             <div className="relative">
-              <div className="absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                <CheckCircle2 className="w-2.5 h-2.5" />
+              <div className={`absolute -left-8 top-0 flex items-center justify-center w-5 h-5 rounded-full border text-[10px] ${
+                verificationBadge.tone === "verified"
+                  ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                  : verificationBadge.tone === "partial"
+                  ? "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
+                  : "border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+              }`}>
+                {verificationBadge.tone === "verified" ? (
+                  <CheckCircle2 className="w-2.5 h-2.5" />
+                ) : (
+                  <AlertCircle className="w-2.5 h-2.5" />
+                )}
               </div>
 
               <div className="space-y-1">
@@ -179,14 +216,16 @@ export function EvidenceChainCard({
                   </span>
                   <span
                     className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${
-                      (chain.verification?.confidenceLevel || chain.confidence?.level) === "high"
+                      verificationBadge.tone === "verified"
                         ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                        : (chain.verification?.confidenceLevel || chain.confidence?.level) === "moderate"
+                        : verificationBadge.tone === "partial"
                         ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
                         : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                     }`}
                   >
-                    {((chain.verification?.confidenceLevel || chain.confidence?.level || "moderate") as string).toLowerCase()} confidence
+                    {verificationBadge.tone === "unverified"
+                      ? "insufficient legal context"
+                      : `${((chain.verification?.confidenceLevel || chain.confidence?.level || "moderate") as string).toLowerCase()} confidence`}
                   </span>
                   {chain.verification?.status && (
                     <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
