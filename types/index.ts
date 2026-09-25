@@ -540,3 +540,4 @@ export interface Situation {
 export * from "./ask";
 export * from "./compare";
 
+export * from "./negotiation";

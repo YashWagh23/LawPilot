@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Eye,
   Sparkles,
+  Handshake,
 } from "lucide-react";
 
 interface FindingDetailModalProps {
@@ -16,6 +17,8 @@ interface FindingDetailModalProps {
   onJumpToClause?: (clauseId: string) => void;
   onAskLawPilot?: (question: string) => void;
   onViewEvidenceChain?: (chain: FindingPresentation["evidenceChain"]) => void;
+  /** Opens the Negotiation Copilot; only offered for material (HIGH / MEDIUM) findings. */
+  onNegotiate?: (finding: FindingPresentation) => void;
 }
 
 export function FindingDetailModal({
@@ -25,6 +28,7 @@ export function FindingDetailModal({
   onJumpToClause,
   onAskLawPilot,
   onViewEvidenceChain,
+  onNegotiate,
 }: FindingDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -194,6 +198,20 @@ export function FindingDetailModal({
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-auto">
+            {onNegotiate && (finding.severityLabel === "HIGH" || finding.severityLabel === "MEDIUM") && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onNegotiate(finding);
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors cursor-pointer min-h-[44px]"
+              >
+                <Handshake className="w-3.5 h-3.5 text-indigo-500" aria-hidden="true" />
+                <span>Negotiate this</span>
+              </button>
+            )}
+
             {onAskLawPilot && (
               <button
                 type="button"

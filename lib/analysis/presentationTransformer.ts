@@ -6,6 +6,7 @@ import type {
   ActionPlan,
   ActionPlanItem,
   DocumentComparisonResult,
+  NegotiationDraft,
 } from "@/types";
 
 export interface FindingPresentation {
@@ -40,6 +41,8 @@ export interface SimpleActionItem {
   findingTitle?: string;
   priority: "urgent" | "important" | "recommended";
   isFromCompare?: boolean;
+  /** Present when the step was saved from the Negotiation Copilot. */
+  negotiation?: NegotiationDraft;
 }
 
 export interface TopChangeHighlight {

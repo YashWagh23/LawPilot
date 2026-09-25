@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Check } from "lucide-react";
 import ColorBends from "@/components/effects/ColorBendsLoader";
 import { UnderstandScene } from "@/components/landing/UnderstandScene";
 import { VerifyScene } from "@/components/landing/VerifyScene";
@@ -15,10 +16,26 @@ export default function HomePage() {
           HERO
       ══════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden border-b border-slate-200 dark:border-slate-800/60 min-h-[100dvh] flex items-center">
-      {/* Subtle gradient backdrop */}
+        {/* Photographic backdrop — law office desk. Served via next/image (responsive srcset,
+            AVIF/WebP) and preloaded as the LCP candidate. Never blurred; readability comes from
+            the opacity + overlay layers below. Focal point biased right so the scales and gavel
+            stay in frame on narrow viewports while the left side stays quiet behind the copy. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 bg-slate-100 dark:bg-[#0C0E14]">
+          <Image
+            src="/hero-law-office.jpg"
+            alt=""
+            fill
+            preload
+            sizes="100vw"
+            className="object-cover object-[68%_center] opacity-90 dark:opacity-60"
+          />
+        </div>
+
+        {/* Readability overlay — heavy behind the left-aligned copy, lighter toward the photo's
+            subject on the right; near-uniform on mobile where copy spans the full width. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-slate-50 via-white to-white dark:from-[#0C0E14] dark:via-[#0C0E14] dark:to-[#0C0E14]"
+          className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-white/85 via-white/80 to-white/90 md:bg-gradient-to-r md:from-white/[0.93] md:via-white/[0.84] md:via-55% md:to-white/40 dark:from-[#0C0E14]/85 dark:via-[#0C0E14]/80 dark:to-[#0C0E14]/90 md:dark:from-[#0C0E14]/[0.94] md:dark:via-[#0C0E14]/[0.86] md:dark:to-[#0C0E14]/50"
         />
 
         {/* Dot-grid texture — 1px dots, 32px pitch, subconscious */}
@@ -30,7 +47,7 @@ export default function HomePage() {
         {/* ColorBends — institutional palette, kept strictly behind headline */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-[0.30] dark:opacity-[0.45] transition-opacity duration-700"
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-[0.18] dark:opacity-[0.32] transition-opacity duration-700"
         >
           <ColorBends
             colors={["#6366F1", "#475569", "#334155"]}
@@ -63,6 +80,12 @@ export default function HomePage() {
           className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_80%_65%_at_50%_35%,transparent_40%,rgba(15,23,42,0.035)_100%)] dark:bg-[radial-gradient(ellipse_80%_65%_at_50%_35%,transparent_35%,rgba(0,0,0,0.50)_100%)]"
         />
 
+        {/* Bottom fade — hands the photo off cleanly to the next scene's flat background */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-32 bg-gradient-to-b from-transparent to-[#F8FAFC] dark:to-[#0C0E14]"
+        />
+
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pt-20 md:pb-24">
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight text-slate-950 dark:text-white leading-[1.08] lp-text-balance lp-animate-fade-up">
@@ -91,22 +114,21 @@ export default function HomePage() {
 
             <Link
               href="/analysis/demo-employment-agreement"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-white dark:hover:bg-slate-800 transition-colors duration-150"
             >
               See a sample analysis
             </Link>
           </div>
 
           {/* Trust signals — below CTAs, inline, minimal */}
-          <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400 dark:text-slate-500 lp-animate-fade-up lp-delay-3">
-            <span>No account required</span>
-            <span aria-hidden="true">·</span>
-            <span>Document isolation</span>
-            <span aria-hidden="true">·</span>
-            <span>Grounded citations</span>
-            <span aria-hidden="true">·</span>
-            <span>Auditable evidence chains</span>
-          </div>
+          <ul className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-slate-600 dark:text-slate-300 lp-animate-fade-up lp-delay-3">
+            {["No account required", "Document isolation", "Grounded citations", "Auditable evidence chains"].map((signal) => (
+              <li key={signal} className="inline-flex items-center gap-1.5">
+                <Check aria-hidden="true" className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                {signal}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 

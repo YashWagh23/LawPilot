@@ -22,12 +22,14 @@ import {
   ChevronDown,
   ArrowRight,
   ShieldCheck,
+  Handshake,
 } from "lucide-react";
 import { ActionPlanView } from "@/components/action-plan/ActionPlan";
 import { LawyerBriefView } from "@/components/lawyer-brief/LawyerBrief";
 import { generateDeterministicActionPlan } from "@/lib/analysis/deterministicActionPlan";
 import { generateDeterministicLawyerBrief } from "@/lib/analysis/deterministicLawyerBrief";
 import { AskLawPilotView } from "./AskLawPilotView";
+import { NegotiationCopilotModal } from "@/components/negotiation/NegotiationCopilotModal";
 
 interface AnalysisClientViewProps {
   report: AnalysisReport;
@@ -61,6 +63,8 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   const [qaClause, setQaClause] = useState<Clause | null>(null);
   const [qaFinding, setQaFinding] = useState<FindingPresentation | null>(null);
   const [isQaOpen, setIsQaOpen] = useState(false);
+  const [negotiationFinding, setNegotiationFinding] =
+    useState<FindingPresentation | null>(null);
 
   // Jurisdiction
   const [jurisdictionContext] = useState<JurisdictionContext | undefined>(
@@ -286,8 +290,19 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                         </div>
                       </button>
 
-                      {/* Right area — opens the detail modal */}
-                      <div className="shrink-0 px-4 sm:px-5 pb-3 sm:pb-0">
+                      {/* Right area — opens the detail modal (and the Negotiation Copilot for material findings) */}
+                      <div className="shrink-0 px-4 sm:px-5 pb-3 sm:pb-0 flex items-center gap-4">
+                        {(finding.severityLabel === "HIGH" || finding.severityLabel === "MEDIUM") && (
+                          <button
+                            type="button"
+                            onClick={() => setNegotiationFinding(finding)}
+                            aria-label={`Negotiate: ${finding.title}`}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors cursor-pointer py-1"
+                          >
+                            <Handshake className="w-3 h-3" aria-hidden="true" />
+                            Negotiate
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setSelectedFindingForModal(finding)}
@@ -558,6 +573,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             <div role="tabpanel" id="subtabpanel-actions" aria-labelledby="subtab-actions">
               <ActionPlanView
                 actionPlan={resolvedActionPlan}
+                documentId={report.documentId || report.id}
                 onSelectFinding={(findingId) => {
                   const matched = presentationFindings.find((f) => f.id === findingId);
                   if (matched) handleJumpToClause(matched.clauseId);
@@ -572,6 +588,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             <div role="tabpanel" id="subtabpanel-brief" aria-labelledby="subtab-brief">
               <LawyerBriefView
                 brief={resolvedLawyerBrief}
+                documentId={report.documentId || report.id}
                 onNavigateToActionPlan={() => setActSubTab("actions")}
                 onSelectFinding={(findingId) => {
                   const matched = presentationFindings.find((f) => f.id === findingId);
@@ -597,6 +614,17 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         onViewEvidenceChain={(chain) => {
           if (chain) setSelectedChainForModal(chain);
         }}
+        onNegotiate={(finding) => setNegotiationFinding(finding)}
+      />
+
+      <NegotiationCopilotModal
+        report={report}
+        finding={negotiationFinding}
+        isOpen={!!negotiationFinding}
+        onClose={() => setNegotiationFinding(null)}
+        onViewEvidenceChain={(chain) => setSelectedChainForModal(chain)}
+        onOpenActionPlan={() => { setActiveTab("act"); setActSubTab("actions"); }}
+        onOpenLawyerBrief={() => { setActiveTab("act"); setActSubTab("brief"); }}
       />
 
       <EvidenceChainDetailModal
