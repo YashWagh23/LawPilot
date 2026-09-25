@@ -23,12 +23,15 @@ import {
   ChevronDown,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
   Handshake,
 } from "lucide-react";
 import { ActionPlanView } from "@/components/action-plan/ActionPlan";
 import { LawyerBriefView } from "@/components/lawyer-brief/LawyerBrief";
 import { generateDeterministicActionPlan } from "@/lib/analysis/deterministicActionPlan";
 import { generateDeterministicLawyerBrief } from "@/lib/analysis/deterministicLawyerBrief";
+import { isHeuristicReport } from "@/lib/analysis/analysisSummary";
+import { getReportVerificationState, VERIFICATION_TONE_CLASSES } from "@/lib/analysis/verificationState";
 import { AskLawPilotView } from "./AskLawPilotView";
 import { NegotiationCopilotModal } from "@/components/negotiation/NegotiationCopilotModal";
 
@@ -81,6 +84,9 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   // Jurisdiction: exactly what the analysis established. Never defaults to a country.
   const jurisdictionContext: JurisdictionContext = getReportJurisdiction(report);
 
+  // Verification: reflects what the evidence chains actually verified (never assumed).
+  const verification = useMemo(() => getReportVerificationState(report), [report]);
+
   // Transform findings into clean Presentation models
   const presentationFindings = useMemo(() => {
     return report.findings.map((f) => toFindingPresentation(f, report));
@@ -129,6 +135,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         evidenceChains: report.evidenceChains,
         keyDates: report.keyDates,
         actionPlan: report.actionPlan,
+        heuristic: isHeuristicReport(report),
       })
     );
   }, [report]);
@@ -178,9 +185,18 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
             <span aria-hidden="true">·</span>
             <span>{formatJurisdictionBadge(jurisdictionContext)}</span>
             <span aria-hidden="true">·</span>
-            <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
-              <ShieldCheck className="w-3 h-3" />
-              Verified
+            <span
+              className={`inline-flex items-center gap-1 font-medium ${VERIFICATION_TONE_CLASSES[verification.tone].text}`}
+              title={verification.detail}
+              data-testid="verification-badge"
+              data-verification-state={verification.tone}
+            >
+              {verification.tone === "verified" ? (
+                <ShieldCheck className="w-3 h-3" aria-hidden="true" />
+              ) : (
+                <ShieldAlert className="w-3 h-3" aria-hidden="true" />
+              )}
+              {verification.label}
             </span>
           </div>
 
@@ -456,7 +472,13 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                   <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">→</span>
                   <span>Certainty assessment</span>
                   <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">→</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Verified grounding</span>
+                  <span className={`font-medium ${VERIFICATION_TONE_CLASSES[verification.tone].text}`}>
+                    {verification.tone === "verified"
+                      ? "Verified grounding"
+                      : verification.tone === "partial"
+                      ? "Partially verified grounding"
+                      : "Not verified: insufficient legal context"}
+                  </span>
                 </div>
               </div>
 

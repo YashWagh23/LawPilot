@@ -12,6 +12,7 @@ import {
 import type {
   ClauseComparisonItem,
 } from "@/types";
+import { getChainVerificationBadge, VERIFICATION_TONE_CLASSES } from "@/lib/analysis/verificationState";
 import {
   addCompareActionItem,
   isCompareActionItemAdded,
@@ -311,8 +312,11 @@ export const SideBySideClauseView: React.FC<SideBySideClauseViewProps> = ({
                 <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                   View Evidence & Statutory Authorities
                 </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
-                  Verified
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded ${VERIFICATION_TONE_CLASSES[getChainVerificationBadge(change.evidenceChain).tone].pill}`}
+                  title={getChainVerificationBadge(change.evidenceChain).detail}
+                >
+                  {getChainVerificationBadge(change.evidenceChain).label}
                 </span>
               </div>
               {isEvidenceExpanded ? (

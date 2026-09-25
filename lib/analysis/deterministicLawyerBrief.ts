@@ -31,6 +31,8 @@ export interface DetailedLawyerBriefInput {
   keyDates?: KeyDate[];
   actionPlan?: ActionPlan;
   tracker?: AiRunTracker;
+  /** True when the findings came from the rule-based fallback because AI analysis was unavailable. */
+  heuristic?: boolean;
 }
 
 /**
@@ -63,7 +65,9 @@ export function generateDeterministicLawyerBrief(
     .map((f) => f.title.replace(/\s+deserves review$/i, "").toLowerCase());
   const matterSummary = `Review of a ${docLabel} titled "${input.documentTitle}"${
     knownJurisdiction ? `, which appears to be governed by the law of ${knownJurisdiction}` : `. The document does not clearly establish which law governs it`
-  }. Analysis identified ${findings.length} provision${findings.length === 1 ? "" : "s"} of interest${
+  }. ${
+    input.heuristic ? "A rule-based (heuristic) scan, run because AI analysis was unavailable, flagged" : "Analysis identified"
+  } ${findings.length} provision${findings.length === 1 ? "" : "s"} of interest${
     highRiskCount > 0 ? `, including ${highRiskCount} elevated-risk term${highRiskCount === 1 ? "" : "s"}${topTitles.length ? ` (${topTitles.join("; ")})` : ""}` : ""
   }. The reader is seeking legal review to assess enforceability, identify drafting asymmetries, and prepare negotiation points before relying on the agreement.`;
 

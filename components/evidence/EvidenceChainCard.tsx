@@ -14,6 +14,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
+import { getChainVerificationBadge, VERIFICATION_TONE_CLASSES } from "@/lib/analysis/verificationState";
 
 interface EvidenceChainCardProps {
   chain: EvidenceChain;
@@ -25,6 +26,7 @@ export function EvidenceChainCard({
   defaultExpanded = true,
 }: EvidenceChainCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const verificationBadge = getChainVerificationBadge(chain);
 
   return (
     <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
@@ -45,8 +47,11 @@ export function EvidenceChainCard({
             {chain.verification?.status && (
               <>
                 <span aria-hidden="true" className="text-slate-200 dark:text-slate-700">·</span>
-                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                  {chain.verification.status === "verified" ? "Verified" : "Contextual"}
+                <span
+                  className={`text-[11px] font-medium ${VERIFICATION_TONE_CLASSES[verificationBadge.tone].text}`}
+                  title={verificationBadge.detail}
+                >
+                  {verificationBadge.label}
                 </span>
               </>
             )}
@@ -193,7 +198,9 @@ export function EvidenceChainCard({
                   {chain.confidence?.rationale ||
                     (chain.verification?.issues.length
                       ? chain.verification.issues.join("; ")
-                      : "Verified against authoritative legal sources in matching jurisdiction.")}
+                      : verificationBadge.tone === "verified"
+                      ? "Verified against authoritative legal sources in matching jurisdiction."
+                      : verificationBadge.detail)}
                 </p>
               </div>
             </div>

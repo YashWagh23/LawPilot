@@ -74,10 +74,16 @@ export function JurisdictionIndicator({
         <span className="text-slate-300 dark:text-slate-700">|</span>
 
         <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
-          <span className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">
-            <CheckCircle2 className="w-3 h-3" />
-            Verified: {verifiedSourceCount}
-          </span>
+          {verifiedSourceCount > 0 ? (
+            <span className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">
+              <CheckCircle2 className="w-3 h-3" />
+              Verified: {verifiedSourceCount}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+              Not verified
+            </span>
+          )}
           {uncertaintyCount > 0 && (
             <span className="inline-flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200/60 dark:border-amber-800/40">
               <AlertTriangle className="w-3 h-3" />

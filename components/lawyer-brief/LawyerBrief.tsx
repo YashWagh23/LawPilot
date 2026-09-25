@@ -60,6 +60,9 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
     });
 
     lines.push(`## 5. VERIFIED LEGAL CONTEXT`);
+    if (brief.verifiedLegalContext.length === 0) {
+      lines.push("- Not verified: no legal source could be verified for this document.");
+    }
     brief.verifiedLegalContext.forEach((lc) => {
       lines.push(`- **${lc.issueTitle}**: *${lc.sourceTitle}* (${lc.citation}, ${lc.jurisdiction})`);
       lines.push(`  ${lc.explanation} [Status: ${lc.verificationStatus}]`);
@@ -337,6 +340,12 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
             Verified Legal Context & Authorities
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {brief.verifiedLegalContext.length === 0 && (
+              <p className="md:col-span-2 text-xs text-slate-400 print:text-gray-700">
+                Not verified: no legal source could be verified for this document, so nothing here is presented as
+                verified legal authority. Ask counsel to confirm the governing law.
+              </p>
+            )}
             {brief.verifiedLegalContext.map((lc, idx) => (
               <div
                 key={idx}
@@ -344,7 +353,11 @@ export const LawyerBriefView: React.FC<LawyerBriefProps> = ({
               >
                 <div className="flex items-center justify-between font-semibold">
                   <span className="text-indigo-300 print:text-black">{lc.issueTitle}</span>
-                  <span className="text-[10px] text-emerald-400 print:text-gray-600">✓ Verified</span>
+                  {lc.verificationStatus === "verified" ? (
+                    <span className="text-[10px] text-emerald-400 print:text-gray-600">✓ Verified</span>
+                  ) : (
+                    <span className="text-[10px] text-amber-400 print:text-gray-600">Partially verified</span>
+                  )}
                 </div>
                 <div className="font-mono text-[11px] text-slate-400 print:text-gray-600">
                   {lc.citation} ({lc.jurisdiction})

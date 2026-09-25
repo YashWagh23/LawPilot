@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
+import { getChainVerificationBadge, VERIFICATION_TONE_CLASSES } from "@/lib/analysis/verificationState";
 
 interface EvidenceChainDetailModalProps {
   chain: EvidenceChain | null;
@@ -50,6 +51,7 @@ export function EvidenceChainDetailModal({
   const primaryClaim = claims[0];
   const verification = chain.verification;
   const isConflict = verification?.status === "conflicting";
+  const verificationBadge = getChainVerificationBadge(chain);
 
   const nextStep =
     chain.practicalNextStep || (chain.nextSteps && chain.nextSteps[0]);
@@ -95,8 +97,11 @@ export function EvidenceChainDetailModal({
                 <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
                   LEGAL CONTEXT:
                 </span>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">
-                  {verification?.status === "verified" ? "Verified" : "Contextual"}
+                <span
+                  className={`font-semibold px-2 py-0.5 rounded ${VERIFICATION_TONE_CLASSES[verificationBadge.tone].pill}`}
+                  title={verificationBadge.detail}
+                >
+                  {verificationBadge.label}
                 </span>
               </div>
             </div>

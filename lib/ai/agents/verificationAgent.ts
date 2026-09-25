@@ -288,6 +288,22 @@ export function runHardVerificationGate(
   };
 }
 
+function describeVerificationRationale(status: VerificationStatusLevel, issues: string[]): string {
+  const notes = issues.join("; ");
+  switch (status) {
+    case "verified":
+      return notes
+        ? `Verified with notes: ${notes}`
+        : "Verified against authoritative legal sources in matching jurisdiction.";
+    case "partially_verified":
+      return `Partially verified${notes ? `: ${notes}` : "."}`;
+    case "conflicting":
+      return `Conflicting authorities${notes ? `: ${notes}` : "."}`;
+    default:
+      return `Not verified${notes ? `: ${notes}` : ": no authoritative legal source could be verified for this issue."}`;
+  }
+}
+
 /**
  * Verification Agent
  * Constructs and verifies the full signature Evidence Chain for each finding.
@@ -473,9 +489,7 @@ export async function verifyAndAssembleEvidence(
       legalSource: primarySource,
       confidence: {
         level: gateResult.confidenceLevel,
-        rationale: gateResult.issues.length > 0
-          ? `Verified with notes: ${gateResult.issues.join("; ")}`
-          : "Verified against authoritative legal sources in matching jurisdiction.",
+        rationale: describeVerificationRationale(gateResult.status, gateResult.issues),
       },
       uncertainty: {
         id: `unc-${finding.id}`,

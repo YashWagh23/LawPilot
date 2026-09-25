@@ -316,88 +316,236 @@ interface HeadingMatchResult {
   section: string;
   title: string;
   inlineBodyText?: string;
+  /** Set for plain top-level integer headings ("4." / "Section 4"); drives sequence tracking. */
+  topNumber?: number;
+  /** A numbered paragraph with no heading of its own; its title is derived from its opening words. */
+  untitled?: boolean;
+}
+
+/**
+ * Running state the segmenter carries between lines so numbering can be judged in context:
+ * a wrapped "1 March 2026 ..." line or a "2.1 ..." sub-clause is not a new top-level section.
+ */
+interface HeadingContext {
+  /** The last accepted top-level integer heading number (0 before the first). */
+  lastTop: number;
+  /**
+   * Set while inside a numbered list that restarted at "1." within a section: the number the next
+   * list item is expected to carry, so "2." and "3." of that list are not mistaken for sections.
+   */
+  listNext?: number;
+  /** Typical (90th percentile) line length of the document; wrapped text hugs it, headings do not. */
+  wrapWidth?: number;
+}
+
+const MONTH_THEN_NUMBER =
+  /^(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d/i;
+const LEADING_UNIT =
+  /^(?:days?|weeks?|months?|years?|hours?|lakhs?|crores?|per\s?cent|percent|%|calendar|business|working|times|rupees|dollars|only)\b/i;
+/** Words that make a phrase a sentence rather than a heading. */
+const VERBISH = /\b(?:shall|will|may|must|is|are|was|were|has|have|hereby|agrees?|pays?|grants?|undertakes?)\b/i;
+
+/** Highest gap allowed between consecutive top-level numbers (tolerates a section lost to extraction). */
+const MAX_TOP_LEVEL_GAP = 5;
+
+function looksLikeTitle(text: string): boolean {
+  const t = text.replace(/[.:]+$/, "").trim();
+  if (!t || t.length > 70 || !/^[A-Z0-9"“'(]/.test(t)) return false;
+  if (t.split(/\s+/).length > 9) return false;
+  return !VERBISH.test(t);
+}
+
+/** A short label for a numbered paragraph that carries no heading of its own. */
+function deriveTitleFromSentence(sentence: string): string {
+  const words = sentence
+    .replace(/^(?:that|the|each|either)\s+/i, "")
+    .replace(/[.;:,]+$/, "")
+    .split(/\s+/)
+    .filter(Boolean);
+  const head = words.slice(0, 6).join(" ").replace(/[.;:,]+$/, "");
+  const title = head.charAt(0).toUpperCase() + head.slice(1);
+  return words.length > 6 ? `${title}…` : title;
+}
+
+/**
+ * Decides what follows a heading number: an inline "Title. Body", a bare title, or (for numbered
+ * paragraphs such as "1. The Licensee shall pay…") an untitled clause whose whole text is the body.
+ */
+function analyzeNumberedRemainder(
+  remainder: string,
+  allowUntitled: boolean,
+  atLineWidth = false
+): { title: string; inlineBody?: string; untitled?: boolean } | null {
+  const rem = remainder.trim();
+  if (!rem || !/^[A-Z0-9"“'(]/.test(rem)) return null;
+  if (MONTH_THEN_NUMBER.test(rem) || LEADING_UNIT.test(rem)) return null;
+
+  const split = splitTitleAndInlineBody(rem);
+  if (split.inlineBody && looksLikeTitle(split.title)) {
+    return { title: split.title.replace(/[.:]+$/, "").trim(), inlineBody: split.inlineBody };
+  }
+
+  const wordCount = rem.split(/\s+/).length;
+  // A line that fills the document's usual line width and reads like the start of a sentence is the
+  // first wrapped line of a numbered paragraph, not a heading.
+  const wrappedParagraphStart = atLineWidth && !isHeadingShaped(rem);
+  if (
+    !wrappedParagraphStart &&
+    rem.length <= 70 &&
+    wordCount <= 9 &&
+    looksLikeTitle(rem) &&
+    (wordCount <= 6 || !rem.endsWith("."))
+  ) {
+    return { title: rem.replace(/[.:]+$/, "").trim() };
+  }
+
+  if (allowUntitled && wordCount >= 4) {
+    return { title: deriveTitleFromSentence(rem), inlineBody: rem, untitled: true };
+  }
+  return null;
+}
+
+const TITLE_CONNECTORS = new Set(["a", "an", "the", "of", "and", "or", "for", "to", "in", "on", "at", "by", "with", "from", "as", "&"]);
+
+/** True for text shaped like a heading: ALL CAPS, or Title Case ("Fees and Payment"). */
+function isHeadingShaped(title: string): boolean {
+  const t = title.replace(/[.:]+$/, "").trim();
+  if (!t || t.includes(";")) return false;
+  if (!/[a-z]/.test(t)) return true;
+  const significant = t.split(/\s+/).filter((w) => !TITLE_CONNECTORS.has(w.toLowerCase()));
+  if (significant.length === 0) return false;
+  const capitalized = significant.filter((w) => /^[A-Z0-9"“'(]/.test(w)).length;
+  return capitalized / significant.length >= 0.6;
+}
+
+/** Line openings that begin a new section rather than continue a wrapped heading. */
+const STARTS_NUMBERED_OR_KEYWORD = /^(?:\d|\(\d|(?:section|article|clause|paragraph|exhibit|schedule|annexure|appendix)\s)/i;
+
+/** A title that ends on a connector ("… AND LIMITATION OF") is continued on the next line. */
+function titleContinuesOnNextLine(title: string): boolean {
+  const last = title.trim().split(/\s+/).pop()?.toLowerCase().replace(/[.,]+$/, "") ?? "";
+  return TITLE_CONNECTORS.has(last);
+}
+
+function atLineWidth(line: string, ctx?: HeadingContext): boolean {
+  return Boolean(ctx?.wrapWidth && line.length >= ctx.wrapWidth * 0.8);
+}
+
+/** The top-level number of a delimited numbered line ("3." / "3)" / "(3)"), or undefined. */
+function delimitedTopLevelNumber(line: string): number | undefined {
+  const m = line.trim().match(/^(?:\((\d{1,2})\)|(\d{1,2})[.)])\s+\S/);
+  return m ? Number(m[1] || m[2]) : undefined;
 }
 
 /**
  * Comprehensive heading patterns for legal agreements:
- * 1. SECTION 1, Section 1, SECTION 1 — TITLE, Section 1: Title
- * 2. 1. TITLE, 1. Title, 1 TITLE, 1.1 TITLE, 10. Title
- * 3. 1) Title, (1) Title, (a) Title
- * 4. ARTICLE I, Article 1, Clause 1
- * 5. EXHIBIT A, Exhibit A - Title, SCHEDULE 1, ANNEXURE A, APPENDIX 1
+ * 1. SECTION 1, Section 1, SECTION 1 — TITLE, Section 1: Title, Article IV, Clause 3
+ * 2. EXHIBIT A, Exhibit A - Title, SCHEDULE 1, ANNEXURE A, APPENDIX 1
+ * 3. Numbered sections: "1. Title", "1 Title", "1) Title", "(1) Title", "1. Title. Body…",
+ *    and untitled numbered paragraphs ("1. The Licensee shall…")
+ * 4. Decimal sub-clauses ("2.1 …") are body text of their parent section whenever that parent is
+ *    the current top-level section; otherwise they are headings in their own right
+ * 5. Roman numeral headings with upper-case titles ("IV. TERMINATION")
  * 6. Standalone uppercase legal section titles without numbers (e.g. CONFIDENTIALITY)
+ *
+ * Numbering is judged in context (`ctx`): top-level numbers must advance (a date such as
+ * "1 March 2026" wrapped onto its own line, or a list restarting at "1.", is not a heading).
+ * Without `ctx` numbering is not sequence-checked.
  */
-function matchHeadingPattern(line: string): HeadingMatchResult | null {
+function matchHeadingPattern(line: string, ctx?: HeadingContext): HeadingMatchResult | null {
   const trimmed = line.trim();
-  if (!trimmed || trimmed.length > 140) return null;
+  if (!trimmed) return null;
 
   // Pattern 1: Explicit keyword prefixes (SECTION, ARTICLE, CLAUSE, PARAGRAPH)
   // e.g., "SECTION 1. Appointment and Duties", "Section 5 - Notice Period"
-  const keywordMatch = trimmed.match(
-    /^(?:SECTION|ARTICLE|CLAUSE|PARAGRAPH)\s+([0-9IVXLCDM]+(?:\.[0-9]+)*)[.:\s\-–—]*(.*)$/i
-  );
-  if (keywordMatch) {
-    const num = keywordMatch[1].replace(/[.:\s]+$/, "");
-    const remainder = (keywordMatch[2] || "").trim();
-    const { title, inlineBody } = splitTitleAndInlineBody(remainder);
-    return {
-      section: `Section ${num}`,
-      title: title || "Terms and Conditions",
-      inlineBodyText: inlineBody,
-    };
+  const keywordLead = trimmed.match(/^(?:section|article|clause|paragraph)\s+/i);
+  if (keywordLead) {
+    const rest = trimmed.slice(keywordLead[0].length);
+    const numeral = rest.match(/^(\d+(?:\.\d+)*|[IVXLCDM]+)(?![A-Za-z0-9])[.:\s\-–—]*(.*)$/);
+    if (numeral) {
+      const num = numeral[1].replace(/[.:\s]+$/, "");
+      const remainder = (numeral[2] || "").trim();
+      // "Section 5 above shall apply" / "Clause 3 of this Agreement" are references, not headings.
+      if (remainder && /^[a-z]/.test(remainder)) return null;
+      const { title, inlineBody } = splitTitleAndInlineBody(remainder);
+      return {
+        section: `Section ${num}`,
+        title: (title || "Terms and Conditions").replace(/[.:]+$/, "").trim(),
+        inlineBodyText: inlineBody,
+        topNumber: /^\d+$/.test(num) ? Number(num) : undefined,
+      };
+    }
   }
 
   // Pattern 2: Exhibit, Schedule, Annexure, Appendix
   // e.g., "Exhibit A - Prior Inventions / Personal Projects", "Schedule 1: Benefits"
-  const exhibitMatch = trimmed.match(
-    /^(?:EXHIBIT|SCHEDULE|ANNEXURE|APPENDIX)\s+([A-Z0-9]+)[.:\s\-–—]*(.*)$/i
-  );
-  if (exhibitMatch) {
-    const label = exhibitMatch[1].trim();
-    const remainder = (exhibitMatch[2] || "").trim();
-    const { title, inlineBody } = splitTitleAndInlineBody(remainder);
+  const exhibitLead = trimmed.match(/^(?:exhibit|schedule|annexure|appendix)\s+/i);
+  if (exhibitLead) {
+    const rest = trimmed.slice(exhibitLead[0].length);
+    const label = rest.match(/^([A-Z]{1,2}|\d{1,2})(?![A-Za-z0-9])[.:\s\-–—]*(.*)$/);
+    if (label) {
+      const remainder = (label[2] || "").trim();
+      if (!remainder || !/^[a-z]/.test(remainder)) {
+        const { title, inlineBody } = splitTitleAndInlineBody(remainder);
+        return {
+          section: `Exhibit ${label[1]}`,
+          title: title || "Supplementary Exhibit",
+          inlineBodyText: inlineBody,
+        };
+      }
+    }
+  }
+
+  // Pattern 3/4: Numbered sections — "1. Title", "1.1 Title", "1) Title", "(1) Title".
+  const numbered = trimmed.match(/^(?:\((\d{1,2})\)|(\d{1,2}(?:\.\d{1,2})*)([.)])?)\s+(.+)$/);
+  if (numbered) {
+    const num = (numbered[1] || numbered[2]).replace(/[.:\s]+$/, "");
+    const hasDelimiter = Boolean(numbered[1] || numbered[3]);
+    const first = Number(num.split(".")[0]);
+
+    if (num.includes(".")) {
+      // "2.1 …" inside section 2 is part of section 2.
+      if (ctx && ctx.lastTop > 0 && first === ctx.lastTop) return null;
+      const parsed = analyzeNumberedRemainder(numbered[4], true, atLineWidth(trimmed, ctx));
+      if (!parsed) return null;
+      return {
+        section: `Section ${num}`,
+        title: parsed.title,
+        inlineBodyText: parsed.inlineBody,
+        untitled: parsed.untitled,
+      };
+    }
+
+    if (ctx) {
+      const step = first - ctx.lastTop;
+      if (step < 1 || step > MAX_TOP_LEVEL_GAP) return null;
+    }
+    // Untitled numbered paragraphs and delimiter-less "1 Title" lines must be the exact next number.
+    const isNextNumber = !ctx || first === ctx.lastTop + 1;
+    if (!hasDelimiter && !isNextNumber) return null;
+    const parsed = analyzeNumberedRemainder(numbered[4], hasDelimiter && isNextNumber, atLineWidth(trimmed, ctx));
+    if (!parsed) return null;
+    // Continuing a list that restarted inside the current section: only a heading-shaped line that is
+    // also exactly the next section number is allowed to break out of it.
+    if (ctx && ctx.listNext === first && !(isNextNumber && !parsed.untitled && isHeadingShaped(parsed.title))) {
+      return null;
+    }
     return {
-      section: `Exhibit ${label}`,
-      title: title || "Supplementary Exhibit",
-      inlineBodyText: inlineBody,
+      section: `Section ${num}`,
+      title: parsed.title,
+      inlineBodyText: parsed.inlineBody,
+      topNumber: first,
+      untitled: parsed.untitled,
     };
   }
 
-  // Pattern 3: Numbered sections like "1. Appointment and Duties", "1.1 Duties", "2. Term and Renewal. Body text..."
-  const numberedMatch = trimmed.match(
-    /^([0-9]{1,2}(?:\.[0-9]{1,2})*)\.?\s+(.+)$/
-  );
-  if (numberedMatch) {
-    const num = numberedMatch[1].replace(/[.:\s]+$/, "");
-    const remainder = numberedMatch[2].trim();
-    const { title, inlineBody } = splitTitleAndInlineBody(remainder);
-    if (title && /^[A-Z]/.test(title) && title.length <= 70) {
-      return {
-        section: `Section ${num}`,
-        title,
-        inlineBodyText: inlineBody,
-      };
-    }
+  // Pattern 5: Roman numeral headings with an upper-case title: "IV. TERMINATION AND NOTICE"
+  const roman = trimmed.match(/^([IVX]{1,5})[.)]\s+([A-Z][A-Z0-9\s,&/'\-–—]{2,60})$/);
+  if (roman) {
+    return { section: `Section ${roman[1]}`, title: toTitleCase(roman[2].trim()) };
   }
 
-  // Pattern 4: Parenthesized numbers: "1) Title", "(1) Title", "1.1) Title"
-  const parenMatch = trimmed.match(
-    /^(?:\(?([0-9]{1,2})\)|\(?([0-9]{1,2}\.[0-9]{1,2})\))\s+(.+)$/
-  );
-  if (parenMatch) {
-    const num = (parenMatch[1] || parenMatch[2]).replace(/[.:\s]+$/, "");
-    const remainder = (parenMatch[3] || "").trim();
-    const { title, inlineBody } = splitTitleAndInlineBody(remainder);
-    if (title && /^[A-Z]/.test(title) && title.length <= 70) {
-      return {
-        section: `Section ${num}`,
-        title,
-        inlineBodyText: inlineBody,
-      };
-    }
-  }
-
-  // Pattern 5: Standalone Uppercase or Title-case Legal Headings without numbers
+  // Pattern 6: Standalone Uppercase or Title-case Legal Headings without numbers
   // e.g. "CONFIDENTIALITY", "GOVERNING LAW AND JURISDICTION", "TERMINATION FOR CAUSE"
   // Length 4 to 60 characters, no ending period, must match known legal section terms
   if (
@@ -447,6 +595,21 @@ function matchHeadingPattern(line: string): HeadingMatchResult | null {
     }
   }
 
+  return null;
+}
+
+/**
+ * A section number standing alone on its own line, with the heading title on the next line:
+ *   "1."   or   "Section 1"        →   "Licensed Premises"
+ * A bare number without "." or ")" is indistinguishable from a page number and is not accepted.
+ */
+function matchStandaloneNumberLine(line: string): { section: string; topNumber?: number } | null {
+  const keyword = line.match(/^(?:SECTION|ARTICLE|CLAUSE|PARAGRAPH)\s+([0-9IVXLCDM]+(?:\.[0-9]+)*)$/i);
+  if (keyword) {
+    return { section: `Section ${keyword[1]}`, topNumber: /^\d+$/.test(keyword[1]) ? Number(keyword[1]) : undefined };
+  }
+  const bare = line.match(/^(\d{1,2})[.)]$/);
+  if (bare) return { section: `Section ${bare[1]}`, topNumber: Number(bare[1]) };
   return null;
 }
 
@@ -547,63 +710,93 @@ export function segmentDocumentIntoClauses(
   }
 
   // Step 2: Segment lines into raw sections
-  const rawSections: {
+  interface RawSection {
     section: string;
     title: string;
     pageNumber: number;
     bodyLines: string[];
-  }[] = [];
+    untitled?: boolean;
+  }
+  const rawSections: RawSection[] = [];
 
-  let currentSection = {
+  let currentSection: RawSection = {
     section: "Preamble",
     title: "Recitals and Preamble",
     pageNumber: taggedLines[0].pageNumber,
-    bodyLines: [] as string[],
+    bodyLines: [],
+  };
+
+  const lineLengths = taggedLines.map((t) => t.line.length).sort((a, b) => a - b);
+  const headingContext: HeadingContext = {
+    lastTop: 0,
+    wrapWidth: lineLengths[Math.floor((lineLengths.length - 1) * 0.9)],
   };
 
   for (let i = 0; i < taggedLines.length; i++) {
     const { line, pageNumber } = taggedLines[i];
 
-    // Check for two-line headings (e.g. Line 1: "Section 1", Line 2: "Appointment and Duties")
-    const standaloneNumberMatch = line.match(
-      /^(?:SECTION|ARTICLE|CLAUSE|PARAGRAPH)\s+([0-9IVXLCDM]+(?:\.[0-9]+)*)$/i
-    );
-    if (standaloneNumberMatch && i + 1 < taggedLines.length) {
+    // Check for two-line headings (e.g. Line 1: "Section 1" or "1.", Line 2: "Appointment and Duties")
+    const standaloneNumber = matchStandaloneNumberLine(line);
+    if (standaloneNumber && i + 1 < taggedLines.length) {
       const nextLine = taggedLines[i + 1].line.trim();
+      const step = (standaloneNumber.topNumber ?? headingContext.lastTop + 1) - headingContext.lastTop;
       if (
+        step >= 1 &&
+        step <= MAX_TOP_LEVEL_GAP &&
         nextLine.length > 0 &&
         nextLine.length <= 70 &&
         !nextLine.endsWith(".") &&
-        /^[A-Z][\w\s,/'"&\-\(\)]+$/.test(nextLine)
+        /^[A-Z][\w\s,/'"&\-\(\)]+$/.test(nextLine) &&
+        !matchHeadingPattern(nextLine, headingContext)
       ) {
         if (currentSection.bodyLines.length > 0 || currentSection.section !== "Preamble") {
           rawSections.push(currentSection);
         }
         currentSection = {
-          section: `Section ${standaloneNumberMatch[1]}`,
+          section: standaloneNumber.section,
           title: nextLine,
           pageNumber,
           bodyLines: [],
         };
+        if (standaloneNumber.topNumber !== undefined) headingContext.lastTop = standaloneNumber.topNumber;
         i++; // Skip title line since it was incorporated
         continue;
       }
     }
 
     // Check standard heading pattern
-    const heading = matchHeadingPattern(line);
+    const heading = matchHeadingPattern(line, headingContext);
     if (heading) {
       if (currentSection.bodyLines.length > 0 || currentSection.section !== "Preamble") {
         rawSections.push(currentSection);
       }
+      if (heading.topNumber !== undefined) headingContext.lastTop = heading.topNumber;
+      headingContext.listNext = undefined;
+
+      let title = heading.title;
+      // A long heading wrapped over two lines ("7. INDEMNIFICATION AND LIMITATION OF" / "LIABILITY").
+      while (!heading.inlineBodyText && titleContinuesOnNextLine(title) && i + 1 < taggedLines.length) {
+        const next = taggedLines[i + 1].line.trim();
+        if (next.length > 60 || !/^[A-Z]/.test(next) || next.endsWith(".") || STARTS_NUMBERED_OR_KEYWORD.test(next)) break;
+        title = `${title} ${next}`;
+        i++;
+      }
 
       currentSection = {
         section: heading.section,
-        title: heading.title,
+        title,
         pageNumber,
         bodyLines: heading.inlineBodyText ? [heading.inlineBodyText] : [],
+        untitled: heading.untitled,
       };
       continue;
+    }
+
+    // A delimited number that was not accepted as a heading, but restarts or continues a list, keeps
+    // the list cursor moving so its later items stay inside the section.
+    const listNumber = delimitedTopLevelNumber(line);
+    if (listNumber !== undefined && (listNumber <= headingContext.lastTop || listNumber === headingContext.listNext)) {
+      headingContext.listNext = listNumber + 1;
     }
 
     currentSection.bodyLines.push(line);
@@ -639,6 +832,9 @@ export function segmentDocumentIntoClauses(
     seenSections.add(dedupKey);
 
     const baseId = `clause-${s.section.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${idx}`;
+    // Untitled numbered paragraphs are labelled from the whole paragraph, so the label does not depend on
+    // where a PDF happened to wrap its first line.
+    if (s.untitled) s.title = deriveTitleFromSentence(rawText);
     const category = categorizeClauseByKeywords(s.title, rawText);
     const importance = scoreClauseImportance(category, rawText);
     const plainEnglish = generatePlainEnglishSummary(s.section, s.title, category, rawText);

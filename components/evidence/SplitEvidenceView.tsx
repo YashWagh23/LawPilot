@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import type { Clause, EvidenceChain, Finding, LegalSource } from "@/types";
 import { SeverityBadge } from "./SeverityBadge";
 import { SourceDetailModal } from "./SourceDetailModal";
+import { getChainVerificationBadge, VERIFICATION_TONE_CLASSES } from "@/lib/analysis/verificationState";
 import {
   FileText,
   BookOpen,
@@ -181,9 +182,9 @@ export function SplitEvidenceView({
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 capitalize">
-                  {activeChain?.verification?.status?.replace("_", " ") || "Verified"}
+                <ShieldCheck className={`w-4 h-4 ${VERIFICATION_TONE_CLASSES[activeChain ? getChainVerificationBadge(activeChain).tone : "unverified"].text}`} />
+                <span className={`text-xs font-semibold ${VERIFICATION_TONE_CLASSES[activeChain ? getChainVerificationBadge(activeChain).tone : "unverified"].text}`}>
+                  {activeChain ? getChainVerificationBadge(activeChain).label : "Not verified"}
                 </span>
               </div>
             </div>

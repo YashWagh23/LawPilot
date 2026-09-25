@@ -9,6 +9,7 @@ import { validateDocumentFile, DocumentInputError } from "@/lib/documents/fileVa
 import { extractDocumentContent } from "@/lib/documents/textExtractor";
 import { normalizeDocumentContent } from "@/lib/documents/documentNormalizer";
 import { segmentDocumentIntoClauses } from "@/lib/documents/clauseSegmenter";
+import { buildKeyTakeaway, deriveOverallReadiness } from "@/lib/analysis/analysisSummary";
 import { extractDocumentFacts } from "@/lib/ai/agents/extractionAgent";
 import { identifyImportantClausesAndFindings } from "@/lib/ai/agents/riskAnalysisAgent";
 import { mapFindingsToEvidence } from "./evidenceMapper";
@@ -159,11 +160,16 @@ export async function orchestrateDocumentAnalysis(
   });
   const documentType = factExtraction.metadata.documentType;
 
+  // The clause-level risk rules are deterministic. When AI enrichment did not run (no key, quota, timeout,
+  // invalid response) they are all there is, and the report must say so instead of sounding authoritative.
+  const heuristicAnalysis = !factExtraction.usedAi;
+
   const riskResult = identifyImportantClausesAndFindings({
     documentId,
     clauses: segmentedClauses,
     documentType,
     jurisdiction: detectedJurisdiction,
+    heuristic: heuristicAnalysis,
   });
 
   const { mappedFindings, evidenceLinks } = mapFindingsToEvidence(
@@ -251,6 +257,7 @@ export async function orchestrateDocumentAnalysis(
       evidenceChains,
       keyDates: factExtraction.dates,
       tracker,
+      heuristic: heuristicAnalysis,
     }),
   ]);
 
@@ -338,18 +345,8 @@ export async function orchestrateDocumentAnalysis(
     createdAt: new Date().toISOString(),
     status: "completed",
     summary: {
-      overallReadiness:
-        riskResult.criticalAttentionCount > 0 || riskResult.highAttentionCount > 0
-          ? "high_risk_clauses_present"
-          : riskResult.reviewCount > 0
-          ? "review_recommended"
-          : "standard_terms",
-      keyTakeaway:
-        riskResult.criticalAttentionCount > 0
-          ? `Identified ${riskResult.criticalAttentionCount} critical attention clause(s) and ${riskResult.highAttentionCount} item(s) deserving review prior to execution.`
-          : riskResult.highAttentionCount > 0
-          ? `Identified ${riskResult.highAttentionCount} clause(s) that deserve close attention prior to execution.`
-          : "Extracted standard contractual obligations with customary provisions.",
+      overallReadiness: deriveOverallReadiness(riskResult, heuristicAnalysis),
+      keyTakeaway: buildKeyTakeaway(riskResult, heuristicAnalysis),
       totalClausesAnalyzed: segmentedClauses.length,
       criticalAttentionCount: riskResult.criticalAttentionCount,
       highAttentionCount: riskResult.highAttentionCount,

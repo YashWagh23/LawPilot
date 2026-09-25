@@ -1,4 +1,5 @@
 import { GLOBAL_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
+import { buildKeyTakeaway, deriveOverallReadiness } from "@/lib/analysis/analysisSummary";
 import type {
   ActionItem,
   AnalysisReport,
@@ -56,18 +57,8 @@ export async function composeFinalReport(
     createdAt: new Date().toISOString(),
     status: "completed",
     summary: {
-      overallReadiness:
-        criticalAttentionCount > 0 || highAttentionCount > 0
-          ? "high_risk_clauses_present"
-          : reviewCount > 0
-          ? "review_recommended"
-          : "standard_terms",
-      keyTakeaway:
-        criticalAttentionCount > 0
-          ? `Identified ${criticalAttentionCount} critical attention clause(s) requiring immediate attention prior to signing.`
-          : highAttentionCount > 0
-          ? `Identified ${highAttentionCount} clause(s) requiring attention prior to signing.`
-          : "Standard agreement provisions identified with customary terms.",
+      overallReadiness: deriveOverallReadiness({ criticalAttentionCount, highAttentionCount, reviewCount }, false),
+      keyTakeaway: buildKeyTakeaway({ criticalAttentionCount, highAttentionCount, reviewCount }, false),
       totalClausesAnalyzed: input.clauses.length,
       criticalAttentionCount,
       highAttentionCount,

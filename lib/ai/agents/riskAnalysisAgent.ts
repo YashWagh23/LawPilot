@@ -1,6 +1,7 @@
 import type { Clause, DocumentType, Finding, JurisdictionContext, SeverityLevel } from "@/types";
 import { classifyDocumentType, documentTypeLabel, isEmploymentType } from "@/lib/documents/documentClassifier";
 import { getJurisdictionFamily, type JurisdictionFamily } from "@/lib/jurisdiction/jurisdictionDetector";
+import { HEURISTIC_FINDING_LABEL, HEURISTIC_FINDING_UNCERTAINTY } from "@/lib/analysis/analysisSummary";
 
 export interface RiskAnalysisInput {
   documentId: string;
@@ -10,6 +11,11 @@ export interface RiskAnalysisInput {
   documentType?: DocumentType;
   /** Detected jurisdiction. Jurisdiction-specific commentary is emitted only for a known family. */
   jurisdiction?: JurisdictionContext;
+  /**
+   * True when AI analysis was unavailable and these findings come from the keyword/pattern rules alone.
+   * Each finding is then labelled as a heuristic flag instead of reading like a settled analysis.
+   */
+  heuristic?: boolean;
 }
 
 export interface RiskAnalysisResult {
@@ -388,6 +394,14 @@ export function identifyImportantClausesAndFindings(
     if ((titleCounts.get(f.title) || 0) > 1) {
       const section = clauseById.get(f.clauseId)?.section;
       if (section) f.title = `${f.title} (${section})`;
+    }
+  }
+
+  if (input.heuristic) {
+    for (const f of findings) {
+      f.description = `${HEURISTIC_FINDING_LABEL}: ${f.description}`;
+      f.whyItMatters = `Heuristic flag, not a legal conclusion: ${f.whyItMatters}`;
+      f.uncertainties = [HEURISTIC_FINDING_UNCERTAINTY, ...f.uncertainties];
     }
   }
 

@@ -1,0 +1,42 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement (the "Agreement") is entered into as of March 3, 2026 (the "Effective Date") by and between Northwind Analytics, Inc., a Delaware corporation ("Provider"), and Cascade Logistics LLC, a Washington limited liability company ("Client").
+
+1. SERVICES
+1.1 Scope. Provider shall perform the data analytics and reporting services described in each statement of work signed by both parties (each, an "SOW").
+1.2 Change Orders. Any change to the scope, schedule or fees in an SOW must be agreed in a written change order signed by both parties.
+
+2. FEES AND PAYMENT
+2.1 Fees. Client shall pay Provider the fees stated in each SOW, which as of the Effective Date are $12,500 per month.
+2.2 Invoices. Provider will invoice monthly in arrears, and Client shall pay each undisputed invoice within thirty (30) days of receipt.
+2.3 Late Payment. Overdue amounts accrue interest at 1.5% per month, or the maximum rate permitted by law if lower.
+2.4 Taxes. Fees exclude sales, use and similar taxes, which Client shall pay.
+
+3. TERM AND TERMINATION
+3.1 Term. This Agreement begins on the Effective Date and continues for twelve (12) months, then renews automatically for successive twelve (12) month terms unless either party gives sixty (60) days written notice of non-renewal.
+3.2 Termination for Convenience. Provider may terminate this Agreement for any reason on thirty (30) days written notice. Client may terminate only for Provider's uncured material breach.
+3.3 Effect of Termination. On termination Client shall pay all fees accrued through the termination date and any early termination fee stated in an SOW.
+
+4. INTELLECTUAL PROPERTY
+4.1 Provider Materials. Provider retains all right, title and interest in its pre-existing tools, methods and know-how.
+4.2 Deliverables. Client hereby assigns to Provider all right, title and interest in any improvements, feedback and derivative works relating to the Services, including work created solely by Client.
+
+5. CONFIDENTIALITY
+Each party shall protect the other party's Confidential Information using at least reasonable care. These obligations survive indefinitely after termination or expiration of this Agreement.
+
+6. WARRANTIES AND DISCLAIMERS
+6.1 Limited Warranty. Provider warrants that the Services will be performed in a professional and workmanlike manner.
+6.2 Disclaimer. EXCEPT AS EXPRESSLY STATED, THE SERVICES ARE PROVIDED "AS IS" AND PROVIDER DISCLAIMS ALL OTHER WARRANTIES, INCLUDING MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+7. INDEMNIFICATION AND LIMITATION OF LIABILITY
+7.1 Indemnity. Client shall defend and indemnify Provider against all third-party claims arising from Client's use of the Services.
+7.2 Liability Cap. Provider's total liability under this Agreement shall not exceed the fees paid by Client in the three (3) months preceding the claim.
+7.3 Excluded Damages. Neither party is liable for indirect, incidental or consequential damages.
+
+8. GOVERNING LAW AND DISPUTES
+This Agreement is governed by the laws of the State of Delaware, without regard to conflict-of-law principles. Any dispute shall be resolved by binding arbitration in Wilmington, Delaware under the rules of the American Arbitration Association, and each party waives any right to a jury trial.
+
+9. GENERAL
+9.1 Entire Agreement. This Agreement and each SOW are the entire agreement of the parties on their subject matter.
+9.2 Amendments. This Agreement may be amended only in a writing signed by both parties.
+9.3 Assignment. Client may not assign this Agreement without Provider's prior written consent.
