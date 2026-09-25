@@ -1,4 +1,5 @@
 import { getGeminiClient, GEMINI_CONFIG } from "@/lib/ai/gemini";
+import { bestSentences } from "@/lib/ai/ask/relevance";
 import type {
   Clause,
   ClauseQuestionAnswer,
@@ -49,7 +50,7 @@ export const DEMO_VERIFIED_INDIAN_LEGAL_SOURCES: Record<string, LegalSource[]> =
       citation: "Indian Contract Act, 1872 § 74",
       url: "https://www.indiacode.nic.in/handle/123456789/2187",
       sourceUrl: "https://www.indiacode.nic.in/handle/123456789/2187",
-      relevance: "Governs the enforceability of liquidated damages, training bonds, and employee clawback stipulations",
+      relevance: "Governs the enforceability of liquidated damages and penalty stipulations in contracts (including training bonds and similar repayment clauses)",
       retrievedAt: "2026-03-01T00:00:00Z",
       publicationDate: "1872-04-25",
       verificationStatus: "verified",
@@ -368,6 +369,43 @@ export const DEMO_VERIFIED_LEGAL_SOURCES: Record<string, LegalSource[]> = {
   ],
 };
 
+/** Curated sources that only make sense for an employment relationship. */
+const EMPLOYMENT_ONLY_SOURCE_IDS = new Set([
+  "source-copyright-act-17c",
+  "source-sci-percept-dmark",
+  "source-maharashtra-shops-act-66",
+  "source-restatement-emp-807",
+  "source-del-invention-assignment",
+  "source-aaa-employment-rules",
+  "source-del-at-will-restatement",
+]);
+
+/**
+ * Selects the curated, verified sources that may legitimately apply to a document.
+ * - India: the Indian set. - United States: the Delaware set, ONLY when Delaware law governs.
+ * - Any other or unknown jurisdiction: nothing (the honest result is "insufficient context",
+ *   never another country's law presented as applicable).
+ * Employment-specific authorities are dropped for non-employment documents.
+ */
+export function selectCuratedLegalSources(
+  jurisdiction: { country: string; stateOrUT?: string } | undefined,
+  documentType?: string
+): LegalSource[] {
+  if (!jurisdiction) return [];
+  const country = jurisdiction.country.trim().toLowerCase();
+  let repo: Record<string, LegalSource[]> | null = null;
+  if (country === "india") repo = DEMO_VERIFIED_INDIAN_LEGAL_SOURCES;
+  else if (country === "united states" && /delaware/i.test(jurisdiction.stateOrUT || "")) {
+    repo = DEMO_VERIFIED_LEGAL_SOURCES;
+  }
+  if (!repo) return [];
+  const all = Object.values(repo).flat();
+  if (documentType && documentType !== "employment_agreement") {
+    return all.filter((s) => !EMPLOYMENT_ONLY_SOURCE_IDS.has(s.id));
+  }
+  return all;
+}
+
 /**
  * Legal Research Agent
  * Retrieves verified statutory provisions, restatements, or administrative rules.
@@ -515,7 +553,23 @@ Output your analysis strictly conforming to the following JSON schema:
 
   // STEP 5: Fallback to Verified Demo Sources
   // Cleanly separated demo dataset for offline and testing stability
-  const isIndia = /india|maharashtra|mumbai|pune/i.test(cleanJur);
+  const isIndia = /\b(?:india|maharashtra|mumbai|pune)\b/i.test(cleanJur);
+  const isDelaware = /\bdelaware\b/i.test(cleanJur);
+  if (!isIndia && !isDelaware) {
+    // No curated authority exists for this jurisdiction: say so instead of citing another country's law.
+    return {
+      researchQuestion,
+      jurisdiction: cleanJur,
+      sources: [],
+      claims: [],
+      uncertainties: [
+        `LawPilot has no verified legal sources for ${cleanJur}. Applicable law should be confirmed with a lawyer qualified there.`,
+      ],
+      isExclusivelyStatutoryOrRestatement: false,
+      researchConfidence: "insufficient",
+      error: "No verified sources available for this jurisdiction.",
+    };
+  }
   const sourceRepo = isIndia ? DEMO_VERIFIED_INDIAN_LEGAL_SOURCES : DEMO_VERIFIED_LEGAL_SOURCES;
 
   let matchedSources: LegalSource[] = [];
@@ -572,13 +626,13 @@ Output your analysis strictly conforming to the following JSON schema:
 
 /**
  * 5-Part User Question Flow Engine
- * When the user asks e.g. "Can my employer definitely charge me ₹4,50,000 / $18,500?"
  * LawPilot NEVER immediately answers yes/no. It returns:
- * 1. WHAT THE CONTRACT SAYS
- * 2. LEGAL CONTEXT
- * 3. WHAT THIS MEANS
- * 4. WHAT WE CANNOT DETERMINE
- * 5. NEXT STEP
+ * 1. WHAT THE CONTRACT SAYS   2. LEGAL CONTEXT   3. WHAT THIS MEANS
+ * 4. WHAT WE CANNOT DETERMINE   5. NEXT STEP
+ *
+ * Every part is built from the clause/finding/sources the caller supplies (the selected clause
+ * in the report). There is no canned per-topic narrative: a question about a rent clause can never
+ * be answered with text about a training bond.
  */
 export async function answerClauseQuestion(
   input: ClauseQuestionInput,
@@ -586,104 +640,67 @@ export async function answerClauseQuestion(
   clause?: Clause,
   availableSources?: LegalSource[]
 ): Promise<ClauseQuestionAnswer> {
-  const clauseText = clause?.rawText || finding?.evidence?.quotedText || "No clause text provided.";
-  const rawJurisdiction = input.jurisdiction || "India";
-  const isIndia = /india|maharashtra|mumbai|pune/i.test(rawJurisdiction);
+  const clauseText = (clause?.rawText || finding?.evidence?.quotedText || "").replace(/\s+/g, " ").trim();
+  const section = clause?.section || finding?.evidence?.section || "the selected clause";
+  const jurisdiction = (input.jurisdiction || "").trim();
+  const jurisdictionKnown = jurisdiction && !/^(?:unknown|applicable law|n\/a)$/i.test(jurisdiction);
 
-  // Use provided sources or retrieve them
-  let sources = availableSources || [];
-  if (sources.length === 0) {
+  // Sources: caller-provided ones that match this finding's topic; otherwise research (which only
+  // returns curated sources for a supported jurisdiction, and none otherwise).
+  let sources = (availableSources || []).slice(0, 3);
+  if (sources.length === 0 && jurisdictionKnown && (finding || clause)) {
     const research = await performLegalResearch({
-      findingTitle: finding?.title || "Contract Clause Review",
+      findingTitle: finding?.title || clause?.title || "Contract Clause Review",
       category: clause?.category || "general",
       clauseText,
-      jurisdiction: rawJurisdiction,
+      jurisdiction,
       userQuestion: input.question,
     });
     sources = research.sources;
   }
+  const primarySource = sources[0];
 
-  const primarySource = sources[0] || {
-    id: "source-default",
-    title: isIndia ? "Indian Contract Act, 1872" : "General Contract Law Principles",
-    citation: isIndia ? "Indian Contract Act, 1872 § 74" : "Delaware General Law",
-    jurisdiction: isIndia ? "India" : "Delaware",
-    sourceType: "official_legislation" as const,
-    relevance: "Standard contractual rules",
-    retrievedAt: new Date().toISOString(),
-    verificationStatus: "verified" as const,
-  };
-
-  // Structured response construction enforcing the 5-part requirement.
-  //
-  // IMPORTANT: the illustrative training-bond narrative below quotes a SPECIFIC canned clause
-  // ("₹4,50,000" / "$18,500" in Section 6"). It must never be returned for a real uploaded
-  // document unless the document's own clause text actually contains that language — otherwise
-  // this would fabricate a quote that was never in the user's actual contract. It is only safe to
-  // key off the user's question wording (independent of clause text) when there is NO real clause
-  // context at all, i.e. a general/demo Q&A with nothing to ground against.
-  const hasRealClauseContext = Boolean(clause?.rawText || finding?.evidence?.quotedText);
-
-  const isTrainingFeeQuestion =
-    !hasRealClauseContext &&
-    (input.question.includes("4,50,000") ||
-      input.question.includes("450000") ||
-      input.question.includes("18,500") ||
-      input.question.toLowerCase().includes("charge") ||
-      input.question.toLowerCase().includes("repay") ||
-      input.question.toLowerCase().includes("training"));
-
-  if (isTrainingFeeQuestion) {
-    if (isIndia || input.question.includes("4,50,000") || input.question.includes("450000") || input.question.includes("₹")) {
-      return {
-        question: input.question,
-        clauseId: input.clauseId,
-        whatContractSays:
-          'The contract states in Section 6 that if the employee resigns within eighteen (18) months of the Effective Date, the employee must "immediately reimburse to the Company the fixed sum of ₹4,50,000 as liquidated damages and training expense recovery", with authorization to deduct from final salary and settlement.',
-        legalContext:
-          "Under Section 74 of the Indian Contract Act, 1872 and landmark Supreme Court decisions (Fateh Chand, Kailash Nath Associates), a liquidated sum named in an employment bond operates as a ceiling on compensation. The employer must prove actual, reasonable expenses incurred on specialized training rather than imposing a punitive forfeiture.",
-        whatThisMeans:
-          "This means the company has stipulated an upfront ₹4,50,000 recovery obligation. Under Indian law, an employment bond is enforceable only to the extent of actual, documented training expenditures incurred, and demanding a flat sum without pro-rata amortization over service completed is legally vulnerable.",
-        whatWeCannotDetermine:
-          "LawPilot cannot definitively determine whether the company would recover any sum because enforceability depends on undisclosed facts: whether the company actually spent ₹4,50,000 on specialized third-party training, whether verifiable transferable credentials were conferred, and whether actual damages resulted from early departure.",
-        nextStep:
-          "Before signing, request a written itemized breakdown of actual third-party training expenditures and propose that the ₹4,50,000 bond amortize on a monthly pro-rata basis (e.g., reducing by ₹25,000 for each completed month of service) with deductions strictly limited to documented receipts.",
-        sources,
-        confidence: "high",
-      };
-    }
-
+  if (!clauseText) {
     return {
       question: input.question,
       clauseId: input.clauseId,
-      whatContractSays:
-        'The contract states in Section 6 that if the employee departs within twelve (12) months of the Effective Date, the employee must "immediately repay to Employer the full sum of $18,500 as reimbursement for specialized training expenses," with authorization to deduct from final wages.',
-      legalContext:
-        "Under Delaware Wage Payment and Collection Act (19 Del. C. § 1107), wage deductions require authorized lawful purpose. Furthermore, national authorities (Restatement (Third) of Employment Law § 8.07) establish that training reimbursement agreements are scrutinized to ensure repayment is reasonably related to actual vendor costs and properly amortized over tenure.",
-      whatThisMeans:
-        "This means the employer has created a contractual reimbursement obligation on paper. However, demanding a flat $18,500 on Day 360 without monthly pro-rata scaling may be challenged if viewed as an unlawful penalty rather than true cost recovery.",
-      whatWeCannotDetermine:
-        "LawPilot cannot definitively determine whether the employer would win in court because enforceability depends on undisclosed facts: whether the employer actually incurred $18,500 in third-party tuition, whether transferable credentials were provided, and whether wage deductions drop wages below statutory minimums.",
-      nextStep:
-        "Consider asking an employment attorney or discussing with the employer before signing: request that the $18,500 repayment amortize by 1/12th ($1,541.66) for each completed month of service, and restrict the clawback strictly to documented third-party receipts.",
-      sources,
-      confidence: "high",
+      whatContractSays: "No clause text was provided for this question, so the agreement cannot be quoted.",
+      legalContext: "No verified legal source can be linked without a specific clause.",
+      whatThisMeans: "LawPilot cannot say what the agreement provides on this point without the clause text.",
+      whatWeCannotDetermine: "What the agreement provides, and how the governing law treats it.",
+      nextStep: "Select a specific clause or finding and ask again.",
+      sources: [],
+      confidence: "insufficient",
     };
   }
 
-  // General fallback adhering to 5-part calibration
+  const sentences = bestSentences(clauseText, input.question, 2).join(" ");
+  const quote = sentences.length > 320 ? `${sentences.slice(0, 320).replace(/\s+\S*$/, "")}…` : sentences;
+  const uncertainties = (finding?.uncertainties || []).filter((u) => u && u.trim().length > 8).slice(0, 3);
+
   return {
     question: input.question,
     clauseId: input.clauseId,
-    whatContractSays: `The agreement states in ${clause?.section || "the clause"}: "${clauseText.slice(0, 180)}..."`,
-    legalContext: `Relevant authority (${primarySource.title}, ${primarySource.citation}) sets forth governing guidelines under ${primarySource.jurisdiction}.`,
+    whatContractSays: `${section} states: "${quote}"`,
+    legalContext: primarySource
+      ? `Relevant verified authority: ${sources.map((s) => `${s.title} (${s.citation})`).join("; ")}.${
+          primarySource.relevantExcerpt || primarySource.notes ? ` ${primarySource.notes || primarySource.relevantExcerpt}` : ""
+        }`
+      : jurisdictionKnown
+      ? `LawPilot has no verified legal source for this issue in ${jurisdiction}, so it cannot state how the law treats it.`
+      : "The governing law is not established, and no verified legal source is linked to this issue.",
     whatThisMeans:
-      "This provision defines obligations between the signing parties, but its practical application depends on surrounding statutory limits and contract defenses.",
+      finding?.whyItMatters ||
+      finding?.description ||
+      clause?.plainEnglish ||
+      "This provision sets obligations between the parties; how it applies depends on the surrounding terms.",
     whatWeCannotDetermine:
-      "Whether this provision would be strictly enforced depends on specific factual circumstances, industry customs, and evidentiary proof that cannot be ascertained from the contract text alone.",
+      uncertainties.length > 0
+        ? `LawPilot cannot definitively determine the outcome. Open points: ${uncertainties.join(" ")}`
+        : "LawPilot cannot definitively determine how this would be enforced; that depends on facts outside the written agreement and on the governing law.",
     nextStep:
-      "Review this clause with a qualified legal professional licensed in the governing jurisdiction to evaluate specific negotiation carve-outs.",
+      `Ask the other party to clarify ${section} in writing, and review it with a qualified lawyer${jurisdictionKnown ? ` in ${jurisdiction}` : ""} before relying on it.`,
     sources,
-    confidence: sources.length > 0 ? "moderate" : "limited",
+    confidence: primarySource ? "moderate" : "limited",
   };
 }

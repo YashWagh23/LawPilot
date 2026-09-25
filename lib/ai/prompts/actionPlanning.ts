@@ -28,8 +28,8 @@ CRITICAL SAFETY RULES:
 6. Group actions logically into:
    - urgentItems (deadlines within 7 days, immediate risk mitigation, or immediate record preservation)
    - beforeSigning (conditions, clarifications, and checks required before signing)
-   - questionsToAsk (concise, polite, professional questions for the employer, HR, or counterparty)
-   - documentsToCollect (supporting evidence, prior agreements, job descriptions, employee handbooks)
+   - questionsToAsk (concise, polite, professional questions for the counterparty or drafting party)
+   - documentsToCollect (supporting evidence, prior agreements, related policies, invoices or correspondence)
    - factsToConfirm (dates, monetary amounts, scope, definitions)
    - professionalReviewTriggers (clear criteria for when to engage counsel)
    - followUpItems (timeline milestones, renewal notice windows, calendar reminders)`;

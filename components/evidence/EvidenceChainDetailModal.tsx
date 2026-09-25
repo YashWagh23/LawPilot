@@ -89,7 +89,7 @@ export function EvidenceChainDetailModal({
                 <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-200/70 dark:bg-slate-800 px-2 py-0.5 rounded">
                   {chain.jurisdictionContext
                     ? formatJurisdictionBadge(chain.jurisdictionContext)
-                    : primarySource?.jurisdiction || "India · Maharashtra"}
+                    : primarySource?.jurisdiction || "Jurisdiction not established"}
                 </span>
                 <span className="text-slate-300 dark:text-slate-700">·</span>
                 <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-[10px]">
@@ -292,10 +292,10 @@ export function EvidenceChainDetailModal({
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
                     <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-disc list-inside">
                       <li>
-                        <strong>Governing Jurisdiction:</strong> Whether dispute is heard under designated governing law or employee domicile statutory law.
+                        <strong>Governing Jurisdiction:</strong> Whether a dispute is heard under the designated governing law or the law where a party is based.
                       </li>
                       <li>
-                        <strong>Employee Role:</strong> Seniority, access to proprietary trade secrets, and direct customer contacts.
+                        <strong>Party Roles:</strong> Each party’s position, bargaining power, and access to sensitive information.
                       </li>
                       <li>
                         <strong>Applicable Law & Statutes:</strong> Specific statutory exceptions (e.g. wage deduction thresholds, prior invention carve-outs).

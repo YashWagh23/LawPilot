@@ -14,12 +14,10 @@ import { identifyImportantClausesAndFindings } from "@/lib/ai/agents/riskAnalysi
 import { mapFindingsToEvidence } from "./evidenceMapper";
 import {
   detectJurisdiction,
-  isIndianJurisdiction,
+  formatJurisdictionBadge,
 } from "@/lib/jurisdiction/jurisdictionDetector";
-import {
-  DEMO_VERIFIED_INDIAN_LEGAL_SOURCES,
-  DEMO_VERIFIED_LEGAL_SOURCES,
-} from "@/lib/ai/agents/legalResearchAgent";
+import { selectCuratedLegalSources } from "@/lib/ai/agents/legalResearchAgent";
+import { AiRunTracker } from "@/lib/ai/gemini";
 import { verifyAndAssembleEvidence } from "@/lib/ai/agents/verificationAgent";
 import { generateActionPlan } from "@/lib/ai/agents/actionPlanningAgent";
 import { generateDetailedLawyerBrief } from "@/lib/ai/agents/lawyerBriefAgent";
@@ -60,6 +58,7 @@ export async function orchestrateDocumentAnalysis(
   onProgress?: (update: PipelineProgressUpdate) => void
 ): Promise<AnalysisReport> {
   const documentId = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const tracker = new AiRunTracker();
 
   // Stage 0: Security & Format Validation
   onProgress?.({
@@ -146,15 +145,25 @@ export async function orchestrateDocumentAnalysis(
     isolatedContent: normalized.isolatedContent,
     pages: normalized.normalizedPages,
     fileSizeBytes: validation.sizeBytes,
+    tracker,
   });
 
   if (factExtraction.clauses.length > 0) {
     segmentedClauses = factExtraction.clauses;
   }
 
+  const detectedJurisdiction = detectJurisdiction({
+    text: normalized.normalizedFullText,
+    clauses: segmentedClauses,
+    metadata: factExtraction.metadata,
+  });
+  const documentType = factExtraction.metadata.documentType;
+
   const riskResult = identifyImportantClausesAndFindings({
     documentId,
     clauses: segmentedClauses,
+    documentType,
+    jurisdiction: detectedJurisdiction,
   });
 
   const { mappedFindings, evidenceLinks } = mapFindingsToEvidence(
@@ -172,17 +181,9 @@ export async function orchestrateDocumentAnalysis(
     timestamp: new Date().toISOString(),
   });
 
-  const detectedJurisdiction = detectJurisdiction({
-    text: normalized.normalizedFullText,
-    clauses: segmentedClauses,
-    metadata: factExtraction.metadata,
-  });
-
-  // Select verified statutory repository calibrated to detected jurisdiction
-  const legalSourcesMap = isIndianJurisdiction(detectedJurisdiction)
-    ? DEMO_VERIFIED_INDIAN_LEGAL_SOURCES
-    : DEMO_VERIFIED_LEGAL_SOURCES;
-  const legalSources = Object.values(legalSourcesMap).flat();
+  // Select verified sources ONLY for the jurisdiction (and document type) actually detected.
+  // A UK, unknown or other-US-state document gets no curated sources rather than someone else's law.
+  const legalSources = selectCuratedLegalSources(detectedJurisdiction, documentType);
 
   // Stage 5: Building evidence chains
   onProgress?.({
@@ -199,14 +200,13 @@ export async function orchestrateDocumentAnalysis(
       findings: mappedFindings,
       clauses: segmentedClauses,
       sources: legalSources,
-      jurisdiction: `${detectedJurisdiction.country}${
-        detectedJurisdiction.stateOrUT ? " · " + detectedJurisdiction.stateOrUT : ""
-      }`,
+      jurisdiction: formatJurisdictionBadge(detectedJurisdiction).replace("Unknown Jurisdiction", "Unknown"),
       governingLaw: detectedJurisdiction.governingLaw,
     });
     evidenceChains = verificationResult.evidenceChains;
-  } catch {
+  } catch (err) {
     // Non-fatal: fallback to empty chains if assembly encountered issues
+    console.error("[analysis] evidence chain assembly failed:", err);
     evidenceChains = [];
   }
 
@@ -228,9 +228,11 @@ export async function orchestrateDocumentAnalysis(
         : "Legal agreement analyzed by LawPilot.",
       parties: factExtraction.parties.map((p) => `${p.name} (${p.role})`),
       jurisdiction: detectedJurisdiction.country,
+      documentType,
       findings: mappedFindings,
       evidenceChains,
       keyDates: factExtraction.dates,
+      tracker,
     }),
 
     generateDetailedLawyerBrief({
@@ -239,9 +241,7 @@ export async function orchestrateDocumentAnalysis(
       documentType: factExtraction.metadata?.documentType || "Agreement",
       date: factExtraction.metadata?.effectiveDate || undefined,
       parties: factExtraction.parties.map((p) => `${p.name} (${p.role})`),
-      jurisdiction: `${detectedJurisdiction.country}${
-        detectedJurisdiction.stateOrUT ? " · " + detectedJurisdiction.stateOrUT : ""
-      }`,
+      jurisdiction: formatJurisdictionBadge(detectedJurisdiction),
       jurisdictionContext: detectedJurisdiction,
       documentSummary: factExtraction.metadata?.title
         ? `Legal agreement analyzed by LawPilot: ${factExtraction.metadata.title}`
@@ -250,6 +250,7 @@ export async function orchestrateDocumentAnalysis(
       clauses: segmentedClauses,
       evidenceChains,
       keyDates: factExtraction.dates,
+      tracker,
     }),
   ]);
 
@@ -322,8 +323,11 @@ export async function orchestrateDocumentAnalysis(
     // (non-demo) analyzed document.
     jurisdiction: detectedJurisdiction,
     jurisdictionContext: detectedJurisdiction,
+    aiStatus: tracker.summarize(),
     metadata: {
       ...factExtraction.metadata,
+      jurisdiction: formatJurisdictionBadge(detectedJurisdiction),
+      jurisdictionContext: detectedJurisdiction,
       pageCount: extractedContent.totalPageCount,
       wordCount: extractedContent.wordCount,
       fileName: validation.sanitizedFileName,

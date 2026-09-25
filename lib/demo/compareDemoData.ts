@@ -332,10 +332,16 @@ export const DEMO_CURRENT_CLAUSES: Clause[] = [
 /**
  * Builds the hydrated comparison result for the Flagship India Demo
  */
-export function buildFlagshipDemoComparison(): DocumentComparisonResult {
-  const pairs = matchClausesSemantically(DEMO_PREVIOUS_CLAUSES, DEMO_CURRENT_CLAUSES);
-  const rawChanges = analyzeAllClauseDifferences(pairs);
-  const jurisdictionComparison = compareJurisdictions(DEMO_PREVIOUS_JURISDICTION, DEMO_CURRENT_JURISDICTION);
+export function buildFlagshipDemoComparison(swapped = false): DocumentComparisonResult {
+  // `swapped` runs the same comparison in the opposite direction (Current -> Previous), so a user
+  // who swaps the two versions sees decreases where the original run showed increases.
+  const prevClauses = swapped ? DEMO_CURRENT_CLAUSES : DEMO_PREVIOUS_CLAUSES;
+  const currClauses = swapped ? DEMO_PREVIOUS_CLAUSES : DEMO_CURRENT_CLAUSES;
+  const prevJur = swapped ? DEMO_CURRENT_JURISDICTION : DEMO_PREVIOUS_JURISDICTION;
+  const currJur = swapped ? DEMO_PREVIOUS_JURISDICTION : DEMO_CURRENT_JURISDICTION;
+  const pairs = matchClausesSemantically(prevClauses, currClauses);
+  const rawChanges = analyzeAllClauseDifferences(pairs, { isIndian: true, documentType: "employment_agreement" });
+  const jurisdictionComparison = compareJurisdictions(prevJur, currJur);
   const integratedChanges = integrateLegalContext(rawChanges, jurisdictionComparison);
 
   // Compute summary metrics
@@ -373,28 +379,31 @@ export function buildFlagshipDemoComparison(): DocumentComparisonResult {
     })
     .slice(0, 5);
 
+  const baselineDoc = {
+    id: "doc-draft-v1",
+    title: "Employment Agreement (Candidate Initial Baseline Draft)",
+    fileName: "Kavach_Offer_Draft_v1.pdf",
+    fileSizeBytes: 54200,
+    pageCount: 3,
+    wordCount: 1050,
+  };
+  const redlineDoc = {
+    id: "doc-draft-v2-redline",
+    title: "Employment Agreement (HR Revised Counterparty Redline)",
+    fileName: "Kavach_Offer_HR_Redline_v2.pdf",
+    fileSizeBytes: 68400,
+    pageCount: 3,
+    wordCount: 1320,
+  };
+
   return {
-    id: "demo-comparison-kavach-rohan",
-    previousDocument: {
-      id: "doc-draft-v1",
-      title: "Employment Agreement (Candidate Initial Baseline Draft)",
-      fileName: "Kavach_Offer_Draft_v1.pdf",
-      fileSizeBytes: 54200,
-      pageCount: 3,
-      wordCount: 1050,
-    },
-    currentDocument: {
-      id: "doc-draft-v2-redline",
-      title: "Employment Agreement (HR Revised Counterparty Redline)",
-      fileName: "Kavach_Offer_HR_Redline_v2.pdf",
-      fileSizeBytes: 68400,
-      pageCount: 3,
-      wordCount: 1320,
-    },
+    id: swapped ? "demo-comparison-kavach-rohan-swapped" : "demo-comparison-kavach-rohan",
+    previousDocument: swapped ? redlineDoc : baselineDoc,
+    currentDocument: swapped ? baselineDoc : redlineDoc,
     jurisdictionComparison,
     summary: {
-      totalPreviousClauses: DEMO_PREVIOUS_CLAUSES.length,
-      totalCurrentClauses: DEMO_CURRENT_CLAUSES.length,
+      totalPreviousClauses: prevClauses.length,
+      totalCurrentClauses: currClauses.length,
       clausesChanged,
       clausesAdded,
       clausesRemoved,
@@ -414,3 +423,4 @@ export function buildFlagshipDemoComparison(): DocumentComparisonResult {
 }
 
 export const FLAGSHIP_DEMO_COMPARISON = buildFlagshipDemoComparison();
+export const FLAGSHIP_DEMO_COMPARISON_SWAPPED = buildFlagshipDemoComparison(true);

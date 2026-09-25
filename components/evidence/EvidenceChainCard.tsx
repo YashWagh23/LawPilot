@@ -40,7 +40,7 @@ export function EvidenceChainCard({
             <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
               {chain.jurisdictionContext
                 ? formatJurisdictionBadge(chain.jurisdictionContext)
-                : chain.legalClaims[0]?.jurisdiction || "India · Maharashtra"}
+                : chain.legalClaims[0]?.jurisdiction || "Jurisdiction not established"}
             </span>
             {chain.verification?.status && (
               <>
@@ -127,7 +127,7 @@ export function EvidenceChainCard({
                         {legalSource.citation}
                       </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                        {legalSource.jurisdiction || "India"}
+                        {legalSource.jurisdiction || "Jurisdiction not stated"}
                       </span>
                     </div>
 

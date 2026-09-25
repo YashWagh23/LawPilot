@@ -1,122 +1,83 @@
-import type { AnalysisReport } from "@/types";
+import type { AnalysisReport, Finding } from "@/types";
+import { isEmploymentType } from "@/lib/documents/documentClassifier";
 
 export interface SuggestedQuestion {
   id: string;
   question: string;
   category: "fact" | "risk" | "legal" | "action";
   highlightClauseSection?: string;
+  /** Finding this question is about; sent with the question so the answer is about THAT clause. */
+  findingId?: string;
+  clauseId?: string;
+}
+
+function sectionOf(f: Finding): string | undefined {
+  return f.evidence?.section || f.clauseReference?.section;
+}
+
+function shortTitle(f: Finding): string {
+  return f.title.replace(/\s+deserves review$/i, "").replace(/\s*\(Section [^)]+\)$/i, "").trim();
 }
 
 /**
- * Generates dynamically relevant suggested question chips based on the active report
+ * Generates suggested question chips from the ACTUAL findings of the active report, so every chip
+ * points at a clause that exists in this document (never a hardcoded section number or an
+ * employment-only topic for a lease or services agreement).
  */
 export function getSuggestedQuestions(report: AnalysisReport): SuggestedQuestion[] {
-  // Flagship India Employment Agreement Preset
-  const isEmployment =
-    report.metadata.documentType === "employment_agreement" ||
-    report.metadata.title.toLowerCase().includes("employment") ||
-    report.id === "demo-employment-agreement";
-
-  if (isEmployment) {
-    return [
-      {
-        id: "sq-notice",
-        question: "What's my notice period?",
-        category: "fact",
-        highlightClauseSection: "4",
-      },
-      {
-        id: "sq-important",
-        question: "What clauses are most important?",
-        category: "risk",
-      },
-      {
-        id: "sq-non-compete",
-        question: "Why is the non-compete flagged?",
-        category: "legal",
-        highlightClauseSection: "5",
-      },
-      {
-        id: "sq-training-bond",
-        question: "Can my employer recover the training amount?",
-        category: "legal",
-        highlightClauseSection: "8",
-      },
-      {
-        id: "sq-hr",
-        question: "What should I ask HR?",
-        category: "action",
-      },
-      {
-        id: "sq-lawyer",
-        question: "What should I show a lawyer?",
-        category: "action",
-      },
-    ];
-  }
-
-  // Dynamic suggestions for other contracts (e.g. leases, commercial contracts, vendor agreements)
+  const employment = isEmploymentType(report.metadata.documentType);
+  const findings = report.findings || [];
   const suggestions: SuggestedQuestion[] = [];
+  const used = new Set<string>();
 
-  // Look for notice period / termination
-  const noticeDate = (report.keyDates || []).find((d) => d.noticePeriodDays);
-  if (noticeDate) {
-    suggestions.push({
-      id: "sq-dyn-notice",
-      question: "What is the notice period for termination?",
-      category: "fact",
-      highlightClauseSection: noticeDate.clauseReference?.section,
-    });
+  const add = (q: SuggestedQuestion, f?: Finding) => {
+    if (used.size >= 6 || used.has(q.id)) return;
+    used.add(q.id);
+    suggestions.push({ ...q, findingId: f?.id, clauseId: f?.clauseId, highlightClauseSection: q.highlightClauseSection ?? (f ? sectionOf(f) : undefined) });
+  };
+
+  const notice = findings.find((f) => /notice/i.test(f.category) || /\bnotice\b/i.test(f.title));
+  if (notice) {
+    add({ id: "sq-notice", question: employment ? "What's my notice period?" : "What is the notice period?", category: "fact" }, notice);
   } else {
-    suggestions.push({
-      id: "sq-dyn-important",
-      question: "What are the most critical terms in this agreement?",
-      category: "risk",
-    });
+    const noticeDate = (report.keyDates || []).find((d) => d.noticePeriodDays);
+    if (noticeDate) add({ id: "sq-dyn-notice", question: "What is the notice period for termination?", category: "fact", highlightClauseSection: noticeDate.clauseReference?.section });
   }
 
-  // Check critical or high findings
-  const criticalFindings = report.findings.filter(
-    (f) => f.severity === "critical_attention" || f.severity === "high_attention"
-  );
+  add({ id: "sq-important", question: "What clauses are most important?", category: "risk" });
 
-  if (criticalFindings.length > 0) {
-    const topFinding = criticalFindings[0];
-    suggestions.push({
-      id: `sq-dyn-risk-${topFinding.id}`,
-      question: `Why is "${topFinding.title}" considered a risk?`,
-      category: "risk",
-      highlightClauseSection: topFinding.evidence?.section || topFinding.clauseReference?.section,
-    });
+  const restraint = findings.find((f) => /restrictive/i.test(f.category));
+  if (restraint) {
+    add(
+      {
+        id: `sq-restraint-${restraint.id}`,
+        question: /non-?compete/i.test(restraint.title) ? "Why is the non-compete flagged?" : `Why is "${shortTitle(restraint)}" flagged?`,
+        category: "legal",
+      },
+      restraint
+    );
   }
 
-  // Check financial clawbacks or deposits
-  const fin = (report.financialTerms || [])[0];
-  if (fin) {
-    suggestions.push({
-      id: "sq-dyn-fin",
-      question: `What are my payment obligations for ${fin.label}?`,
-      category: "fact",
-    });
+  const training = findings.find((f) => /\btraining\b/i.test(f.title));
+  if (employment && training) {
+    add({ id: "sq-training-bond", question: "Can my employer recover the training amount?", category: "legal" }, training);
+  } else {
+    const money = findings.find((f) => /financial|payment|deposit|renewal/i.test(f.category));
+    if (money) add({ id: `sq-money-${money.id}`, question: `Why is "${shortTitle(money)}" flagged?`, category: "risk" }, money);
   }
 
-  suggestions.push({
-    id: "sq-dyn-missing",
-    question: "What facts or information are missing from this document?",
-    category: "risk",
-  });
+  // Fill remaining slots with the highest-severity findings not yet covered.
+  const covered = new Set(suggestions.map((s) => s.findingId));
+  for (const f of findings) {
+    if (used.size >= 4) break;
+    if (covered.has(f.id)) continue;
+    if (f.severity === "critical_attention" || f.severity === "high_attention" || f.severity === "review") {
+      add({ id: `sq-finding-${f.id}`, question: `Why is "${shortTitle(f)}" flagged?`, category: "risk" }, f);
+    }
+  }
 
-  suggestions.push({
-    id: "sq-dyn-action-hr",
-    question: "What questions should I clarify before signing?",
-    category: "action",
-  });
-
-  suggestions.push({
-    id: "sq-dyn-lawyer-brief",
-    question: "What issues should I show to a lawyer for formal review?",
-    category: "action",
-  });
+  add({ id: "sq-hr", question: employment ? "What should I ask HR?" : "What should I ask the other party?", category: "action" });
+  add({ id: "sq-lawyer", question: "What should I show a lawyer?", category: "action" });
 
   return suggestions.slice(0, 6);
 }

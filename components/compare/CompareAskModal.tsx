@@ -234,7 +234,7 @@ const CompareAskModalContent: React.FC<ModalContentProps> = ({
           <div className="py-12 text-center space-y-3">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Analyzing statutory context and verified Indian precedents...
+              Analyzing statutory context and verified legal sources...
             </p>
           </div>
         )}

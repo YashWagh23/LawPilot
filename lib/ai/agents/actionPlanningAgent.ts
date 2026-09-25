@@ -1,4 +1,4 @@
-import { getGeminiClient, GEMINI_CONFIG } from "@/lib/ai/gemini";
+import { generateJson, isGeminiConfigured } from "@/lib/ai/gemini";
 import type {
   ActionItem,
   ActionPlan,
@@ -6,8 +6,26 @@ import type {
 } from "@/types";
 import {
   ACTION_PLAN_SYSTEM_PROMPT,
-  ActionPlanSchema,
+  ActionPlanItemSchema,
+  ActionPlanTriggerSchema,
 } from "@/lib/ai/prompts/actionPlanning";
+import { z } from "zod";
+
+/**
+ * What we require from the model. Identifiers, timestamps and the summary are set by code (models
+ * routinely omit them), and individual malformed items are dropped instead of failing the plan.
+ */
+const LooseItem = ActionPlanItemSchema.partial({ id: true, isReversible: true, completed: true });
+const LiveActionPlanSchema = z.object({
+  summary: z.string().nullish().catch(null),
+  urgentItems: z.array(LooseItem).catch([]),
+  beforeSigning: z.array(LooseItem).catch([]),
+  questionsToAsk: z.array(LooseItem).catch([]),
+  documentsToCollect: z.array(LooseItem).catch([]),
+  factsToConfirm: z.array(LooseItem).catch([]),
+  professionalReviewTriggers: z.array(ActionPlanTriggerSchema.partial({ id: true })).catch([]),
+  followUpItems: z.array(LooseItem).catch([]),
+});
 
 import {
   generateDeterministicActionPlan,
@@ -39,22 +57,15 @@ export interface ActionPlanningResult {
 export async function generateActionPlan(
   input: ActionPlanningInput
 ): Promise<ActionPlan> {
-  const gemini = getGeminiClient();
+  const baseline = generateDeterministicActionPlan(input);
+  if (!isGeminiConfigured()) return baseline;
 
-  if (gemini) {
-    try {
-      const response = await gemini.models.generateContent({
-        model: GEMINI_CONFIG.defaultModel,
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `${ACTION_PLAN_SYSTEM_PROMPT}
+  const prompt = `${ACTION_PLAN_SYSTEM_PROMPT}
 
 Generate a comprehensive ActionPlan for the following document analysis:
 Document ID: ${input.documentId}
 Document Title: ${input.documentTitle || "Legal Document"}
+Document Type: ${input.documentType || "agreement"}
 Summary: ${input.documentSummary}
 Jurisdiction: ${input.jurisdiction || "Unspecified"}
 Parties: ${(input.parties || []).join(", ") || "Unspecified"}
@@ -67,9 +78,8 @@ ${JSON.stringify(
     title: f.title,
     category: f.category,
     severity: f.severity,
-    plainEnglishSummary: f.plainEnglishSummary,
-    actionableAdvice: f.actionableAdvice,
-    clauseReference: f.clauseReference,
+    summary: f.plainEnglishSummary || f.description,
+    section: f.clauseReference?.section || f.evidence?.section,
   })),
   null,
   2
@@ -79,33 +89,53 @@ KEY DATES & DEADLINES:
 ${JSON.stringify(input.keyDates || [], null, 2)}
 </untrusted_document_context>
 
-Return a single valid JSON object adhering strictly to the ActionPlan schema.`,
-              },
-            ],
-          },
-        ],
-        config: {
-          temperature: 0.1,
-          responseMimeType: "application/json",
-        },
-      });
+Rules: every item's findingId MUST be one of the finding ids above. Each step must be distinct — never emit two steps with the same or near-identical title. Do not assume an employment relationship unless the document type says so.
+Return a single valid JSON object adhering strictly to the ActionPlan schema.`;
 
-      const responseText = response.text?.trim();
-      if (responseText) {
-        const parsedJson = JSON.parse(responseText);
-        const validated = ActionPlanSchema.safeParse(parsedJson);
+  const result = await generateJson({
+    label: "action-plan",
+    contents: prompt,
+    schema: LiveActionPlanSchema,
+    temperature: 0.1,
+    maxOutputTokens: 8192,
+    totalTimeoutMs: 18_000,
+    attemptTimeoutMs: 14_000,
+    tracker: input.tracker,
+  });
 
-        if (validated.success) {
-          return sanitizeAndDeduplicateActionPlan(validated.data);
-        }
-      }
-    } catch (err) {
-      console.warn("Gemini ActionPlan generation failed or timed out, falling back to deterministic synthesis:", err);
-    }
+  if (!result.ok) return baseline;
+
+  const validIds = new Set(input.findings.map((f) => f.id));
+  const live = result.data;
+  const withIds = (items: z.infer<typeof LooseItem>[], group: string) =>
+    items.map((item, idx) => ({
+      ...item,
+      id: item.id || buildActionItemId(input.documentId, group, `ai-${idx}`, item.findingId),
+      isReversible: true,
+      completed: false,
+    }));
+  const plan: ActionPlan = {
+    id: `action-plan-${Date.now()}`,
+    documentId: input.documentId,
+    summary: live.summary || baseline.summary,
+    urgentItems: withIds(live.urgentItems, "urgent"),
+    beforeSigning: withIds(live.beforeSigning, "before-signing"),
+    questionsToAsk: withIds(live.questionsToAsk, "questions"),
+    documentsToCollect: withIds(live.documentsToCollect, "documents"),
+    factsToConfirm: withIds(live.factsToConfirm, "facts"),
+    professionalReviewTriggers: live.professionalReviewTriggers.map((t, i) => ({ ...t, id: t.id || `trigger-ai-${i}` })),
+    followUpItems: withIds(live.followUpItems, "followup"),
+    generatedAt: new Date().toISOString(),
+  };
+  // Reject plans that reference findings that do not exist, or that are empty.
+  const items = [plan.urgentItems, plan.beforeSigning, plan.questionsToAsk, plan.documentsToCollect, plan.factsToConfirm, plan.followUpItems].flat();
+  if (items.length === 0 || items.some((i) => i.findingId && !validIds.has(i.findingId))) {
+    return baseline;
   }
-
-  // Deterministic grounded synthesis fallback
-  return generateDeterministicActionPlan(input);
+  // Deadlines come from the document, not the model: keep the deterministic monitor-deadline steps.
+  plan.followUpItems = [...plan.followUpItems, ...baseline.followUpItems.filter((i) => i.actionType === "monitor_deadline")];
+  plan.urgentItems = [...plan.urgentItems, ...baseline.urgentItems.filter((i) => i.actionType === "monitor_deadline")];
+  return sanitizeAndDeduplicateActionPlan(plan);
 }
 
 

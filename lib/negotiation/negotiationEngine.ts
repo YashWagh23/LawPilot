@@ -12,6 +12,7 @@ import type {
   SeverityLevel,
 } from "@/types";
 import { validateLegalSource } from "@/lib/safety/legalSourceValidator";
+import { splitSentences } from "@/lib/utils";
 
 /**
  * Negotiation Copilot — grounded, deterministic draft generator.
@@ -330,9 +331,7 @@ function dedupe(items: string[]): string[] {
 }
 
 function firstSentence(text: string): string {
-  const trimmed = text.trim();
-  const idx = trimmed.search(/\.\s/);
-  return idx === -1 ? trimmed : trimmed.slice(0, idx + 1);
+  return splitSentences(text.trim())[0] ?? "";
 }
 
 function cleanTitle(title: string): string {

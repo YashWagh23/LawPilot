@@ -35,11 +35,13 @@ export async function POST(request: NextRequest) {
       question,
       history = [],
       clientReport,
+      focus,
     }: {
       documentId: string;
       question: string;
       history?: AskConversationMessage[];
       clientReport?: AnalysisReport;
+      focus?: { clauseId?: string; findingId?: string };
     } = body;
 
     if (!question || typeof question !== "string" || !question.trim()) {
@@ -116,6 +118,10 @@ export async function POST(request: NextRequest) {
       report,
       question: question.trim(),
       history: safeHistory,
+      focus: {
+        clauseId: typeof focus?.clauseId === "string" ? focus.clauseId.slice(0, 200) : undefined,
+        findingId: typeof focus?.findingId === "string" ? focus.findingId.slice(0, 200) : undefined,
+      },
     });
 
     return NextResponse.json({
@@ -133,3 +139,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Live AI calls can take several seconds; the default serverless limit is too tight.
+export const maxDuration = 60;

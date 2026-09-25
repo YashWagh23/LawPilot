@@ -214,21 +214,41 @@ describe("Phase 5: Jurisdiction-Aware Legal Intelligence + India-First Demo", ()
 
   // Test 10: 5-Part Calibrated User Q&A for Indian Training Bond
   it("10. provides calibrated 5-part response for Indian training bond question without absolutism", async () => {
-    const answer = await answerClauseQuestion({
+    const clause = SAMPLE_CLAUSES.find((c) => c.id === "clause-sec-6")!;
+    const finding = SAMPLE_FINDINGS.find((f) => f.clauseId === "clause-sec-6")!;
+    const chain = SAMPLE_EVIDENCE_CHAINS.find((c) => c.finding.clauseId === "clause-sec-6")!;
+    const answer = await answerClauseQuestion(
+      {
+        documentId: "demo-employment-agreement",
+        clauseId: "clause-sec-6",
+        question: "Can Kavach Dynamics definitely charge me ₹4,50,000 if I leave early?",
+        jurisdiction: "India · Maharashtra",
+      },
+      finding,
+      clause,
+      chain.legalSources
+    );
+
+    // Everything is derived from the supplied clause, finding and verified sources.
+    expect(answer.whatContractSays).toContain("4,50,000");
+    expect(answer.whatContractSays).toContain("Section 6");
+    expect(answer.legalContext).toContain("Indian Contract Act, 1872 § 74");
+    expect(answer.legalContext).toContain("Kailash Nath Associates");
+    expect(answer.legalContext).toContain("ceiling");
+    expect(answer.whatThisMeans).toBe(finding.whyItMatters);
+    expect(answer.whatWeCannotDetermine).toContain("LawPilot cannot definitively determine");
+    expect(answer.nextStep).toContain("clarify");
+    expect(answer.confidence).toBe("moderate");
+
+    // Without a clause there is nothing to quote: it must say so, never invent a bond narrative.
+    const noClause = await answerClauseQuestion({
       documentId: "demo-employment-agreement",
       clauseId: "clause-sec-6",
       question: "Can Kavach Dynamics definitely charge me ₹4,50,000 if I leave early?",
       jurisdiction: "India · Maharashtra",
     });
-
-    expect(answer.whatContractSays).toContain("₹4,50,000");
-    expect(answer.legalContext).toContain("Section 74 of the Indian Contract Act, 1872");
-    expect(answer.legalContext).toContain("Kailash Nath Associates");
-    expect(answer.legalContext).toContain("ceiling");
-    expect(answer.whatThisMeans).toContain("enforceable only to the extent of actual");
-    expect(answer.whatWeCannotDetermine).toContain("LawPilot cannot definitively determine");
-    expect(answer.nextStep).toContain("amortize");
-    expect(answer.confidence).toBe("high");
+    expect(noClause.whatContractSays).not.toContain("4,50,000");
+    expect(noClause.confidence).toBe("insufficient");
   });
 
   // Test 11: Lawyer Brief generation dynamically synthesizes Indian legal context

@@ -70,11 +70,22 @@ const CONCEPT_SYNONYMS: Record<string, string[]> = {
 };
 
 /**
- * Scores semantic affinity between two clauses based on title, category, and text tokens
+ * Scores semantic affinity between two clauses based on title, category, and text tokens.
+ *
+ * Category and topic-synonym hints are only allowed to contribute when the clauses ALSO share
+ * real textual/title overlap; otherwise two unrelated clauses that merely share a category
+ * (e.g. "Rent" and "Security Deposit", both "payment") were being paired as the same clause.
  */
 export function calculateClauseAffinity(a: Clause, b: Clause): number {
   const normTitleA = normalizeClauseTitle(a.title);
   const normTitleB = normalizeClauseTitle(b.title);
+
+  // 0. Identical wording under a different title/number is the same clause.
+  const normTextA = a.rawText.replace(/\s+/g, " ").trim().toLowerCase();
+  const normTextB = b.rawText.replace(/\s+/g, " ").trim().toLowerCase();
+  if (normTextA.length > 20 && normTextA === normTextB) {
+    return 1.0;
+  }
 
   // 1. Direct title match or substring inclusion
   if (normTitleA === normTitleB && normTitleA.length > 0) {
@@ -87,32 +98,43 @@ export function calculateClauseAffinity(a: Clause, b: Clause): number {
     return 0.9;
   }
 
-  // 2. Keyword synonyms in titles
-  let conceptMatchBonus = 0;
+  const tokensA = tokenize(a.rawText);
+  const tokensB = tokenize(b.rawText);
+  const textJaccard = computeTokenJaccard(tokensA, tokensB);
+  const titleJaccard = computeTokenJaccard(tokenize(normTitleA), tokenize(normTitleB));
+
+  // 2. Keyword synonyms in titles (only counts with supporting overlap)
+  let sharesConcept = false;
   for (const [, synonyms] of Object.entries(CONCEPT_SYNONYMS)) {
     const hasA = synonyms.some((s) => normTitleA.includes(s));
     const hasB = synonyms.some((s) => normTitleB.includes(s));
     if (hasA && hasB) {
-      conceptMatchBonus = 0.45;
+      sharesConcept = true;
       break;
     }
   }
+  const conceptMatchBonus = sharesConcept && (textJaccard >= 0.12 || titleJaccard >= 0.2) ? 0.45 : 0;
 
-  // 3. Category match bonus
-  const categoryBonus = a.category === b.category && a.category !== "general" && a.category !== "other" ? 0.3 : 0;
+  // 3. Category match bonus (only with supporting overlap)
+  const sameCategory = a.category === b.category && a.category !== "general" && a.category !== "other";
+  const categoryBonus = sameCategory && (textJaccard >= 0.2 || titleJaccard >= 0.34) ? 0.3 : 0;
 
-  // 4. Token overlap between raw text
-  const tokensA = tokenize(a.rawText);
-  const tokensB = tokenize(b.rawText);
-  const textJaccard = computeTokenJaccard(tokensA, tokensB);
+  // 4. Title token overlap
+  const titleBonus = titleJaccard >= 0.5 ? 0.35 : titleJaccard >= 0.34 ? 0.2 : 0;
 
-  return Math.min(1.0, textJaccard * 0.4 + conceptMatchBonus + categoryBonus);
+  return Math.min(1.0, textJaccard * 0.4 + conceptMatchBonus + categoryBonus + titleBonus);
 }
+
+/** Minimum affinity for two clauses to be treated as the same provision. */
+const MATCH_THRESHOLD = 0.5;
 
 /**
  * Matches clauses between previous and current versions semantically.
  * Handles section renumbering (e.g. Section 7 -> Section 9) without falsely
  * reporting them as removed and added.
+ *
+ * Assignment is global and best-first (highest-affinity pairs claim each other first), so the
+ * result does not depend on clause order and one clause can never steal another's true partner.
  */
 export function matchClausesSemantically(
   previousClauses: Clause[],
@@ -120,37 +142,29 @@ export function matchClausesSemantically(
 ): MatchedClausePair[] {
   const results: MatchedClausePair[] = [];
   const matchedCurrentIndices = new Set<number>();
+  const matchedPreviousIndices = new Set<number>();
   const previousMatchMap = new Map<number, { currentIndex: number; score: number; confidence: MatchedClausePair["matchConfidence"] }>();
 
-  // Pass 1: High-confidence matching
+  const candidates: { i: number; j: number; score: number }[] = [];
   for (let i = 0; i < previousClauses.length; i++) {
-    const prev = previousClauses[i];
-    let bestCurrentIdx = -1;
-    let bestScore = 0;
-
     for (let j = 0; j < currentClauses.length; j++) {
-      if (matchedCurrentIndices.has(j)) continue;
-
-      const curr = currentClauses[j];
-      const score = calculateClauseAffinity(prev, curr);
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestCurrentIdx = j;
-      }
+      let score = calculateClauseAffinity(previousClauses[i], currentClauses[j]);
+      // Tiny tie-breaker: identical section labels / similar position are more likely the same clause.
+      if ((previousClauses[i].section || "").trim().toLowerCase() === (currentClauses[j].section || "").trim().toLowerCase()) score += 0.01;
+      score -= Math.abs(i / Math.max(previousClauses.length, 1) - j / Math.max(currentClauses.length, 1)) * 0.01;
+      if (score >= MATCH_THRESHOLD) candidates.push({ i, j, score });
     }
+  }
+  candidates.sort((x, y) => y.score - x.score || x.i - y.i || x.j - y.j);
 
-    if (bestScore >= 0.45 && bestCurrentIdx !== -1) {
-      let confidence: MatchedClausePair["matchConfidence"] = "semantic_medium";
-      if (bestScore >= 0.85) {
-        confidence = "exact_title";
-      } else if (bestScore >= 0.6) {
-        confidence = "semantic_high";
-      }
-
-      previousMatchMap.set(i, { currentIndex: bestCurrentIdx, score: bestScore, confidence });
-      matchedCurrentIndices.add(bestCurrentIdx);
-    }
+  for (const { i, j, score } of candidates) {
+    if (matchedPreviousIndices.has(i) || matchedCurrentIndices.has(j)) continue;
+    let confidence: MatchedClausePair["matchConfidence"] = "semantic_medium";
+    if (score >= 0.85) confidence = "exact_title";
+    else if (score >= 0.6) confidence = "semantic_high";
+    previousMatchMap.set(i, { currentIndex: j, score, confidence });
+    matchedPreviousIndices.add(i);
+    matchedCurrentIndices.add(j);
   }
 
   // Assemble matched previous clauses

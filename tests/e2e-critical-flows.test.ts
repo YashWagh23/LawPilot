@@ -73,11 +73,16 @@ describe("LawPilot Critical E2E Product Audit & Data Consistency Invariants", ()
         // Verify evidence chain if present
         const chain = report.evidenceChains?.find((c) => c.finding?.id === finding.id);
         if (chain) {
-          expect(chain.legalClaims.length).toBeGreaterThan(0);
-          expect(chain.legalSources.length).toBeGreaterThan(0);
-          // Verify citation is non-empty and verified
-          expect(chain.legalSources[0].citation).toBeTruthy();
-          expect(chain.legalSources[0].verificationStatus).toBe("verified");
+          if (chain.verification.status === "insufficient_context") {
+            // Honest "no curated authority for this topic": must not carry any source.
+            expect(chain.legalSources).toHaveLength(0);
+          } else {
+            expect(chain.legalClaims.length).toBeGreaterThan(0);
+            expect(chain.legalSources.length).toBeGreaterThan(0);
+            // Verify citation is non-empty and verified
+            expect(chain.legalSources[0].citation).toBeTruthy();
+            expect(chain.legalSources[0].verificationStatus).toBe("verified");
+          }
         }
       }
     }, 30000);

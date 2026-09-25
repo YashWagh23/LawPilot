@@ -91,6 +91,7 @@ export function classifyQuestion(rawQuestion: string): QuestionClassificationRes
 
   // 4. RISK_INTERPRETATION checks
   if (
+    /\bwhy\b.*\b(?:flag|flagged|risky|risk|concern|concerning|red flag|considered a risk|marked)\b/.test(norm) ||
     norm.includes("why did lawpilot flag") ||
     norm.includes("why is this flagged") ||
     norm.includes("why is this risky") ||

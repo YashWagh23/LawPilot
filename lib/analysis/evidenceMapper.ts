@@ -1,4 +1,5 @@
 import type { Clause, EvidenceLink, Finding } from "@/types";
+import { splitSentences } from "@/lib/utils";
 
 export interface EvidenceMappingResult {
   evidenceLinks: EvidenceLink[];
@@ -82,7 +83,7 @@ export function mapFindingsToEvidence(
     // Determine representative exact quote from the clause
     // Use first 150 chars or the most relevant sentence
     let quotedText = clause.rawText;
-    const sentences = clause.rawText.split(/(?<=[.?!])\s+/);
+    const sentences = splitSentences(clause.rawText);
     if (sentences.length > 0 && sentences[0].length >= 25) {
       quotedText = sentences.slice(0, 2).join(" ");
     }

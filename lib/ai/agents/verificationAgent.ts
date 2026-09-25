@@ -130,7 +130,6 @@ export function runHardVerificationGate(
   // citations as verified.
   const targetIsGenericOrUS =
     targetJurisdiction === "general" ||
-    targetJurisdiction === "unknown" ||
     targetJurisdiction.trim().length === 0 ||
     targetJurisdiction.includes("delaware") ||
     targetJurisdiction.includes("federal") ||
@@ -326,16 +325,16 @@ export async function verifyAndAssembleEvidence(
         (catLower.includes("financial") &&
           (s.relevance.toLowerCase().includes("liquidated damages") ||
             s.relevance.toLowerCase().includes("repayment") ||
-            s.title.includes("74") ||
+            /§\s*74\b/.test(s.title) ||
             s.title.toLowerCase().includes("wage"))) ||
         (catLower.includes("restrictive") &&
           (s.relevance.toLowerCase().includes("non-compete") ||
             s.relevance.toLowerCase().includes("restraint") ||
-            s.title.includes("27"))) ||
+            /§\s*27\b/.test(s.title))) ||
         (catLower.includes("intellectual") &&
           (s.relevance.toLowerCase().includes("copyright") ||
             s.relevance.toLowerCase().includes("invention") ||
-            s.title.includes("17"))) ||
+            /§\s*17\b/.test(s.title))) ||
         ((catLower.includes("arbitrat") || catLower.includes("dispute")) &&
           s.relevance.toLowerCase().includes("arbitrat")) ||
         (catLower.includes("notice") && s.relevance.toLowerCase().includes("notice")) ||
@@ -359,7 +358,7 @@ export async function verifyAndAssembleEvidence(
           clauseTextLower.includes("competing business") ||
           titleLower.includes("non-compete")
         ) {
-          return sTitle.includes("27") || sRel.includes("non-compete") || sRel.includes("restraint");
+          return /§\s*27\b/.test(sTitle) || sRel.includes("non-compete") || sRel.includes("restraint");
         }
         if (
           clauseTextLower.includes("bond") ||
@@ -367,7 +366,7 @@ export async function verifyAndAssembleEvidence(
           clauseTextLower.includes("liquidated damages") ||
           titleLower.includes("financial")
         ) {
-          return sTitle.includes("74") || sRel.includes("liquidated damages") || sRel.includes("repayment") || sTitle.includes("wage");
+          return /§\s*74\b/.test(sTitle) || sRel.includes("liquidated damages") || sRel.includes("repayment") || sTitle.includes("wage");
         }
         if (
           clauseTextLower.includes("invention") ||
@@ -415,7 +414,7 @@ export async function verifyAndAssembleEvidence(
       clause,
       candidateClaims,
       relatedSources,
-      input.jurisdiction || input.governingLaw || "Delaware"
+      input.jurisdiction || input.governingLaw || "Unknown"
     );
 
     if (gateResult.status === "unsupported" || gateResult.status === "insufficient_context") {
@@ -483,7 +482,7 @@ export async function verifyAndAssembleEvidence(
         findingId: finding.id,
         factualDependencies: gateResult.uncertainties.filter((u) => !u.includes("LawPilot")),
         unverifiedAssumptions: [
-          `Assumes ${input.jurisdiction || "Delaware"} governing law applies as stated in the agreement.`,
+          `Assumes ${input.jurisdiction && input.jurisdiction !== "Unknown" ? input.jurisdiction : "the stated"} governing law applies as stated in the agreement.`,
         ],
         explanation: gateResult.uncertainties[0] || "Further factual discovery needed.",
         isFactVsInterpretationClear: true,

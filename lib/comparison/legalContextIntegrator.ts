@@ -6,7 +6,8 @@ import type {
   LegalClaim,
   LegalSource,
 } from "@/types";
-import { DEMO_VERIFIED_INDIAN_LEGAL_SOURCES } from "@/lib/ai/agents/legalResearchAgent";
+import { DEMO_VERIFIED_INDIAN_LEGAL_SOURCES, selectCuratedLegalSources } from "@/lib/ai/agents/legalResearchAgent";
+import type { DocumentType } from "@/types";
 
 /**
  * Compares jurisdiction metadata between previous and current documents
@@ -15,19 +16,20 @@ export function compareJurisdictions(
   prevJurisdiction?: JurisdictionContext,
   currJurisdiction?: JurisdictionContext
 ): JurisdictionComparison {
-  const fallbackJurisdiction: JurisdictionContext = {
-    country: "India",
-    stateOrUT: "Maharashtra",
-    governingLaw: "Laws of the Republic of India",
-    confidence: "high",
-    source: "document",
+  const unknown: JurisdictionContext = {
+    country: "Unknown",
+    confidence: "unknown",
+    source: "inferred",
+    evidence: ["No jurisdiction signals found in document text."],
   };
 
-  const prev = prevJurisdiction || fallbackJurisdiction;
-  const curr = currJurisdiction || fallbackJurisdiction;
+  const prev = prevJurisdiction || unknown;
+  const curr = currJurisdiction || unknown;
 
-  const prevCountry = (prev.country || "India").trim().toLowerCase();
-  const currCountry = (curr.country || "India").trim().toLowerCase();
+  const prevCountry = (prev.country || "Unknown").trim().toLowerCase();
+  const currCountry = (curr.country || "Unknown").trim().toLowerCase();
+  const prevUnknown = prevCountry === "unknown";
+  const currUnknown = currCountry === "unknown";
 
   const prevState = (prev.stateOrUT || "").trim().toLowerCase();
   const currState = (curr.stateOrUT || "").trim().toLowerCase();
@@ -39,10 +41,16 @@ export function compareJurisdictions(
   let statusLabel = "";
   let warning: string | undefined = undefined;
 
-  if (isAligned) {
-    const displayCountry = prev.country || "India";
-    const displayState = prev.stateOrUT ? ` · ${prev.stateOrUT}` : "";
-    statusLabel = `${displayCountry}${displayState} · Jurisdiction Aligned`;
+  if (prevUnknown && currUnknown) {
+    statusLabel = "Jurisdiction not established in either document";
+  } else if (prevUnknown !== currUnknown) {
+    statusLabel = "JURISDICTION CHANGED";
+    warning = `${prevUnknown ? "The previous document does not establish a governing jurisdiction" : `Previous document was governed by ${prev.country}${prev.stateOrUT ? ` (${prev.stateOrUT})` : ""}`}, while ${
+      currUnknown ? "the revised document does not establish one" : `the revised document specifies ${curr.country}${curr.stateOrUT ? ` (${curr.stateOrUT})` : ""}`
+    }. Confirm which law governs before relying on either draft.`;
+  } else if (isAligned) {
+    const displayState = prev.stateOrUT ? ` · ${prev.stateOrUT}` : curr.stateOrUT ? ` · ${curr.stateOrUT}` : "";
+    statusLabel = `${prev.country}${displayState} · Jurisdiction Aligned`;
   } else {
     statusLabel = "JURISDICTION CHANGED";
     warning = `Previous document was governed by ${prev.country}${
@@ -55,7 +63,7 @@ export function compareJurisdictions(
   return {
     previousJurisdiction: prev,
     currentJurisdiction: curr,
-    isAligned,
+    isAligned: prevUnknown !== currUnknown ? false : isAligned,
     statusLabel,
     warning,
   };
@@ -66,9 +74,14 @@ export function compareJurisdictions(
  */
 export function integrateLegalContext(
   changes: ClauseComparisonItem[],
-  jurisdictionComp: JurisdictionComparison
+  jurisdictionComp: JurisdictionComparison,
+  documentType: DocumentType = "employment_agreement"
 ): ClauseComparisonItem[] {
-  const isIndian = jurisdictionComp.currentJurisdiction.country.toLowerCase().includes("india");
+  const isIndian = jurisdictionComp.currentJurisdiction.country.toLowerCase() === "india";
+  const isEmployment = documentType === "employment_agreement";
+  // Curated authority that legitimately applies to this document type in this jurisdiction.
+  const allowedIds = new Set(selectCuratedLegalSources(jurisdictionComp.currentJurisdiction, documentType).map((s) => s.id));
+  const onlyAllowed = (list: LegalSource[] | undefined): LegalSource[] => (list || []).filter((s) => allowedIds.has(s.id));
 
   return changes.map((change) => {
     // Only link legal authorities to material changes (HIGH / MEDIUM)
@@ -84,8 +97,11 @@ export function integrateLegalContext(
     let nextStepText = "";
 
     if (isIndian) {
-      if (titleLower.includes("training") || titleLower.includes("bond") || change.category === "payment") {
-        sources = DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.training_reimbursement || [];
+      const changeText = `${change.whatChanged.original} ${change.whatChanged.revised}`.toLowerCase();
+      const isTrainingTopic =
+        isEmployment && (/training|bond|clawback|reimburs/.test(titleLower) || /training|clawback/.test(changeText));
+      if (isTrainingTopic) {
+        sources = onlyAllowed(DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.training_reimbursement);
         questionText = "Are liquidated damages / training bond clawback stipulations enforceable under Indian law?";
         legalClaimText =
           "Under Section 74 of the Indian Contract Act, 1872 and Supreme Court precedent (Kailash Nath Associates), stipulated amounts in employment bonds are treated as upper limits rather than automatic penalties; employers must prove actual loss and cannot enforce arbitrary penalties.";
@@ -93,8 +109,8 @@ export function integrateLegalContext(
           "Whether the employer has kept itemized receipts or documented actual expenditure incurred on specialized external training.";
         nextStepText =
           "Request itemized documentation of training expenses and propose a proportional monthly amortization schedule.";
-      } else if (titleLower.includes("non-compete") || change.category === "restriction") {
-        sources = DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.non_compete || [];
+      } else if (isEmployment && (titleLower.includes("non-compete") || change.category === "restriction")) {
+        sources = onlyAllowed(DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.non_compete);
         questionText = "Is a post-employment non-compete covenant valid and enforceable in India?";
         legalClaimText =
           "Under Section 27 of the Indian Contract Act, 1872 and Supreme Court precedent (Percept D'Mark v. Zaheer Khan), restrictive covenants that extend beyond the term of employment are void ab initio as restraints of trade.";
@@ -102,8 +118,8 @@ export function integrateLegalContext(
           "Whether the provision could still be used to withhold experience letters or initiate non-solicitation disputes regarding specific company clients.";
         nextStepText =
           "Clarify that the restriction is limited to non-solicitation of active clients and remove general industry employment bans.";
-      } else if (titleLower.includes("intellectual") || titleLower.includes("inventions") || change.category === "intellectual_property") {
-        sources = DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.ip_assignment || [];
+      } else if (isEmployment && (titleLower.includes("intellectual") || titleLower.includes("inventions") || change.category === "intellectual_property")) {
+        sources = onlyAllowed(DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.ip_assignment);
         questionText = "Does statutory employer copyright extend to works created outside work hours on personal hardware?";
         legalClaimText =
           "Section 17(c) of the Copyright Act, 1957 vests copyright in the employer only for works made 'in the course of employment under a contract of service'; broader assignment of off-hours personal software requires explicit bilateral consideration and documentation.";
@@ -112,8 +128,8 @@ export function integrateLegalContext(
         nextStepText =
           "Attach an Exhibit listing pre-existing personal intellectual property and open-source contributions to carve them out from assignment.";
       } else if (titleLower.includes("arbitrat") || titleLower.includes("dispute") || change.category === "dispute_resolution") {
-        sources = DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.arbitration || [];
-        questionText = "Can an employer unilaterally designate or appoint a sole arbitrator in India?";
+        sources = onlyAllowed(DEMO_VERIFIED_INDIAN_LEGAL_SOURCES.arbitration);
+        questionText = "Can one party unilaterally designate or appoint a sole arbitrator in India?";
         legalClaimText =
           "Under Section 12(5) of the Arbitration and Conciliation Act, 1996 and Supreme Court precedent (Perkins Eastman Architects DPC v. HSCC), an interested party who has an interest in the outcome of the dispute is legally ineligible to unilaterally appoint a sole arbitrator.";
         uncertaintyText =
@@ -190,7 +206,7 @@ export function integrateLegalContext(
           title: change.suggestedActionItem.title,
           description: change.suggestedActionItem.explanation,
           priority: change.significance === "HIGH" ? "high" : "medium",
-          partyResponsible: "Employee",
+          partyResponsible: "User",
           isReversible: true,
           recommendedTimeline: "Before execution",
           practicalAdvice: nextStepText,

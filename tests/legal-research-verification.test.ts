@@ -323,19 +323,35 @@ describe("Phase 3: Legal Research & Verified Evidence Chain", () => {
 
   // Test 17: User question flow 5-part answer
   it("17. answers user question with strict 5-part calibrated structure", async () => {
-    const result = await answerClauseQuestion({
-      documentId: "demo-doc",
-      clauseId: "clause-sec-6",
-      question: "Can my employer definitely charge me $18,500?",
-      jurisdiction: "Delaware",
-    });
+    const clause: Clause = {
+      id: "clause-sec-6",
+      section: "Section 6",
+      title: "Training Fee Reimbursement",
+      rawText:
+        "If Employee resigns before completing twelve (12) full months of service, Employee shall repay the full sum of $18,500 as reimbursement for training expenses.",
+      plainEnglish: "You repay $18,500 if you leave within 12 months.",
+      category: "payment",
+      pageNumber: 2,
+      importance: "high_attention",
+    };
+    const result = await answerClauseQuestion(
+      {
+        documentId: "demo-doc",
+        clauseId: "clause-sec-6",
+        question: "Can my employer definitely charge me $18,500?",
+        jurisdiction: "Delaware",
+      },
+      undefined,
+      clause,
+      DEMO_VERIFIED_LEGAL_SOURCES.training_reimbursement
+    );
 
     expect(result.whatContractSays).toContain("$18,500");
-    expect(result.legalContext).toContain("19 Del. C. § 1107");
+    expect(result.legalContext).toContain("Delaware Wage Payment and Collection Act");
     expect(result.whatThisMeans).toBeDefined();
     expect(result.whatWeCannotDetermine).toContain("LawPilot cannot definitively determine");
-    expect(result.nextStep).toContain("amortize");
-    expect(result.confidence).toBe("high");
+    expect(result.nextStep).toContain("clarify");
+    expect(result.confidence).toBe("moderate");
   });
 
   // Test 18: verifyAndAssembleEvidence orchestrates all chains

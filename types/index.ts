@@ -437,10 +437,27 @@ export interface LawyerBrief {
   recommendedNegotiationPoints: string[];
 }
 
+/**
+ * Honest record of whether live AI contributed to a report. `live`: every AI step succeeded.
+ * `partial`: some steps fell back to deterministic logic. `deterministic`: none used AI.
+ */
+export interface AiAnalysisStatus {
+  mode: "live" | "partial" | "deterministic";
+  configured: boolean;
+  succeededSteps: string[];
+  failedSteps: string[];
+  models: string[];
+  errors: string[];
+}
+
+export type DocumentType = DocumentMetadata["documentType"];
+
 export interface AnalysisReport {
   id: string;
   documentId: string;
   metadata: DocumentMetadata;
+  /** Present on reports produced by the live pipeline; absent on the bundled demo report. */
+  aiStatus?: AiAnalysisStatus;
   createdAt: string;
   // `jurisdiction` and `jurisdictionContext` are intentionally kept in sync (same value) by the
   // orchestrator: `jurisdiction` is the original field name, `jurisdictionContext` is what most

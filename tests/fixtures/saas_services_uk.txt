@@ -1,0 +1,27 @@
+SOFTWARE AS A SERVICE AGREEMENT
+
+This Software as a Service Agreement is entered into on 15 January 2026 between Brightpath Software Ltd, a company registered in England and Wales (the "Supplier") and Orbit Retail plc, a company registered in England and Wales (the "Customer").
+
+1. Services
+The Supplier shall provide the Customer with access to the Brightpath platform and related support services (the "Services") in accordance with this Agreement.
+
+2. Fees and Payment
+The Customer shall pay an annual subscription fee of £48,000, invoiced annually in advance and payable within thirty (30) days of the invoice date. Overdue amounts shall bear interest at 8% per annum. The Supplier may increase the fees by up to 7% on each renewal.
+
+3. Term and Renewal
+This Agreement commences on 15 January 2026 for an initial term of twenty-four (24) months and shall automatically renew for successive twelve (12) month periods unless either party gives ninety (90) days written notice of non-renewal before the end of the then-current term.
+
+4. Intellectual Property
+All intellectual property rights in the Services remain with the Supplier. The Customer hereby assigns to the Supplier all right, title and interest in any feedback, improvements and derivative works relating to the Services created by the Customer.
+
+5. Limitation of Liability
+The Supplier's total aggregate liability under this Agreement shall not exceed the fees paid in the preceding three (3) months. The Customer shall indemnify the Supplier against all third-party claims arising from the Customer's use of the Services.
+
+6. Termination
+The Supplier may terminate this Agreement at any time on thirty (30) days written notice. The Customer may terminate only for material breach that remains uncured fifteen (15) days after written notice.
+
+7. Confidentiality
+Each party shall keep the other's confidential information secret. This obligation shall survive indefinitely following termination.
+
+8. Governing Law and Jurisdiction
+This Agreement shall be governed by and construed in accordance with the laws of England and Wales. The courts of England and Wales shall have exclusive jurisdiction over any dispute.

@@ -32,11 +32,11 @@ export function JurisdictionIndicator({
 }: JurisdictionIndicatorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isOverriding, setIsOverriding] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(context?.country || "India");
-  const [selectedState, setSelectedState] = useState(context?.stateOrUT || "Maharashtra");
+  const [selectedCountry, setSelectedCountry] = useState(context?.country || "Unknown");
+  const [selectedState, setSelectedState] = useState(context?.stateOrUT || "");
 
-  const currentCountry = context?.country || "India";
-  const _currentState = context?.stateOrUT || (currentCountry === "India" ? "Maharashtra" : undefined);
+  const currentCountry = context?.country || "Unknown";
+  const _currentState = context?.stateOrUT;
   const isIndia = currentCountry.toLowerCase() === "india";
   const isUS = currentCountry.toLowerCase() === "united states" || currentCountry.toLowerCase() === "us";
 

@@ -6,6 +6,8 @@ import {
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
+import { firstSentence } from "@/lib/utils";
+import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
 import type {
   ClauseComparisonItem,
   ComparisonSummary,
@@ -26,26 +28,31 @@ interface ComparisonSummaryViewProps {
  * Returns a punchy, 1-sentence "Why It Matters" summary for the top summary cards
  */
 export function getConciseWhyItMatters(change: ClauseComparisonItem): string {
-  const normTitle = change.clauseTitle.toLowerCase();
-  if (normTitle.includes("notice")) {
-    return "Longer exit obligation that restricts career mobility and increases deduction risk.";
+  // Direction comes from the measured change itself, never from the clause title.
+  const d = change.semanticDetails?.find((x) => x.direction && x.direction !== "neutral");
+  if (d) {
+    const verb = d.direction === "increase" ? "Increased" : "Decreased";
+    const word = d.parameter.startsWith("Arbitrator")
+      ? d.direction === "increase"
+        ? "Appointment moved under one party's unilateral control."
+        : "Appointment moved away from unilateral control."
+      : d.parameter === "Geographic Scope"
+      ? `${d.direction === "increase" ? "Wider" : "Narrower"} territory covered.`
+      : d.parameter === "IP Assignment Scope"
+      ? `${d.direction === "increase" ? "Broader" : "Narrower"} ownership reach over work outside business hours.`
+      : d.parameter === "Settlement Deduction Remedy"
+      ? d.direction === "increase"
+        ? "New right to deduct from final dues."
+        : "Right to deduct from final dues removed."
+      : `${d.parameter} ${verb.toLowerCase()} from ${d.previousValue} to ${d.currentValue}.`;
+    return word;
   }
-  if (normTitle.includes("training") || normTitle.includes("bond")) {
-    return "Substantially higher contractual financial clawback exposure.";
-  }
-  if (normTitle.includes("non-compete")) {
-    return "Expanded post-employment restrictions on working in your industry across India.";
-  }
-  if (normTitle.includes("intellectual") || normTitle.includes("inventions")) {
-    return "Broadened employer claims over personal software code created outside work hours.";
-  }
-  if (normTitle.includes("arbitrat") || normTitle.includes("dispute")) {
-    return "Shifts dispute resolution to unilateral arbitrator appointment by employer MD.";
-  }
+  if (change.changeType === "ADDED") return "New clause introduced that was not in the previous draft.";
+  if (change.changeType === "REMOVED") return "Clause present in the previous draft is missing from this one.";
 
   if (change.whyItMatters) {
-    const firstSentence = change.whyItMatters.split(/\.\s+/)[0].trim();
-    return firstSentence.endsWith(".") ? firstSentence : `${firstSentence}.`;
+    const sentence = firstSentence(change.whyItMatters);
+    return sentence.length > 140 ? `${sentence.slice(0, 137).replace(/\s+\S*$/, "")}…` : sentence;
   }
 
   return "Material contractual term modification.";
@@ -59,7 +66,7 @@ export const ComparisonSummaryView: React.FC<ComparisonSummaryViewProps> = ({
   onSelectChange,
   selectedChangeId,
 }) => {
-  const totalChangesCount = summary.clausesChanged + summary.clausesAdded + summary.clausesRemoved;
+  const totalChangesCount = summary.clausesChanged + summary.clausesAdded + summary.clausesRemoved + summary.clausesMoved;
   const materialCount = topMaterialChanges.length;
 
   return (
@@ -88,8 +95,12 @@ export const ComparisonSummaryView: React.FC<ComparisonSummaryViewProps> = ({
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Showing all {materialCount} material changes requiring review · {summary.clausesChanged} modified · {summary.clausesAdded} added
+              {summary.materialChangesCount > materialCount
+                ? `Showing the top ${materialCount} of ${summary.materialChangesCount} material changes`
+                : `Showing all ${materialCount} material changes requiring review`}{" "}
+              · {summary.clausesChanged} modified · {summary.clausesAdded} added
               {summary.clausesRemoved > 0 ? ` · ${summary.clausesRemoved} removed` : ""}
+              {summary.clausesMoved > 0 ? ` · ${summary.clausesMoved} renumbered` : ""}
             </p>
           </div>
 
@@ -98,7 +109,7 @@ export const ComparisonSummaryView: React.FC<ComparisonSummaryViewProps> = ({
             <Scale className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="text-[11px] font-medium">
               {jurisdictionComparison.isAligned
-                ? "Governing Law: India · Maharashtra"
+                ? `Governing Law: ${jurisdictionComparison.currentJurisdiction.country === "Unknown" ? "not established" : formatJurisdictionBadge(jurisdictionComparison.currentJurisdiction)}`
                 : `Jurisdiction: ${jurisdictionComparison.statusLabel}`}
             </span>
           </div>

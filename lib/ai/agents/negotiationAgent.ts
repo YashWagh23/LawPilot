@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getGeminiClient, GEMINI_CONFIG } from "@/lib/ai/gemini";
+import { generateJson, isGeminiConfigured } from "@/lib/ai/gemini";
 import { validateSafetyCompliance } from "@/lib/safety/safetyRules";
 import {
   buildVerifyChecklist,
@@ -108,8 +108,7 @@ export function mergeAiOutput(
 
 export async function generateNegotiationPlan(input: NegotiationEngineInput): Promise<NegotiationDraft> {
   const base = generateNegotiationDraft(input);
-  const gemini = getGeminiClient();
-  if (!gemini) return base;
+  if (!isGeminiConfigured()) return base;
 
   const allowedSources = base.grounding.legalBasis.map((b) => ({
     citation: b.citation,
@@ -118,15 +117,9 @@ export async function generateNegotiationPlan(input: NegotiationEngineInput): Pr
     evidenceChainClaim: b.claim,
   }));
 
-  try {
-    const response = await gemini.models.generateContent({
-      model: GEMINI_CONFIG.defaultModel,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `${NEGOTIATION_SYSTEM_PROMPT}
+  const result = await generateJson({
+    label: "negotiation",
+    contents: `${NEGOTIATION_SYSTEM_PROMPT}
 
 ALLOWED_LEGAL_SOURCES (from the verified Evidence Chain — the ONLY law you may mention):
 ${JSON.stringify(allowedSources, null, 2)}
@@ -148,21 +141,12 @@ ${isolate(JSON.stringify({
 </untrusted_document_context>
 
 Return a single valid JSON object.`,
-            },
-          ],
-        },
-      ],
-      config: {
-        temperature: 0.2,
-        responseMimeType: "application/json",
-      },
-    });
-
-    const text = response.text?.trim();
-    if (!text) return base;
-    return mergeAiOutput(base, JSON.parse(text), input.jurisdiction) ?? base;
-  } catch (err) {
-    console.warn("Gemini negotiation draft failed, using grounded template draft:", err);
-    return base;
-  }
+    schema: z.record(z.string(), z.unknown()),
+    temperature: 0.2,
+    maxOutputTokens: 4096,
+    totalTimeoutMs: 25_000,
+    attemptTimeoutMs: 18_000,
+  });
+  if (!result.ok) return base;
+  return mergeAiOutput(base, result.data, input.jurisdiction) ?? base;
 }

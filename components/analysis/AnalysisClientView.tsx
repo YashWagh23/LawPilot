@@ -16,7 +16,8 @@ import { EvidenceChainDetailModal } from "@/components/evidence/EvidenceChainDet
 import { EvidenceChainCard } from "@/components/evidence/EvidenceChainCard";
 import { ClauseQAModal } from "@/components/analysis/ClauseQAModal";
 import { DocumentViewer } from "@/components/document/DocumentViewer";
-import { formatJurisdictionBadge } from "@/lib/jurisdiction/jurisdictionDetector";
+import { formatJurisdictionBadge, getReportJurisdiction } from "@/lib/jurisdiction/jurisdictionDetector";
+import type { QuestionFocus } from "@/lib/ai/ask/relevance";
 import {
   Printer,
   ChevronDown,
@@ -51,6 +52,10 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
     report.findings[0]?.id || ""
   );
 
+  // Clause chosen directly in the full document viewer (independent of any finding)
+  const [viewerClauseId, setViewerClauseId] = useState<string | null>(null);
+  const passageRef = React.useRef<HTMLElement | null>(null);
+
   // Progressive disclosure toggles for Layer 3
   const [showFullDocViewer, setShowFullDocViewer] = useState(false);
   const [showFullEvidence, setShowFullEvidence] = useState(false);
@@ -66,17 +71,15 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   const [negotiationFinding, setNegotiationFinding] =
     useState<FindingPresentation | null>(null);
 
-  // Jurisdiction
-  const [jurisdictionContext] = useState<JurisdictionContext | undefined>(
-    report.jurisdictionContext ||
-      report.metadata.jurisdictionContext || {
-        country: "India",
-        stateOrUT: "Maharashtra",
-        governingLaw: report.metadata.governingLaw || "Laws of the Republic of India",
-        confidence: "high",
-        source: "document",
-      }
-  );
+  // A question (and the clause/finding it is about) handed over from another part of the UI.
+  const [pendingAsk, setPendingAsk] = useState<{
+    question: string;
+    focus?: QuestionFocus;
+    nonce: number;
+  } | null>(null);
+
+  // Jurisdiction: exactly what the analysis established. Never defaults to a country.
+  const jurisdictionContext: JurisdictionContext = getReportJurisdiction(report);
 
   // Transform findings into clean Presentation models
   const presentationFindings = useMemo(() => {
@@ -130,12 +133,30 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
     );
   }, [report]);
 
+  // Selecting a finding syncs the Document Passage panel (and the full viewer) to its clause.
+  const handleSelectFinding = (findingId: string) => {
+    setActiveFindingId(findingId);
+    setViewerClauseId(null);
+    // If the passage panel is entirely below the fold, bring it into view so the sync is visible.
+    if (typeof window !== "undefined") {
+      requestAnimationFrame(() => {
+        const el = passageRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        if (rect.top > window.innerHeight - 40) {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    }
+  };
+
   // Handle jump to clause in document viewer
   const handleJumpToClause = (clauseId: string) => {
     const matchedFinding = presentationFindings.find((f) => f.clauseId === clauseId);
     if (matchedFinding) {
       setActiveFindingId(matchedFinding.id);
     }
+    setViewerClauseId(null);
     setShowFullDocViewer(true);
     setActiveTab("overview");
     setTimeout(() => {
@@ -252,7 +273,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
                       {/* Left area — sets active finding (updates Document Passage) */}
                       <button
                         type="button"
-                        onClick={() => setActiveFindingId(finding.id)}
+                        onClick={() => handleSelectFinding(finding.id)}
                         aria-pressed={isActive}
                         aria-label={`Select ${finding.severityLabel} severity finding: ${finding.title}`}
                         className="flex-1 min-w-0 text-left p-4 sm:pl-5 sm:py-5 sm:pr-2"
@@ -352,7 +373,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
           </section>
 
           {/* ── Section: Document Passage ── */}
-          <section id="document-section-anchor" className="space-y-3">
+          <section id="document-section-anchor" ref={passageRef} className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 Document passage
@@ -369,7 +390,7 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
 
             {/* Contextual snippet of the currently selected issue */}
             {activeFinding && !showFullDocViewer && (
-              <div className="space-y-2 lp-animate-fade-in">
+              <div className="space-y-2 lp-animate-fade-in" aria-live="polite" data-testid="document-passage">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
                     {activeFinding.clauseReference}
@@ -398,11 +419,17 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
               <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden lp-animate-slide-down">
                 <DocumentViewer
                   clauses={report.clauses}
-                  selectedClauseId={activeFinding?.clauseId || report.clauses[0]?.id}
-                  activeEvidenceLink={report.evidenceLinks.find((l) => l.clauseId === activeFinding?.clauseId) || null}
+                  selectedClauseId={viewerClauseId || activeFinding?.clauseId || report.clauses[0]?.id}
+                  activeEvidenceLink={
+                    (!viewerClauseId || viewerClauseId === activeFinding?.clauseId
+                      ? report.evidenceLinks.find((l) => l.findingId === activeFinding?.id) ||
+                        report.evidenceLinks.find((l) => l.clauseId === activeFinding?.clauseId)
+                      : null) || null
+                  }
                   documentTitle={report.metadata.title}
                   totalPageCount={report.metadata.pageCount}
                   onSelectClause={(cid) => {
+                    setViewerClauseId(cid);
                     const matched = presentationFindings.find((f) => f.clauseId === cid);
                     if (matched) setActiveFindingId(matched.id);
                   }}
@@ -532,6 +559,8 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         >
           <AskLawPilotView
             report={report}
+            initialAsk={pendingAsk}
+            onAskConsumed={() => setPendingAsk(null)}
             onJumpToClause={(clauseId) => handleJumpToClause(clauseId)}
             onOpenChain={(chain) => setSelectedChainForModal(chain)}
           />
@@ -608,7 +637,8 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
         isOpen={!!selectedFindingForModal}
         onClose={() => setSelectedFindingForModal(null)}
         onJumpToClause={(clauseId) => handleJumpToClause(clauseId)}
-        onAskLawPilot={(_q) => {
+        onAskLawPilot={(question, f) => {
+          setPendingAsk({ question, focus: { findingId: f.id, clauseId: f.clauseId }, nonce: Date.now() });
           setActiveTab("ask");
         }}
         onViewEvidenceChain={(chain) => {

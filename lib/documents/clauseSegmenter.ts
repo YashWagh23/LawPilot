@@ -1,5 +1,6 @@
 import type { Clause, ClauseCategory, ImportanceLevel } from "@/types";
 import type { ExtractedPage } from "./textExtractor";
+import { splitSentences } from "@/lib/utils";
 
 export interface SegmentedSection {
   section: string;
@@ -270,54 +271,18 @@ export function scoreClauseImportance(
 }
 
 /**
- * Generates an intuitive, readable plain English summary of a clause based on its category and title
+ * Deterministic plain-English lead-in for a clause, derived ONLY from the clause's own text.
+ * (Live AI replaces this with a real summary; this must never assume a document type or claim
+ * terms the clause does not contain.)
  */
-function generatePlainEnglishSummary(section: string, title: string, category: ClauseCategory): string {
-  const t = title.toLowerCase();
-  if (t.includes("appointment") || t.includes("duties")) {
-    return `Defines the employee's title, reporting obligations, responsibilities, and adherence to company policies.`;
+function generatePlainEnglishSummary(section: string, title: string, category: ClauseCategory, rawText: string): string {
+  const sentences = splitSentences(rawText);
+  const lead = sentences[0] ? sentences[0].replace(/\s+/g, " ").trim() : "";
+  if (!lead) {
+    return `${section} covers ${title.toLowerCase() || category.replace(/_/g, " ")}; see the original text for the exact terms.`;
   }
-  if (t.includes("compensation") || t.includes("benefit") || t.includes("salary")) {
-    return `Specifies base salary, variable pay components, bonuses, and benefits schedule.`;
-  }
-  if (t.includes("probation") || t.includes("confirmation")) {
-    return `Establishes the initial probationary evaluation period and criteria for written confirmation.`;
-  }
-  if (t.includes("working hours") || t.includes("remote")) {
-    return `Governs standard working hours, remote-work eligibility, and workplace telemetry/monitoring policies.`;
-  }
-  if (t.includes("notice") || t.includes("garden leave") || t.includes("exit")) {
-    return `Sets advance written notice requirements for departure, garden leave terms, and exit protocols.`;
-  }
-  if (t.includes("training") || t.includes("reimbursement")) {
-    return `Outlines conditions for reimbursement or recovery of company-sponsored training expenses upon early departure.`;
-  }
-  if (t.includes("confidential")) {
-    return `Imposes strict non-disclosure obligations on proprietary technical, financial, and business information.`;
-  }
-  if (t.includes("intellectual property") || t.includes("invention")) {
-    return `Defines company ownership of inventions, software, and works created during employment, with carve-outs for pre-existing projects.`;
-  }
-  if (t.includes("non-compete") || t.includes("restriction") || t.includes("post-employment")) {
-    return `Places restrictions on providing competing services or soliciting clients after departure from the company.`;
-  }
-  if (t.includes("cause") || t.includes("misconduct")) {
-    return `Details grounds for immediate termination due to material breach, fraud, or misconduct.`;
-  }
-  if (t.includes("arbitrat") || t.includes("dispute")) {
-    return `Mandates informal dispute resolution followed by binding arbitration under applicable arbitration law.`;
-  }
-  if (t.includes("governing law") || t.includes("jurisdiction")) {
-    return `Identifies the applicable legal jurisdiction and designated courts for interim legal relief.`;
-  }
-  if (t.includes("entire agreement") || t.includes("amendment")) {
-    return `Confirms this document supersedes prior oral or written discussions; amendments require written consent.`;
-  }
-  if (t.includes("exhibit") || t.includes("schedule") || t.includes("annexure")) {
-    return `Supplementary exhibit detailing specific schedules, itemized disclosures, or excluded personal inventions.`;
-  }
-
-  return `This provision (${section}) governs ${category.replace(/_/g, " ")}. Refer to original text for full legal terms.`;
+  const clipped = lead.length > 220 ? `${lead.slice(0, 217).replace(/\s+\S*$/, "")}…` : lead;
+  return `${section} (${title}): ${clipped}`;
 }
 
 /**
@@ -676,7 +641,7 @@ export function segmentDocumentIntoClauses(
     const baseId = `clause-${s.section.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${idx}`;
     const category = categorizeClauseByKeywords(s.title, rawText);
     const importance = scoreClauseImportance(category, rawText);
-    const plainEnglish = generatePlainEnglishSummary(s.section, s.title, category);
+    const plainEnglish = generatePlainEnglishSummary(s.section, s.title, category, rawText);
 
     // If pages is empty, pageNumber must be null
     const hasPages = pages && pages.length > 0;

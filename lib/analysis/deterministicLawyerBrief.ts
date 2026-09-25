@@ -2,6 +2,7 @@ import type {
   ActionPlan,
   Clause,
   DetailedLawyerBrief,
+  DocumentType,
   EvidenceChain,
   Finding,
   JurisdictionContext,
@@ -11,6 +12,9 @@ import type {
   LawyerBriefLegalContext,
   LawyerBriefQuestion,
 } from "@/types";
+
+import type { AiRunTracker } from "@/lib/ai/gemini";
+import { documentTypeLabel } from "@/lib/documents/documentClassifier";
 
 export interface DetailedLawyerBriefInput {
   documentId: string;
@@ -26,6 +30,7 @@ export interface DetailedLawyerBriefInput {
   evidenceChains?: EvidenceChain[];
   keyDates?: KeyDate[];
   actionPlan?: ActionPlan;
+  tracker?: AiRunTracker;
 }
 
 /**
@@ -50,8 +55,17 @@ export function generateDeterministicLawyerBrief(
   const highRiskCount = findings.filter(
     (f) => f.severity === "critical_attention" || f.severity === "high_attention"
   ).length;
-  const jurisdictionLabel = input.jurisdiction || input.jurisdictionContext?.country || "applicable governing law";
-  const matterSummary = `Review of ${input.documentType || "Agreement"} titled "${input.documentTitle}". The document establishes an employment and restrictive covenant relationship under ${jurisdictionLabel}. Initial analysis identifies ${findings.length} substantive provisions of interest, including ${highRiskCount} elevated-risk terms regarding post-employment restrictions, training clawback obligations, and proprietary rights assignment. The client is seeking legal review to assess enforceability, identify drafting asymmetries, and negotiate standard protections prior to execution.`;
+  const knownJurisdiction = input.jurisdiction && !/^unknown/i.test(input.jurisdiction) ? input.jurisdiction : null;
+  const docLabel = documentTypeLabel(input.documentType as DocumentType);
+  const topTitles = findings
+    .filter((f) => f.severity === "critical_attention" || f.severity === "high_attention")
+    .slice(0, 3)
+    .map((f) => f.title.replace(/\s+deserves review$/i, "").toLowerCase());
+  const matterSummary = `Review of a ${docLabel} titled "${input.documentTitle}"${
+    knownJurisdiction ? `, which appears to be governed by the law of ${knownJurisdiction}` : `. The document does not clearly establish which law governs it`
+  }. Analysis identified ${findings.length} provision${findings.length === 1 ? "" : "s"} of interest${
+    highRiskCount > 0 ? `, including ${highRiskCount} elevated-risk term${highRiskCount === 1 ? "" : "s"}${topTitles.length ? ` (${topTitles.join("; ")})` : ""}` : ""
+  }. The reader is seeking legal review to assess enforceability, identify drafting asymmetries, and prepare negotiation points before relying on the agreement.`;
 
   // 2. User Concerns
   const userConcerns = findings.map(
@@ -110,53 +124,8 @@ export function generateDeterministicLawyerBrief(
     });
   });
 
-  // If evidence chains are empty, synthesize baseline authorities based on jurisdiction
-  if (verifiedLegalContext.length === 0) {
-    const isIndia = (input.jurisdiction && /india|maharashtra|mumbai|pune|delhi|bengaluru|karnataka/i.test(input.jurisdiction)) ||
-      input.jurisdictionContext?.country === "India" ||
-      /india|kavach/i.test(input.documentTitle);
-    const isDelaware = input.jurisdiction && /delaware/i.test(input.jurisdiction);
-
-    if (isIndia) {
-      verifiedLegalContext.push(
-        {
-          issueTitle: "Liquidated Damages & Training Bonds",
-          sourceTitle: "Indian Contract Act, 1872 § 74",
-          citation: "Indian Contract Act, 1872 § 74",
-          jurisdiction: "India",
-          explanation: "Stipulated compensation amounts operate as upper ceilings; employers must prove actual loss incurred on specialized training.",
-          verificationStatus: "verified",
-        },
-        {
-          issueTitle: "Post-Employment Restrictive Covenants",
-          sourceTitle: "Indian Contract Act, 1872 § 27 & Percept D'Mark",
-          citation: "Indian Contract Act, 1872 § 27",
-          jurisdiction: "India",
-          explanation: "Agreements in restraint of trade are void ab initio; post-employment non-compete clauses are unenforceable in India.",
-          verificationStatus: "verified",
-        }
-      );
-    } else if (isDelaware) {
-      verifiedLegalContext.push(
-        {
-          issueTitle: "Training Expense Repayment & Wage Deductions",
-          sourceTitle: "Delaware Wage Payment and Collection Act",
-          citation: "19 Del. C. § 1107",
-          jurisdiction: "Delaware",
-          explanation: "Restricts payroll withholding without explicit informed employee authorization and reasonable cost substantiation.",
-          verificationStatus: "verified",
-        },
-        {
-          issueTitle: "Post-Employment Non-Compete Scope",
-          sourceTitle: "Delaware Court of Chancery Precedent",
-          citation: "Kodiak Bldg. Partners, LLC v. Adams, 2022 WL 5240507",
-          jurisdiction: "Delaware",
-          explanation: "Delaware courts scrutinize non-compete agreements for overbreadth in geographic scope and industry definitions, refusing blue-penciling when covenants exceed legitimate employer interests.",
-          verificationStatus: "verified",
-        }
-      );
-    }
-  }
+  // Legal context is ONLY what the evidence chains verified. If none is linked, the brief says so
+  // (see the UI) rather than inventing authorities for the document's apparent jurisdiction.
 
   // 5. What Remains Uncertain
   const uncertaintiesSet = new Set<string>();
@@ -165,19 +134,26 @@ export function generateDeterministicLawyerBrief(
   });
 
   if (uncertaintiesSet.size === 0) {
-    uncertaintiesSet.add("Actual third-party expenses incurred by employer for training programs remain unspecified.");
-    uncertaintiesSet.add("Exact geographic territory where competitive accounts reside has not been demarcated.");
-    uncertaintiesSet.add("Whether employer's standard arbitration agreement complies with recent AAA/JAMS fee-splitting rules.");
+    findings.forEach((f) => (f.uncertainties || []).forEach((u) => uncertaintiesSet.add(u)));
+  }
+  if (uncertaintiesSet.size === 0) {
+    uncertaintiesSet.add("Facts outside the written agreement (how its terms are applied in practice) are not stated in the document.");
+    uncertaintiesSet.add("Which law governs, and how it treats the flagged terms, should be confirmed by counsel.");
   }
   const whatRemainsUncertain = Array.from(uncertaintiesSet);
 
   // 6. Documents Available
+  const isEmploymentDoc = input.documentType === "employment_agreement";
   const documentsAvailable = [
     `Complete signed or proposed agreement (${input.documentTitle})`,
-    "Formal written job offer letter and salary notification",
-    "Company Employee Handbook / Code of Conduct (if incorporated by reference)",
-    "List of pre-existing personal intellectual property / open-source projects (Exhibit A candidate)",
-    "Written correspondence regarding role expectations and remote work arrangements",
+    ...(isEmploymentDoc
+      ? [
+          "Formal written job offer letter and salary notification",
+          "Company policies or handbook (if incorporated by reference)",
+        ]
+      : ["Any amendments, schedules, annexures or side letters"]),
+    "Written correspondence with the other party about the flagged terms",
+    "Any payment records, invoices or receipts relevant to the amounts in the agreement",
   ];
 
   // 7. High-Value Questions for Counsel
@@ -185,27 +161,26 @@ export function generateDeterministicLawyerBrief(
     const sec = f.clauseReference?.section || f.evidence?.section || "the applicable section";
     const lower = f.title.toLowerCase();
 
-    let q = `What standard revisions should be requested for ${sec} to mitigate exposure?`;
-    let ctx = f.plainEnglishSummary || f.whyItMatters || f.description;
+    let q = `What revisions should be requested for ${sec} to reduce exposure, and are they realistic to negotiate?`;
+    const ctx = f.plainEnglishSummary || f.whyItMatters || f.description;
 
     if (
       lower.includes("non-compete") ||
       lower.includes("restrictive") ||
       lower.includes("competing") ||
       lower.includes("restriction") ||
-      f.category.toLowerCase().includes("restriction")
+      lower.includes("solicit") ||
+      f.category.toLowerCase().includes("restrictive")
     ) {
-      q = "Under governing state law, is the 12-month post-employment covenant vulnerable to challenge for geographical overbreadth, and can we negotiate a carve-out for non-direct competitors?";
-      ctx = "The current definition encompasses any entity providing related services, effectively preventing all industry employment.";
-    } else if (lower.includes("training") || lower.includes("reimbursement") || lower.includes("clawback")) {
-      q = "Does the lump-sum repayment provision run afoul of statutory wage deduction restrictions, and should we propose a monthly pro-rata amortization schedule?";
-      ctx = "As drafted, departing at month 23 requires 100% repayment of all unitemized training costs.";
-    } else if (lower.includes("invention") || lower.includes("intellectual property")) {
-      q = "How should we draft the carve-out in Exhibit A to cleanly preserve pre-existing inventions created prior to commencement?";
-      ctx = "The agreement currently contains a blanket assignment covering concepts conceived during the term without clear personal time exclusions.";
-    } else if (lower.includes("arbitration") || lower.includes("dispute")) {
-      q = "Does the mandatory arbitration clause ensure employer payment of administrative forum costs, and is unilateral fee-shifting enforceable?";
-      ctx = "Client seeks confirmation that dispute resolution expenses will not create prohibitive barriers to redress.";
+      q = `Is the restriction in ${sec} enforceable under the governing law, and can its duration, geographic scope and covered activities be narrowed?`;
+    } else if (lower.includes("training") || lower.includes("reimbursement") || lower.includes("clawback") || lower.includes("exit financial")) {
+      q = `Is the repayment or payment obligation in ${sec} enforceable under the governing law, and should it reduce pro-rata or be tied to documented costs?`;
+    } else if (lower.includes("invention") || lower.includes("intellectual property") || /ip/.test(lower) || f.category.toLowerCase().includes("intellectual")) {
+      q = `How should ${sec} be revised to add a carve-out for pre-existing work and anything created independently?`;
+    } else if (lower.includes("arbitration") || lower.includes("dispute") || lower.includes("court forum")) {
+      q = `Who bears forum and arbitrator costs under ${sec}, and is that allocation enforceable?`;
+    } else if (lower.includes("notice")) {
+      q = `Can the notice terms in ${sec} be made mutual, and can they be shortened or waived by agreement?`;
     }
 
     return {
@@ -226,20 +201,11 @@ export function generateDeterministicLawyerBrief(
   }));
 
   if (importantDates.length === 0) {
-    importantDates.push(
-      {
-        label: "Proposed Commencement Date",
-        date: input.date || "Within 14 business days",
-        description: "Expected effective date of employment and covenant commencement.",
-        isDeadline: true,
-      },
-      {
-        label: "Written Notice of Resignation",
-        noticePeriodDays: 30,
-        description: "Contractual notice window required for voluntary departure.",
-        isDeadline: true,
-      }
-    );
+    importantDates.push({
+      label: "No dated deadlines identified",
+      description: "The analysis did not find explicit dates or notice windows. Confirm any timing requirements with the other party.",
+      isDeadline: false,
+    });
   }
 
   return {
@@ -250,8 +216,8 @@ export function generateDeterministicLawyerBrief(
       title: input.documentTitle,
       documentType: input.documentType,
       date: input.date || new Date().toISOString().split("T")[0],
-      parties: input.parties && input.parties.length > 0 ? input.parties : ["Employer", "Employee"],
-      jurisdiction: input.jurisdiction || input.jurisdictionContext?.country || "Applicable Law",
+      parties: input.parties && input.parties.length > 0 ? input.parties : ["Not identified in the document"],
+      jurisdiction: input.jurisdiction || (input.jurisdictionContext && input.jurisdictionContext.country !== "Unknown" ? input.jurisdictionContext.country : "Not established by the document"),
       jurisdictionContext: input.jurisdictionContext,
     },
     jurisdictionContext: input.jurisdictionContext,

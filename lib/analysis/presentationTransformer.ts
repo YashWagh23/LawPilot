@@ -1,3 +1,5 @@
+import { firstSentence } from "@/lib/utils";
+import { extractMoneyAmounts } from "@/lib/documents/measures";
 import type {
   AnalysisReport,
   Finding,
@@ -85,9 +87,10 @@ export function extractStandoutValue(finding: Finding, report: AnalysisReport): 
   const textToScan = `${finding.title} ${finding.description} ${finding.evidence?.quotedText || ""}`;
 
   // 1. Match Indian Rupee or standard currency amounts
-  const rupeeMatch = textToScan.match(/(?:₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:Lakh|Crore|L|Cr))?/i);
-  if (rupeeMatch) {
-    return rupeeMatch[0].replace(/\s+/g, " ").trim();
+  // Currency must be a standalone token followed by a digit ("Rs" inside "users, 100" is not money).
+  const moneyMatch = extractMoneyAmounts(textToScan)[0];
+  if (moneyMatch) {
+    return moneyMatch.raw;
   }
 
   // 2. Cross-reference financial terms associated with this clause
@@ -103,7 +106,7 @@ export function extractStandoutValue(finding: Finding, report: AnalysisReport): 
   // 3. Time duration / restriction windows (e.g. 12 months, 2 years)
   const durationMatch = textToScan.match(/\b(\d+)\s*(months?|years?|days?)\b/i);
   if (durationMatch) {
-    const isScope = textToScan.toLowerCase().includes("all-india") || textToScan.toLowerCase().includes("india");
+    const isScope = /\ball-india\b|\bpan-india\b|\bthroughout india\b|\bterritory of india\b/i.test(textToScan);
     return isScope ? `${durationMatch[0]} · All-India` : durationMatch[0];
   }
 
@@ -163,7 +166,7 @@ export function toFindingPresentation(
   // Layer 1: One-sentence plain English summary
   let summary = finding.description || finding.summary || "";
   if (summary.includes(". ")) {
-    summary = summary.split(". ")[0] + ".";
+    summary = firstSentence(summary);
   }
 
   // Layer 2: Breakdown

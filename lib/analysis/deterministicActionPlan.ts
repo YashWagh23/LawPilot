@@ -6,6 +6,7 @@ import type {
   Finding,
   KeyDate,
 } from "@/types";
+import type { AiRunTracker } from "@/lib/ai/gemini";
 import { sanitizeActionItem } from "@/lib/ai/prompts/actionPlanning";
 
 export interface ActionPlanningInput {
@@ -17,6 +18,8 @@ export interface ActionPlanningInput {
   findings: Finding[];
   evidenceChains?: EvidenceChain[];
   keyDates?: KeyDate[];
+  documentType?: string;
+  tracker?: AiRunTracker;
 }
 
 /**
@@ -87,18 +90,26 @@ export function sanitizeAndDeduplicateActionPlan(plan: ActionPlan): ActionPlan {
   const seenIds = new Set<string>();
   const seenActionKeys = new Set<string>();
 
+  const firstByKey = new Map<string, ActionPlanItem>();
+
   const dedupeItems = (items: ActionPlanItem[]): ActionPlanItem[] => {
     return items
       .map(sanitizeActionItem)
       .filter((item) => {
-        // Semantic deduplication: findingId + actionType + normalized title
-        const normalizedTitle = item.title.trim().toLowerCase();
-        const actionKey = `${item.findingId || "gen"}::${item.actionType}::${normalizedTitle}`;
+        // Semantic deduplication: the same step (type + title) is shown once even when several
+        // findings produce it; the surviving step lists every clause it applies to.
+        const normalizedTitle = item.title.trim().toLowerCase().replace(/\s+/g, " ");
+        const actionKey = `${item.actionType}::${normalizedTitle}`;
 
         if (seenActionKeys.has(actionKey)) {
+          const kept = firstByKey.get(actionKey);
+          if (kept && item.clauseSection && !(kept.clauseSection || "").includes(item.clauseSection)) {
+            kept.clauseSection = kept.clauseSection ? `${kept.clauseSection}, ${item.clauseSection}` : item.clauseSection;
+          }
           return false;
         }
         seenActionKeys.add(actionKey);
+        firstByKey.set(actionKey, item);
 
         // ID uniqueness guarantee across the whole plan
         if (seenIds.has(item.id)) {
@@ -162,6 +173,7 @@ export function generateDeterministicActionPlan(
   const professionalReviewTriggers: ActionPlanTrigger[] = [];
   const followUpItems: ActionPlanItem[] = [];
 
+  const isEmploymentDoc = !input.documentType || input.documentType === "employment_agreement";
   const findings = input.findings || [];
   const keyDates = input.keyDates || [];
   const _evidenceChains = input.evidenceChains || [];
@@ -179,23 +191,18 @@ export function generateDeterministicActionPlan(
     const pageNum = clauseRef.pageNumber ?? null;
     const lowerTitle = finding.title.toLowerCase();
 
+    const catLowerAP = finding.category.toLowerCase();
     const isRestrictiveCovenant =
-      lowerTitle.includes("non-compete") ||
-      lowerTitle.includes("restrictive") ||
-      lowerTitle.includes("competing") ||
-      lowerTitle.includes("restriction") ||
-      finding.category.toLowerCase().includes("restriction");
+      /non-?compet|restrictive|competing|restriction|non-?solicit|exclusivity/.test(lowerTitle) ||
+      catLowerAP.includes("restrictive");
     const isTraining =
-      lowerTitle.includes("training") ||
-      lowerTitle.includes("reimbursement") ||
-      lowerTitle.includes("clawback") ||
-      finding.category.toLowerCase().includes("payment") ||
-      finding.category.toLowerCase().includes("financial");
+      /\btraining\b|reimbursement|clawback|exit financial/.test(lowerTitle) ||
+      catLowerAP.includes("financial & termination");
     const isIp =
-      lowerTitle.includes("invention") ||
-      lowerTitle.includes("intellectual property") ||
-      lowerTitle.includes("ip") ||
-      finding.category.toLowerCase().includes("intellectual");
+      /\binventions?\b|intellectual property|\bownership allocation\b/.test(lowerTitle) ||
+      catLowerAP.includes("intellectual");
+    const isArbitration = /arbitration|dispute resolution|court forum/.test(lowerTitle);
+    const shortTitle = finding.title.replace(/\s+deserves review$/i, "").replace(/\s*\(Section [^)]+\)$/i, "");
 
     // 1. Professional Review Triggers
     if (isHigh || isRestrictiveCovenant || isTraining || isIp) {
@@ -210,12 +217,16 @@ export function generateDeterministicActionPlan(
       });
     }
 
-    // 2. Questions to Ask Counterparty / HR / Drafting Party
+    // 2. Questions to Ask Counterparty / Drafting Party: specific to what is unclear in THIS finding
+    const firstUncertainty = (finding.uncertainties || []).find((u) => u && u.trim().length > 10);
+    const specificQuestion = firstUncertainty
+      ? `Could you confirm ${firstUncertainty.trim().replace(/^./, (c) => c.toLowerCase()).replace(/[.]+$/, "")}?`
+      : `Could you confirm the intended scope and specific exceptions under ${clauseSec}?`;
     questionsToAsk.push(
       sanitizeActionItem({
         id: buildActionItemId(input.documentId, "questions", "clarify", finding.id),
-        title: `Clarify ${finding.title} with drafting party`,
-        explanation: `Ask the drafting party to explain the intended operational scope of ${clauseSec} before execution.`,
+        title: `Ask about ${clauseSec}: ${shortTitle}`,
+        explanation: `Get the drafting party's written position on what ${clauseSec} is intended to cover before you rely on it.`,
         actionType: "ask_party",
         priority: isHigh ? "urgent" : isMedium ? "important" : "recommended",
         findingId: finding.id,
@@ -224,7 +235,7 @@ export function generateDeterministicActionPlan(
         clauseSection: clauseSec,
         pageNumber: pageNum,
         isReversible: true,
-        practicalAdvice: finding.actionableAdvice || `Request clarification in writing: "Could you confirm the intended scope and specific exceptions under ${clauseSec}?"`,
+        practicalAdvice: finding.actionableAdvice || `Ask in writing: "${specificQuestion}"`,
       })
     );
 
@@ -243,7 +254,7 @@ export function generateDeterministicActionPlan(
           clauseSection: clauseSec,
           pageNumber: pageNum,
           isReversible: true,
-          practicalAdvice: "Propose limiting restrictions to named competitors rather than the entire industry, and reduce duration to 6 months.",
+          practicalAdvice: "Propose limiting restrictions to named competitors or clients rather than the entire industry, with a shorter, clearly defined duration.",
         })
       );
 
@@ -268,7 +279,7 @@ export function generateDeterministicActionPlan(
         sanitizeActionItem({
           id: buildActionItemId(input.documentId, "before-signing", "train-cap", finding.id),
           title: "Request pro-rata monthly amortization for training repayment",
-          explanation: "The current clawback requires 100% repayment even if you depart in month 23. Request pro-rata reduction.",
+          explanation: "The clause may require full repayment even late in the stated period. Ask for a pro-rata reduction for each completed period of service.",
           actionType: "clarify",
           priority: "urgent",
           findingId: finding.id,
@@ -277,7 +288,7 @@ export function generateDeterministicActionPlan(
           clauseSection: clauseSec,
           pageNumber: pageNum,
           isReversible: true,
-          practicalAdvice: "Propose: 'Repayment shall amortize pro-rata by 1/12th per completed month of continuous service.'",
+          practicalAdvice: "Propose that the repayment amortize pro-rata for each completed month of continuous service.",
         })
       );
 
@@ -285,7 +296,7 @@ export function generateDeterministicActionPlan(
         sanitizeActionItem({
           id: buildActionItemId(input.documentId, "documents", "train-doc", finding.id),
           title: "Collect itemized receipts and written notices of approved training costs",
-          explanation: "Ensure that only actual, third-party expenses paid by the employer can be claimed for reimbursement.",
+          explanation: "Ensure that only actual, documented third-party expenses can be claimed for reimbursement.",
           actionType: "collect_document",
           priority: "important",
           findingId: finding.id,
@@ -301,8 +312,8 @@ export function generateDeterministicActionPlan(
       beforeSigning.push(
         sanitizeActionItem({
           id: buildActionItemId(input.documentId, "before-signing", "ip-exhibit", finding.id),
-          title: "Attach written Exhibit A listing all pre-existing inventions",
-          explanation: "Under broad invention assignment clauses, any personal projects created prior to signing could be claimed unless explicitly excluded.",
+          title: "Attach a written Exhibit A listing pre-existing work to exclude",
+          explanation: "Under broad assignment clauses, pre-existing work could be claimed unless it is explicitly excluded.",
           actionType: "preserve_evidence",
           priority: "urgent",
           findingId: finding.id,
@@ -311,7 +322,7 @@ export function generateDeterministicActionPlan(
           clauseSection: clauseSec,
           pageNumber: pageNum,
           isReversible: true,
-          practicalAdvice: "Document all personal code repositories, open-source projects, and domain names on Exhibit A before signing.",
+          practicalAdvice: "List personal projects, code repositories and other pre-existing work on an exhibit before signing.",
         })
       );
 
@@ -331,12 +342,12 @@ export function generateDeterministicActionPlan(
           practicalAdvice: "Export Git commit logs and initial creation dates to substantiate pre-existing ownership.",
         })
       );
-    } else if (lowerTitle.includes("arbitration") || lowerTitle.includes("dispute")) {
+    } else if (isArbitration) {
       factsToConfirm.push(
         sanitizeActionItem({
           id: buildActionItemId(input.documentId, "facts", "arb-fact", finding.id),
-          title: "Confirm whether employer pays arbitration forum fees",
-          explanation: "Under Delaware and federal arbitration standards, agreements requiring employees to split steep forum fees may be challenged as unconscionable.",
+          title: "Confirm who pays arbitration forum fees",
+          explanation: "Forum and arbitrator fees can be costly; how they are allocated affects whether pursuing a claim is practical.",
           actionType: "confirm_fact",
           priority: "important",
           findingId: finding.id,
@@ -345,25 +356,7 @@ export function generateDeterministicActionPlan(
           clauseSection: clauseSec,
           pageNumber: pageNum,
           isReversible: true,
-          practicalAdvice: "Request clarification on AAA/JAMS fee allocations and confirm fee-shifting is mutual.",
-        })
-      );
-    } else {
-      // General finding
-      beforeSigning.push(
-        sanitizeActionItem({
-          id: buildActionItemId(input.documentId, "before-signing", `general-${index}`, finding.id),
-          title: `Verify terms for ${finding.title}`,
-          explanation: finding.plainEnglishSummary || finding.whyItMatters || finding.description || "Review finding terms before signing.",
-          actionType: "clarify",
-          priority: isHigh ? "urgent" : isMedium ? "important" : "recommended",
-          findingId: finding.id,
-          findingTitle: finding.title,
-          clauseId: clauseRef?.clauseId,
-          clauseSection: clauseSec,
-          pageNumber: pageNum,
-          isReversible: true,
-          practicalAdvice: finding.actionableAdvice || "Review with drafting party before signing.",
+          practicalAdvice: "Request clarification of how forum and arbitrator fees are allocated and whether fee-shifting is mutual.",
         })
       );
     }
@@ -415,12 +408,14 @@ export function generateDeterministicActionPlan(
     documentsToCollect.push(
       sanitizeActionItem({
         id: buildActionItemId(input.documentId, "documents", "default-offer"),
-        title: "Collect original offer letter and written job description",
-        explanation: "Compare representations made during hiring with contractual duties and compensation terms.",
+        title: isEmploymentDoc ? "Collect original offer letter and written job description" : "Collect the signed agreement, amendments and related correspondence",
+        explanation: isEmploymentDoc
+          ? "Compare representations made during hiring with contractual duties and compensation terms."
+          : "Compare what was discussed or promised with what the written terms actually say.",
         actionType: "collect_document",
         priority: "important",
         isReversible: true,
-        practicalAdvice: "Maintain a dedicated offline folder with all pre-execution emails and offer letters.",
+        practicalAdvice: "Keep a dedicated offline folder with the agreement, amendments and all pre-signing correspondence.",
       })
     );
   }

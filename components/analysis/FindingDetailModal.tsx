@@ -15,7 +15,7 @@ interface FindingDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onJumpToClause?: (clauseId: string) => void;
-  onAskLawPilot?: (question: string) => void;
+  onAskLawPilot?: (question: string, finding: FindingPresentation) => void;
   onViewEvidenceChain?: (chain: FindingPresentation["evidenceChain"]) => void;
   /** Opens the Negotiation Copilot; only offered for material (HIGH / MEDIUM) findings. */
   onNegotiate?: (finding: FindingPresentation) => void;
@@ -217,7 +217,7 @@ export function FindingDetailModal({
                 type="button"
                 onClick={() => {
                   onClose();
-                  onAskLawPilot(`Can you explain the clause "${finding.title}" in simple terms and what I should negotiate?`);
+                  onAskLawPilot(`What does ${finding.section} (${finding.title}) mean for me, and what should I ask about it?`, finding);
                 }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors cursor-pointer min-h-[44px]"
               >

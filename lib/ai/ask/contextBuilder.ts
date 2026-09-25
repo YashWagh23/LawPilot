@@ -7,6 +7,8 @@ import type {
   LegalSource,
 } from "@/types";
 import type { AskConversationMessage } from "@/types/ask";
+import { getReportJurisdiction } from "@/lib/jurisdiction/jurisdictionDetector";
+import { chainForFinding, rankClauses, type QuestionFocus } from "./relevance";
 
 export interface FilteredAskContext {
   relevantClauses: Clause[];
@@ -18,21 +20,6 @@ export interface FilteredAskContext {
   sanitizedQuestion: string;
   conversationHistorySummary: string;
   untrustedContextXml: string;
-}
-
-/**
- * Normalizes text for keyword search
- */
-function normalize(str: string): string {
-  return str.toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim();
-}
-
-/**
- * Check if text contains any tokens from a query
- */
-function matchesKeywords(text: string, queryTokens: string[]): boolean {
-  const norm = normalize(text);
-  return queryTokens.some((token) => token.length > 2 && norm.includes(token));
 }
 
 /**
@@ -53,39 +40,22 @@ export function sanitizeUserQuestion(question: string): string {
 
 /**
  * Context Builder for Ask LawPilot
- * Selects minimum necessary context to prevent token bloat and ensure grounded answers
+ * Selects minimum necessary context to prevent token bloat and ensure grounded answers.
+ * Clauses are ranked against the question (and the user's selected clause/finding, which always
+ * comes first) so the model is shown the clause the question is actually about.
  */
 export function buildAskContext(
   report: AnalysisReport,
   question: string,
-  history: AskConversationMessage[] = []
+  history: AskConversationMessage[] = [],
+  focus?: QuestionFocus
 ): FilteredAskContext {
   const sanitizedQuestion = sanitizeUserQuestion(question);
-  const queryTokens = normalize(sanitizedQuestion).split(/\s+/).filter(Boolean);
 
-  // Check for section number patterns e.g. "section 8", "clause 5", "s. 4", "sec 2"
-  const sectionMatch = sanitizedQuestion.match(/(?:section|clause|sec\.?|s\.?)\s*([0-9A-Za-z.-]+)/i);
-  const targetSection = sectionMatch ? sectionMatch[1].toLowerCase() : null;
+  // 1. Relevant clauses: ranked matches; else the highest-risk clauses as a last resort.
+  const ranked = rankClauses(report, sanitizedQuestion, focus);
+  let matchedClauses = ranked.slice(0, 4).map((r) => r.clause);
 
-  // 1. Identify relevant clauses
-  let matchedClauses = report.clauses.filter((c) => {
-    const cSec = (c.section || c.sectionNumber || "").toLowerCase();
-    const cTitle = (c.title || "").toLowerCase();
-    const cText = (c.rawText || c.clauseText || "").slice(0, 200);
-
-    if (targetSection) {
-      if (cSec === targetSection || cSec.includes(targetSection) || cTitle.includes(`section ${targetSection}`)) {
-        return true;
-      }
-    }
-    return (
-      matchesKeywords(cTitle, queryTokens) ||
-      matchesKeywords(c.category || "", queryTokens) ||
-      matchesKeywords(cText, queryTokens)
-    );
-  });
-
-  // If no clauses matched directly, take top 4 highest-risk or representative clauses
   if (matchedClauses.length === 0) {
     const importantIds = new Set(
       report.findings
@@ -94,73 +64,36 @@ export function buildAskContext(
         .filter(Boolean)
     );
     matchedClauses = report.clauses.filter((c) => importantIds.has(c.id)).slice(0, 4);
-    if (matchedClauses.length === 0) {
-      matchedClauses = report.clauses.slice(0, 4);
-    }
-  } else if (matchedClauses.length > 5) {
-    matchedClauses = matchedClauses.slice(0, 5);
+    if (matchedClauses.length === 0) matchedClauses = report.clauses.slice(0, 4);
   }
 
   const matchedClauseIds = new Set(matchedClauses.map((c) => c.id));
 
-  // 2. Identify relevant findings
-  let matchedFindings = report.findings.filter((f) => {
-    if (f.clauseId && matchedClauseIds.has(f.clauseId)) return true;
-    return (
-      matchesKeywords(f.title, queryTokens) ||
-      matchesKeywords(f.plainEnglishSummary || f.description, queryTokens) ||
-      matchesKeywords(f.category, queryTokens)
-    );
-  });
+  // 2. Findings and 3. Evidence chains attached to those clauses
+  let matchedFindings = report.findings.filter((f) => matchedClauseIds.has(f.clauseId) || (f.evidence?.clauseId && matchedClauseIds.has(f.evidence.clauseId)));
+  if (matchedFindings.length === 0) matchedFindings = report.findings.slice(0, 3);
+  matchedFindings = matchedFindings.slice(0, 4);
 
-  if (matchedFindings.length === 0) {
-    matchedFindings = report.findings.slice(0, 3);
-  } else if (matchedFindings.length > 4) {
-    matchedFindings = matchedFindings.slice(0, 4);
+  const chainSet = new Map<string, EvidenceChain>();
+  for (const f of matchedFindings) {
+    const chain = chainForFinding(report, f);
+    if (chain) chainSet.set(chain.id, chain);
   }
+  const matchedChains = Array.from(chainSet.values()).slice(0, 3);
 
-  // 3. Identify relevant Evidence Chains
-  let matchedChains = (report.evidenceChains || []).filter((chain) => {
-    const chainClauseId = chain.documentEvidence?.clauseId || chain.finding?.clauseId;
-    if (chainClauseId && matchedClauseIds.has(chainClauseId)) return true;
-
-    const findingTitle = chain.finding?.title || "";
-    const legalClaim = chain.legalClaims?.[0]?.claim || "";
-    const legalContext = chain.legalClaims?.[0]?.explanation || "";
-
-    return (
-      matchesKeywords(findingTitle, queryTokens) ||
-      matchesKeywords(legalClaim, queryTokens) ||
-      matchesKeywords(legalContext, queryTokens)
-    );
-  });
-
-  if (matchedChains.length === 0 && (report.evidenceChains || []).length > 0) {
-    matchedChains = (report.evidenceChains || []).slice(0, 2);
-  } else if (matchedChains.length > 3) {
-    matchedChains = matchedChains.slice(0, 3);
-  }
-
-  // 4. Extract verified sources from matched chains
+  // 4. Verified sources from matched chains
   const sourcesMap = new Map<string, LegalSource>();
   for (const chain of matchedChains) {
-    const chainSources = chain.legalSources || [];
-    for (const src of chainSources) {
-      sourcesMap.set(src.id, src);
-    }
+    for (const src of chain.legalSources || []) sourcesMap.set(src.id, src);
   }
   const relevantSources = Array.from(sourcesMap.values());
 
-  // 5. Jurisdiction context
-  const jurisdiction: JurisdictionContext =
-    report.jurisdictionContext ||
-    report.metadata.jurisdictionContext || {
-      country: "India",
-      stateOrUT: "Maharashtra",
-      governingLaw: report.metadata.governingLaw || "Laws of the Republic of India",
-      confidence: "high",
-      source: "document",
-    };
+  // 5. Jurisdiction context: never defaults to a country the document did not establish
+  const jurisdiction = getReportJurisdiction(report);
+  const jurisdictionText =
+    jurisdiction.country === "Unknown"
+      ? "Not established by the document"
+      : `${jurisdiction.country}${jurisdiction.stateOrUT ? ` (${jurisdiction.stateOrUT})` : ""}`;
 
   // 6. Format recent conversation history
   const recentHistory = history.slice(-4);
@@ -175,17 +108,18 @@ export function buildAskContext(
 <untrusted_document_context>
 DOCUMENT METADATA:
 - Title: ${report.metadata.title || "Legal Agreement"}
+- Type: ${(report.metadata.documentType || "general_contract").replace(/_/g, " ")}
 - Parties: ${(report.metadata.parties || []).map((p) => `${p.name} (${p.role})`).join(", ") || "Unspecified"}
-- Governing Law: ${jurisdiction.governingLaw || "India"}
-- Jurisdiction: ${jurisdiction.country}${jurisdiction.stateOrUT ? ` (${jurisdiction.stateOrUT})` : ""}
+- Governing Law: ${jurisdiction.governingLaw || "Not stated"}
+- Jurisdiction: ${jurisdictionText}
 
 KEY FINANCIAL TERMS:
 ${(report.financialTerms || []).map((t) => `- ${t.label}: ${t.formattedAmount}`).join("\n") || "None specified"}
 
 KEY DATES & NOTICE PERIODS:
-${(report.keyDates || []).map((d) => `- ${d.label}: ${d.noticePeriodDays ? `${d.noticePeriodDays} days` : d.date || "Specified"} (Clause: ${d.clauseReference?.section || "N/A"})`).join("\n") || "None specified"}
+${(report.keyDates || []).map((d) => `- ${d.label}: ${d.description || (d.noticePeriodDays ? `${d.noticePeriodDays} days` : d.date || "Specified")} (Clause: ${d.clauseReference?.section || "N/A"})`).join("\n") || "None specified"}
 
-RELEVANT CLAUSES:
+RELEVANT CLAUSES (most relevant first):
 ${matchedClauses
   .map(
     (c) =>
@@ -202,12 +136,16 @@ ${matchedFindings
   .join("\n\n")}
 
 VERIFIED LEGAL CONTEXT & EVIDENCE CHAINS:
-${matchedChains
-  .map(
-    (ch) =>
-      `[Evidence Chain: ${ch.finding?.title || "Legal Issue"}]\nLegal Claim: ${ch.legalClaims?.[0]?.claim || "N/A"}\nExplanation: ${ch.legalClaims?.[0]?.explanation || "N/A"}\nUncertainties: ${(ch.uncertainties || []).join("; ") || "None"}\nSources: ${(ch.legalSources || []).map((s: LegalSource) => s.citation).join("; ")}`
-  )
-  .join("\n\n")}
+${
+  matchedChains.length > 0
+    ? matchedChains
+        .map(
+          (ch) =>
+            `[Evidence Chain: ${ch.finding?.title || "Legal Issue"}]\nLegal Claim: ${ch.legalClaims?.[0]?.claim || "N/A"}\nExplanation: ${ch.legalClaims?.[0]?.explanation || "N/A"}\nUncertainties: ${(ch.uncertainties || []).join("; ") || "None"}\nSources: ${(ch.legalSources || []).map((s: LegalSource) => `${s.citation} [id: ${s.id}]`).join("; ") || "NONE - no verified legal source is available for this issue"}`
+        )
+        .join("\n\n")
+    : "NONE - no verified legal source is available for these clauses"
+}
 </untrusted_document_context>
 `.trim();
 

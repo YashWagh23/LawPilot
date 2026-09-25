@@ -110,7 +110,7 @@ describe("Phase 7: Ask LawPilot — Grounded Document Q&A", () => {
         question: "Why is the non-compete flagged?",
       });
 
-      expect(answer.classification).toBe("LEGAL_CONTEXT");
+      expect(answer.classification).toBe("RISK_INTERPRETATION");
       expect(answer.answer).toContain("Section 27");
       expect(answer.answer).toContain("Indian Contract Act");
       expect(answer.legalContext).toContain("void");
@@ -130,11 +130,13 @@ describe("Phase 7: Ask LawPilot — Grounded Document Q&A", () => {
 
       expect(answer.whatWouldChangeAnswer).toBeDefined();
       expect(answer.whatWouldChangeAnswer!.length).toBeGreaterThan(0);
-      expect(
-        answer.whatWouldChangeAnswer!.some((fact) =>
-          fact.toLowerCase().includes("active employment") || fact.toLowerCase().includes("during employment")
-        )
-      ).toBe(true);
+      // Every "what would change" item must come from the report's own uncertainties for this
+      // finding/chain, not from canned text.
+      const nonCompeteChain = SAMPLE_ANALYSIS_REPORT.evidenceChains.find((c) => c.finding.evidence.section === "Section 9")!;
+      const known = [...(nonCompeteChain.finding.uncertainties || []), ...(nonCompeteChain.uncertainties || [])].map((u) => u.toLowerCase().replace(/[.]+$/, ""));
+      for (const item of answer.whatWouldChangeAnswer!) {
+        expect(known.some((k) => item.toLowerCase().includes(k.replace(/^./, (c) => c.toLowerCase())))).toBe(true);
+      }
     });
   });
 

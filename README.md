@@ -2,7 +2,7 @@
 
 > **Understand. Verify. Act.**
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black) ![React](https://img.shields.io/badge/React-19-61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6) ![Tests](https://img.shields.io/badge/tests-268%20passing-brightgreen) ![Zero Auth](https://img.shields.io/badge/auth-none%20required-lightgrey)
+![Next.js](https://img.shields.io/badge/Next.js-16-black) ![React](https://img.shields.io/badge/React-19-61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6) ![Tests](https://img.shields.io/badge/tests-306%20passing-brightgreen) ![Zero Auth](https://img.shields.io/badge/auth-none%20required-lightgrey)
 
 **Live Demo:** [lawpilot-sepia.vercel.app](https://lawpilot-sepia.vercel.app/)
 

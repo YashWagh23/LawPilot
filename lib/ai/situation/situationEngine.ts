@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { getGeminiClient, GEMINI_CONFIG } from "@/lib/ai/gemini";
+import { generateJson, isGeminiConfigured } from "@/lib/ai/gemini";
+import {
+  US_ONLY_TERMS,
+  classifySituationCategory,
+  detectSituationLocation,
+  localizeAssessment,
+  type SituationLocation,
+} from "./situationProfiles";
 import type { SituationAssessment } from "@/types";
 
 /**
@@ -191,9 +198,18 @@ function isVagueOrInsufficientPrompt(normalized: string): boolean {
     "doctor",
     "hospit",
     "polic",
+    "partner",
+    "dispute",
+    "share",
+    "startup",
+    "business",
+    "equity",
+    "landlord",
   ];
 
-  const hasDisputeKeyword = disputeKeywords.some((k) => normalized.includes(k));
+  const hasDisputeKeyword = disputeKeywords.some((k) =>
+    k === "$" ? normalized.includes("$") : k === "ip" ? /\bip\b/.test(normalized) : new RegExp(`\\b${k}`).test(normalized)
+  );
   if (!hasDisputeKeyword) {
     return true;
   }
@@ -210,6 +226,10 @@ function isVagueOrInsufficientPrompt(normalized: string): boolean {
  * Provides grounded, safe, calibrated situation assessments when offline or during fallback
  */
 export function generateDeterministicSituationAssessment(userPrompt: string): SituationAssessment {
+  return localizeAssessment(buildBaseAssessment(userPrompt), detectSituationLocation(userPrompt));
+}
+
+function buildBaseAssessment(userPrompt: string): SituationAssessment {
   const norm = userPrompt.toLowerCase().trim();
   const now = new Date().toISOString();
   const baseId = `sit-${Date.now()}`;
@@ -328,14 +348,8 @@ export function generateDeterministicSituationAssessment(userPrompt: string): Si
   }
 
   // 2. UNPAID FREELANCE INVOICE (e.g. Sample Scenario or keyword matches)
-  const isFreelanceInvoice =
-    norm.includes("invoice") ||
-    norm.includes("freelance") ||
-    norm.includes("contractor") ||
-    norm.includes("unpaid") ||
-    norm.includes("milestone") ||
-    norm.includes("client owes") ||
-    norm.includes("14,500");
+  const situationCategory = classifySituationCategory(norm);
+  const isFreelanceInvoice = situationCategory === "freelance_unpaid_invoice";
 
   if (isFreelanceInvoice) {
     return {
@@ -462,18 +476,7 @@ export function generateDeterministicSituationAssessment(userPrompt: string): Si
   }
 
   // 3. EMPLOYMENT DISPUTE
-  const isEmployment =
-    norm.includes("job") ||
-    norm.includes("workplace") ||
-    norm.includes("boss") ||
-    norm.includes("employer") ||
-    norm.includes("employee") ||
-    norm.includes("terminated") ||
-    norm.includes("fired") ||
-    norm.includes("severance") ||
-    norm.includes("wage") ||
-    norm.includes("overtime") ||
-    norm.includes("layoff");
+  const isEmployment = situationCategory === "employment_dispute";
 
   if (isEmployment) {
     return {
@@ -575,14 +578,7 @@ export function generateDeterministicSituationAssessment(userPrompt: string): Si
   }
 
   // 4. LANDLORD / TENANT
-  const isLandlordTenant =
-    norm.includes("landlord") ||
-    norm.includes("tenant") ||
-    norm.includes("lease") ||
-    norm.includes("rent") ||
-    norm.includes("deposit") ||
-    norm.includes("eviction") ||
-    norm.includes("apartment");
+  const isLandlordTenant = situationCategory === "landlord_tenant";
 
   if (isLandlordTenant) {
     return {
@@ -791,13 +787,21 @@ export async function analyzeSituation(userPrompt: string): Promise<SituationAss
     return generateDeterministicSituationAssessment(sanitized);
   }
 
-  const gemini = getGeminiClient();
-  if (!gemini) {
+  if (!isGeminiConfigured()) {
     return generateDeterministicSituationAssessment(sanitized);
   }
 
-  try {
-    const prompt = `You are the Situation Navigator engine for LawPilot.
+  const location = detectSituationLocation(sanitized);
+  const locationRule =
+    location.family === "unknown"
+      ? "The user did not say where this happened. Do NOT assume any country. Keep advice jurisdiction-neutral, set jurisdictionEstimate to 'Unspecified jurisdiction', and make your FIRST follow-up question ask for the country and state/city."
+      : location.family === "united_states"
+      ? `The user's location signals point to ${location.label}. Use U.S. concepts and dollars only where they fit.`
+      : `The user's location signals point to ${location.label}. Use ONLY that country's legal concepts, forums and currency${
+          location.family === "india" ? " (₹). Do not mention U.S. law, U.S. courts or dollars" : ". Do not mention U.S. law or dollars"
+        }. Set jurisdictionEstimate to "${location.label}".`;
+
+  const prompt = `You are the Situation Navigator engine for LawPilot.
 Tagline: Understand. Verify. Act.
 
 The user does NOT have a contract uploaded. They have narrated a factual situation:
@@ -805,12 +809,15 @@ The user does NOT have a contract uploaded. They have narrated a factual situati
 ${sanitized}
 </user_situation>
 
+LOCATION RULE:
+${locationRule}
+
 CORE OBJECTIVE:
 Provide a structured, balanced preliminary assessment that organizes the facts, identifies the likely category, highlights missing facts, and suggests 1-3 practical, reversible next steps.
 
 STRICT LEGAL SAFETY RULES:
 1. LawPilot provides legal information and preparation assistance, NEVER formal legal representation or definitive legal advice.
-2. NEVER guarantee outcomes, invent statutes, invent cases, invent legal facts, or tell users to sue.
+2. NEVER guarantee outcomes, invent statutes, invent cases, invent legal facts, or tell users to sue. Name a statute only if you are certain it exists and applies; otherwise describe the concept without a citation.
 3. FORBIDDEN PHRASES: "This is illegal", "You will definitely win", "Your counterparty cannot do this", "You should sue", "This violates the law".
 4. If the prompt is medical/personal health without an explicit legal controversy (e.g. "I am sick"), DO NOT invent a legal controversy. Classify as "insufficient_information", provide a medical notice disclaimer, and ask clarifying questions.
 5. Prioritize REVERSIBLE next steps (e.g. gather evidence, request records, send factual notice).
@@ -865,50 +872,63 @@ Return ONLY a valid JSON object matching this exact structure:
   "createdAt": "${new Date().toISOString()}"
 }`;
 
-    const response = await gemini.models.generateContent({
-      model: GEMINI_CONFIG.defaultModel,
-      contents: prompt,
-      config: {
-        temperature: 0.1,
-        responseMimeType: "application/json",
-      },
-    });
+  const result = await generateJson({
+    label: "situation",
+    contents: prompt,
+    schema: SituationAssessmentSchema,
+    temperature: 0.1,
+    maxOutputTokens: 6144,
+    totalTimeoutMs: 30_000,
+    attemptTimeoutMs: 22_000,
+  });
 
-    const responseText = response.text?.trim() || "";
-    if (!responseText) {
-      return generateDeterministicSituationAssessment(sanitized);
-    }
-
-    const jsonCandidate: unknown = JSON.parse(responseText);
-    const validation = SituationAssessmentSchema.safeParse(jsonCandidate);
-    if (!validation.success) {
-      console.warn(
-        "Gemini situation analysis returned a response that did not match the expected schema, falling back to deterministic engine:",
-        validation.error.message
-      );
-      return generateDeterministicSituationAssessment(sanitized);
-    }
-
-    const parsed = validation.data;
-
-    // Normalize schema-level `null` (accepted above because Gemini sends it for inapplicable
-    // optional fields) down to `undefined` to match the SituationAssessment type exactly.
-    const situationSummary =
-      parsed.situationSummary ||
-      `Factual situation analysis regarding ${parsed.identifiedCategory.replace(/_/g, " ")}.`;
-
-    return {
-      ...parsed,
-      situationSummary,
-      jurisdictionEstimate: parsed.jurisdictionEstimate ?? undefined,
-      disclaimer: parsed.disclaimer ?? undefined,
-      followUpQuestions: parsed.followUpQuestions.map((q) => ({
-        ...q,
-        options: q.options ?? undefined,
-      })),
-    };
-  } catch (err) {
-    console.warn("Gemini situation analysis failed or timed out, falling back to deterministic engine:", err);
+  if (!result.ok) {
     return generateDeterministicSituationAssessment(sanitized);
   }
+
+  const parsed = result.data;
+
+  // Normalize schema-level `null` down to `undefined` to match the SituationAssessment type exactly.
+  const situationSummary =
+    parsed.situationSummary ||
+    `Factual situation analysis regarding ${parsed.identifiedCategory.replace(/_/g, " ")}.`;
+
+  const assessment: SituationAssessment = {
+    ...parsed,
+    situationSummary,
+    jurisdictionEstimate: parsed.jurisdictionEstimate ?? undefined,
+    disclaimer: parsed.disclaimer ?? undefined,
+    followUpQuestions: parsed.followUpQuestions.map((q) => ({
+      ...q,
+      options: q.options ?? undefined,
+    })),
+  };
+
+  return enforceLocation(assessment, location, sanitized);
 }
+
+/**
+ * Live output must respect the user's location: a non-U.S. or unlocated situation may not contain
+ * U.S.-only law or dollar amounts (fall back to the localized deterministic assessment), and the
+ * jurisdiction shown is what the user actually said, not the model's guess.
+ */
+function enforceLocation(
+  assessment: SituationAssessment,
+  location: SituationLocation,
+  userPrompt: string
+): SituationAssessment {
+  if (location.family !== "united_states") {
+    const blob = JSON.stringify({ ...assessment, userPrompt: "" });
+    if (US_ONLY_TERMS.test(blob)) {
+      return generateDeterministicSituationAssessment(userPrompt);
+    }
+  }
+  if (location.family === "unknown") {
+    return { ...assessment, jurisdictionEstimate: "Not stated — please tell LawPilot where this happened" };
+  }
+  return {
+    ...assessment,
+    jurisdictionEstimate: `${location.label}${location.family === "india" && !location.stateOrUT ? " (state not stated)" : ""} (from your description)`,
+  };
+}
+

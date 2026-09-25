@@ -9,6 +9,7 @@ import { extractDocumentContent } from "@/lib/documents/textExtractor";
 import { normalizeDocumentContent } from "@/lib/documents/documentNormalizer";
 import { segmentDocumentIntoClauses } from "@/lib/documents/clauseSegmenter";
 import { detectJurisdiction, isIndianJurisdiction } from "@/lib/jurisdiction/jurisdictionDetector";
+import { classifyDocumentType } from "@/lib/documents/documentClassifier";
 import { GLOBAL_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
 import { matchClausesSemantically } from "./clauseMatcher";
 import { analyzeAllClauseDifferences } from "./semanticChangeDetector";
@@ -123,13 +124,15 @@ export async function compareDocumentBuffers(
   // Copyright Act, Arbitration and Conciliation Act) is only surfaced when the current document is
   // actually detected as Indian-governed; other jurisdictions get jurisdiction-neutral explanations
   // instead of an inapplicable Indian legal conclusion.
-  const rawChanges = analyzeAllClauseDifferences(
-    matchedPairs,
-    isIndianJurisdiction(currJurisdiction)
-  );
+  // The current version is the one being relied on, so its type/jurisdiction frame the narrative.
+  const documentType = classifyDocumentType(currNorm.normalizedFullText, currVal.sanitizedFileName);
+  const rawChanges = analyzeAllClauseDifferences(matchedPairs, {
+    isIndian: isIndianJurisdiction(currJurisdiction),
+    documentType,
+  });
 
   // 9. Integrate legal context & Evidence Chains
-  const changes = integrateLegalContext(rawChanges, jurisdictionComparison);
+  const changes = integrateLegalContext(rawChanges, jurisdictionComparison, documentType);
 
   // 10. Compute summary metrics
   let clausesChanged = 0;

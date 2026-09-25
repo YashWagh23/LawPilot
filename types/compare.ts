@@ -32,6 +32,8 @@ export interface SemanticDiffDetail {
   currentValue: string; // e.g. "90 days", "₹4,50,000", "Territory of India"
   changeSummary: string; // e.g. "+30 days", "+₹2,50,000 (+125%)", "Expanded nationwide"
   impactCategory: ImpactCategory;
+  /** Which way the measured term moved between the drafts (never assumed by prose). */
+  direction?: "increase" | "decrease" | "neutral";
 }
 
 /**

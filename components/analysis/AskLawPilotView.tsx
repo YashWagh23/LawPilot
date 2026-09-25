@@ -15,15 +15,22 @@ import {
   FileText,
   Scale,
 } from "lucide-react";
+import { getSuggestedQuestions } from "@/lib/ai/ask/suggestedQuestions";
+import type { QuestionFocus } from "@/lib/ai/ask/relevance";
 
 interface AskLawPilotViewProps {
   report: AnalysisReport;
+  /** A question handed over from elsewhere (e.g. a finding's "Ask LawPilot" button); sent once on mount. */
+  initialAsk?: { question: string; focus?: QuestionFocus; nonce: number } | null;
+  onAskConsumed?: () => void;
   onJumpToClause?: (clauseId: string) => void;
   onOpenChain?: (chain: EvidenceChain) => void;
 }
 
 export function AskLawPilotView({
   report,
+  initialAsk,
+  onAskConsumed,
   onJumpToClause: _onJumpToClause,
   onOpenChain: _onOpenChain,
 }: AskLawPilotViewProps) {
@@ -55,13 +62,8 @@ export function AskLawPilotView({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const textareaId = `ask-textarea-${report.id}`;
 
-  // Suggested questions — phrased as text links, not pills
-  const suggestedQuestions = [
-    "Why was this flagged?",
-    "What does this clause mean?",
-    "What should I ask HR?",
-    "What is my notice period?",
-  ];
+  // Suggested questions come from this report's own findings (each carries the finding it is about)
+  const suggestedQuestions = getSuggestedQuestions(report);
 
   // Save conversation to localStorage
   const saveMessages = (newMessages: AskConversationMessage[]) => {
@@ -109,7 +111,7 @@ export function AskLawPilotView({
   };
 
   // Handle Question Submission
-  const handleSend = async (queryText?: string) => {
+  const handleSend = async (queryText?: string, focus?: QuestionFocus) => {
     const textToSend = (queryText || inputText).trim();
     if (!textToSend || isLoading) return;
 
@@ -136,6 +138,7 @@ export function AskLawPilotView({
           documentId: report.id,
           question: textToSend,
           history: messages.slice(-4),
+          focus,
           // Only send clientReport if needed for recovery from a 404
         }),
       });
@@ -150,6 +153,7 @@ export function AskLawPilotView({
             documentId: report.id,
             question: textToSend,
             history: messages.slice(-4),
+            focus,
             clientReport: report,
           }),
         });
@@ -196,6 +200,16 @@ export function AskLawPilotView({
     }
   };
 
+  // Send a question handed over from another part of the UI exactly once.
+  const consumedNonceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!initialAsk || consumedNonceRef.current === initialAsk.nonce) return;
+    consumedNonceRef.current = initialAsk.nonce;
+    onAskConsumed?.();
+    void handleSend(initialAsk.question, initialAsk.focus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAsk]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -213,7 +227,7 @@ export function AskLawPilotView({
               Ask about {report.metadata.title}
             </h2>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Ask any question in plain English. LawPilot answers using only your agreement and verified Indian law.
+              Ask any question in plain English. LawPilot answers using only your agreement and the verified legal sources linked to it.
             </p>
           </div>
 
@@ -258,15 +272,15 @@ export function AskLawPilotView({
               Suggested:
             </p>
             <div className="flex flex-wrap gap-x-3 gap-y-1">
-              {suggestedQuestions.map((q, idx) => (
+              {suggestedQuestions.map((q) => (
                 <button
-                  key={idx}
+                  key={q.id}
                   type="button"
-                  onClick={() => handleSend(q)}
+                  onClick={() => handleSend(q.question, { findingId: q.findingId, clauseId: q.clauseId })}
                   disabled={isLoading}
                   className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer disabled:opacity-50"
                 >
-                  {q}
+                  {q.question}
                 </button>
               ))}
             </div>
@@ -308,6 +322,32 @@ export function AskLawPilotView({
                     {msg.content}
                   </div>
 
+                  {/* What is uncertain + follow-ups: always visible, never hidden behind the details toggle */}
+                  {msg.structuredAnswer?.whatIsUncertain && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed whitespace-pre-line">
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">Still uncertain: </span>
+                      {msg.structuredAnswer.whatIsUncertain}
+                    </p>
+                  )}
+                  {(msg.structuredAnswer?.followUpQuestions?.length ?? 0) > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Follow-up questions</p>
+                      <ul className="space-y-0.5">
+                        {msg.structuredAnswer!.followUpQuestions!.map((fq, i) => (
+                          <li key={i}>
+                            <button
+                              type="button"
+                              onClick={() => setInputText(fq)}
+                              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer"
+                            >
+                              {fq}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Supporting Details (collapsible) */}
                   {msg.structuredAnswer && (
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
@@ -343,6 +383,19 @@ export function AskLawPilotView({
                               <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
                                 {msg.structuredAnswer.legalContext}
                               </p>
+                            </div>
+                          )}
+
+                          {(msg.structuredAnswer.whatWouldChangeAnswer?.length ?? 0) > 0 && (
+                            <div className="space-y-0.5">
+                              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                What would change this answer
+                              </p>
+                              <ul className="list-disc pl-4 text-slate-600 dark:text-slate-300 space-y-0.5">
+                                {msg.structuredAnswer.whatWouldChangeAnswer!.map((w, i) => (
+                                  <li key={i}>{w}</li>
+                                ))}
+                              </ul>
                             </div>
                           )}
 

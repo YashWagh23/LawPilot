@@ -31,6 +31,13 @@ export function DocumentViewer({
   const [userPage, setUserPage] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // The page follows the selected clause: a manual page change only sticks until the selection changes.
+  const [lastSelectedClauseId, setLastSelectedClauseId] = useState(selectedClauseId);
+  if (lastSelectedClauseId !== selectedClauseId) {
+    setLastSelectedClauseId(selectedClauseId);
+    setUserPage(null);
+  }
+
   const activeClause =
     clauses.find((c) => c.id === selectedClauseId) || clauses[0] || null;
 
@@ -202,17 +209,10 @@ export function DocumentViewer({
                 </div>
 
                 <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
-                  {activeEvidenceLink &&
-                  activeEvidenceLink.clauseId === activeClause.id &&
-                  activeClause.rawText.includes(activeEvidenceLink.quotedText) ? (
-                    // Highlight the specific excerpt linked to the finding
-                    renderHighlightedExcerpt(
-                      activeClause.rawText,
-                      activeEvidenceLink.quotedText
-                    )
-                  ) : (
-                    activeClause.rawText
-                  )}
+                  {activeEvidenceLink && activeEvidenceLink.clauseId === activeClause.id
+                    ? // Highlight the specific excerpt linked to the finding (whitespace-tolerant)
+                      renderHighlightedExcerpt(activeClause.rawText, activeEvidenceLink.quotedText)
+                    : activeClause.rawText}
                 </div>
               </div>
             </div>
@@ -229,17 +229,22 @@ export function DocumentViewer({
 }
 
 /**
- * Safely highlights the exact evidence quote inside source text
+ * Safely highlights the exact evidence quote inside source text. The match ignores differences in
+ * whitespace/line breaks (quotes are stored with single spaces; clause text keeps its newlines).
  */
 function renderHighlightedExcerpt(fullText: string, quote: string) {
-  const index = fullText.indexOf(quote);
-  if (index === -1) {
+  const words = quote.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return fullText;
+  const escape = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(words.map(escape).join("\\s+"));
+  const match = pattern.exec(fullText);
+  if (!match) {
     return fullText;
   }
 
-  const before = fullText.slice(0, index);
-  const matched = fullText.slice(index, index + quote.length);
-  const after = fullText.slice(index + quote.length);
+  const before = fullText.slice(0, match.index);
+  const matched = match[0];
+  const after = fullText.slice(match.index + matched.length);
 
   return (
     <>

@@ -1,11 +1,28 @@
-import { getGeminiClient, GEMINI_CONFIG } from "@/lib/ai/gemini";
-import type {
-  DetailedLawyerBrief,
-} from "@/types";
-import {
-  DetailedLawyerBriefSchema,
-  LAWYER_BRIEF_SYSTEM_PROMPT,
-} from "@/lib/ai/prompts/lawyerBrief";
+import { generateJson, isGeminiConfigured } from "@/lib/ai/gemini";
+import type { DetailedLawyerBrief } from "@/types";
+import { LAWYER_BRIEF_SYSTEM_PROMPT } from "@/lib/ai/prompts/lawyerBrief";
+import { z } from "zod";
+
+/** Only the narrative sections are taken from the model; everything else comes from the analysis. */
+const LiveBriefSchema = z.object({
+  matterSummary: z.string().min(10),
+  userConcerns: z.array(z.string()).catch([]),
+  whatRemainsUncertain: z.array(z.string()).catch([]),
+  documentsAvailable: z.array(z.string()).catch([]),
+  questionsForCounsel: z
+    .array(
+      z.object({
+        findingId: z.string(),
+        clauseReference: z.string().catch(""),
+        question: z.string().min(5),
+        context: z.string().catch(""),
+      })
+    )
+    .catch([]),
+  verifiedLegalContext: z
+    .array(z.object({ citation: z.string() }))
+    .catch([]),
+});
 
 import {
   LAWYER_BRIEF_STANDARD_DISCLAIMER,
@@ -22,22 +39,18 @@ export {
 /**
  * Generates a concise, structured 1-2 page briefing for legal counsel.
  * Synthesizes verified findings, evidence chains, clauses, and key dates.
+ *
+ * The deterministic brief is the grounded baseline. Live AI may improve the narrative sections,
+ * but anything that must stay verifiable (clauses, legal citations, dates, uncertainties) is
+ * taken from, or checked against, the analysis itself — never from model memory.
  */
 export async function generateDetailedLawyerBrief(
   input: DetailedLawyerBriefInput
 ): Promise<DetailedLawyerBrief> {
-  const gemini = getGeminiClient();
+  const baseline = generateDeterministicLawyerBrief(input);
+  if (!isGeminiConfigured()) return baseline;
 
-  if (gemini) {
-    try {
-      const response = await gemini.models.generateContent({
-        model: GEMINI_CONFIG.defaultModel,
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `${LAWYER_BRIEF_SYSTEM_PROMPT}
+  const prompt = `${LAWYER_BRIEF_SYSTEM_PROMPT}
 
 Generate a 1-2 page DetailedLawyerBrief for legal counsel:
 
@@ -46,12 +59,13 @@ Document Title: ${input.documentTitle}
 Document Type: ${input.documentType}
 Date: ${input.date || "Not specified"}
 Parties: ${input.parties.join(", ") || "Not specified"}
-Jurisdiction: ${input.jurisdiction || "Not specified"}
+Jurisdiction: ${input.jurisdiction || "Not established by the document"}
 Document Summary: ${input.documentSummary}
 
-FINDINGS & SEVERITY:
+FINDINGS & SEVERITY (findingId is required in questionsForCounsel):
 ${JSON.stringify(
   input.findings.map((f) => ({
+    findingId: f.id,
     title: f.title,
     severity: f.severity,
     clauseReference: f.clauseReference?.section || f.evidence?.section,
@@ -61,7 +75,7 @@ ${JSON.stringify(
   2
 )}
 
-VERIFIED EVIDENCE CHAINS:
+VERIFIED EVIDENCE CHAINS (the ONLY legal sources you may cite):
 ${JSON.stringify(
   (input.evidenceChains || []).map((c) => ({
     findingTitle: c.finding.title,
@@ -79,31 +93,50 @@ IMPORTANT DATES:
 ${JSON.stringify(input.keyDates || [], null, 2)}
 </untrusted_document_context>
 
-Return a single valid JSON object adhering strictly to the DetailedLawyerBrief schema.`,
-              },
-            ],
-          },
-        ],
-        config: {
-          temperature: 0.1,
-          responseMimeType: "application/json",
-        },
-      });
+If no verified evidence chain lists a legal source, verifiedLegalContext must be an empty array.
+Return a single valid JSON object adhering strictly to the DetailedLawyerBrief schema.`;
 
-      const responseText = response.text?.trim();
-      if (responseText) {
-        const parsed = JSON.parse(responseText);
-        const validated = DetailedLawyerBriefSchema.safeParse(parsed);
-        if (validated.success) {
-          return validated.data;
-        }
-      }
-    } catch (err) {
-      console.warn("Gemini LawyerBrief generation failed, falling back to deterministic synthesis:", err);
-    }
-  }
+  const result = await generateJson({
+    label: "lawyer-brief",
+    contents: prompt,
+    schema: LiveBriefSchema,
+    temperature: 0.1,
+    maxOutputTokens: 8192,
+    totalTimeoutMs: 18_000,
+    attemptTimeoutMs: 14_000,
+    tracker: input.tracker,
+  });
 
-  return generateDeterministicLawyerBrief(input);
+  if (!result.ok) return baseline;
+
+  const ai = result.data;
+  const knownFindingIds = new Set(input.findings.map((f) => f.id));
+
+  return {
+    ...baseline,
+    // Narrative sections from the model…
+    matterSummary: ai.matterSummary,
+    userConcerns: ai.userConcerns.length > 0 ? ai.userConcerns : baseline.userConcerns,
+    whatRemainsUncertain:
+      ai.whatRemainsUncertain.length > 0
+        ? Array.from(new Set([...ai.whatRemainsUncertain, ...baseline.whatRemainsUncertain])).slice(0, 12)
+        : baseline.whatRemainsUncertain,
+    documentsAvailable: ai.documentsAvailable.length > 0 ? ai.documentsAvailable : baseline.documentsAvailable,
+    // …but only questions tied to real findings, and only legal context that matches a real source.
+    questionsForCounsel: (() => {
+      const byFinding = new Map(baseline.questionsForCounsel.map((q) => [q.findingId, q]));
+      const grounded = ai.questionsForCounsel
+        .filter((q) => knownFindingIds.has(q.findingId))
+        .map((q) => ({
+          findingId: q.findingId,
+          clauseReference: q.clauseReference || byFinding.get(q.findingId)?.clauseReference || "the applicable section",
+          question: q.question,
+          context: q.context || byFinding.get(q.findingId)?.context || "",
+        }));
+      return grounded.length > 0 ? grounded : baseline.questionsForCounsel;
+    })(),
+    // Legal context is only ever the verified evidence-chain sources (the model may not add any).
+    verifiedLegalContext: baseline.verifiedLegalContext,
+    // Clauses, dates and the disclaimer always come from the analysis itself.
+  };
 }
-
-

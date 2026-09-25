@@ -8,6 +8,7 @@ import type {
 } from "@/types";
 import {
   FLAGSHIP_DEMO_COMPARISON,
+  FLAGSHIP_DEMO_COMPARISON_SWAPPED,
 } from "@/lib/demo/compareDemoData";
 import { CompareHeader } from "@/components/compare/CompareHeader";
 import { DualDocumentUploader } from "@/components/compare/DualDocumentUploader";
@@ -41,6 +42,8 @@ export default function ComparePage() {
   const [comparisonResult, setComparisonResult] = useState<DocumentComparisonResult | null>(null);
   const [selectedChange, setSelectedChange] = useState<ClauseComparisonItem | null>(null);
   const [isComparing, setIsComparing] = useState(false);
+  // True once the two demo versions have been swapped, so the demo runs Current -> Previous.
+  const [demoSwapped, setDemoSwapped] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -75,6 +78,7 @@ export default function ComparePage() {
       sizeBytes: FLAGSHIP_DEMO_COMPARISON.currentDocument.fileSizeBytes,
       isDemo: true,
     });
+    setDemoSwapped(false);
     setComparisonResult(FLAGSHIP_DEMO_COMPARISON);
     // Select first material change
     if (FLAGSHIP_DEMO_COMPARISON.topMaterialChanges.length > 0) {
@@ -105,6 +109,7 @@ export default function ComparePage() {
 
     setPreviousDoc(tempCurr);
     setCurrentDoc(tempPrev);
+    if (tempPrev.isDemo && tempCurr.isDemo) setDemoSwapped((v) => !v);
     setComparisonResult(null);
     setSelectedChange(null);
     setErrorMessage(null);
@@ -117,9 +122,10 @@ export default function ComparePage() {
 
     // Case 1: Demo files selected
     if (previousDoc.isDemo && currentDoc.isDemo) {
-      setComparisonResult(FLAGSHIP_DEMO_COMPARISON);
-      if (FLAGSHIP_DEMO_COMPARISON.topMaterialChanges.length > 0) {
-        setSelectedChange(FLAGSHIP_DEMO_COMPARISON.topMaterialChanges[0]);
+      const demo = demoSwapped ? FLAGSHIP_DEMO_COMPARISON_SWAPPED : FLAGSHIP_DEMO_COMPARISON;
+      setComparisonResult(demo);
+      if (demo.topMaterialChanges.length > 0) {
+        setSelectedChange(demo.topMaterialChanges[0]);
       }
       return;
     }
@@ -255,10 +261,10 @@ export default function ComparePage() {
             <div className="lg:col-span-5 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  All Changes ({comparisonResult.summary.clausesChanged + comparisonResult.summary.clausesAdded + comparisonResult.summary.clausesRemoved})
+                  All Changes ({comparisonResult.summary.clausesChanged + comparisonResult.summary.clausesAdded + comparisonResult.summary.clausesRemoved + comparisonResult.summary.clausesMoved})
                 </h3>
                 <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-                  {comparisonResult.topMaterialChanges.length} Material Changes
+                  {comparisonResult.summary.materialChangesCount} Material Changes
                 </span>
               </div>
 

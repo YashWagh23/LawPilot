@@ -62,3 +62,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Live AI calls can take several seconds; the default serverless limit is too tight.
+export const maxDuration = 60;

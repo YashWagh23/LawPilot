@@ -1,26 +1,35 @@
-import { getGeminiClient, GEMINI_CONFIG } from "@/lib/ai/gemini";
-import type {
-  AnalysisReport,
-  LegalSource,
-} from "@/types";
+import { z } from "zod";
+import { generateJson, isGeminiConfigured } from "@/lib/ai/gemini";
+import type { AnalysisReport, EvidenceChain, Finding, LegalSource } from "@/types";
 import type {
   AskAnswerCitation,
   AskAnswerStructure,
   AskConversationMessage,
   AskQuestionType,
 } from "@/types/ask";
-import {
-  ASK_LAWPILOT_SYSTEM_PROMPT,
-  AskAnswerSchema,
-} from "@/lib/ai/prompts/askPrompts";
+import { ASK_LAWPILOT_SYSTEM_PROMPT } from "@/lib/ai/prompts/askPrompts";
 import { buildAskContext, sanitizeUserQuestion } from "./contextBuilder";
 import { classifyQuestion } from "./questionClassifier";
+import {
+  RELEVANCE_THRESHOLD,
+  bestSentences,
+  chainForFinding,
+  detectDocumentWideIntent,
+  rankClauses,
+  type QuestionFocus,
+  type RankedClause,
+} from "./relevance";
 import { GLOBAL_LEGAL_DISCLAIMER } from "@/lib/safety/disclaimer";
+import { getJurisdictionLabel } from "@/lib/jurisdiction/jurisdictionDetector";
+import { extractDurations } from "@/lib/documents/measures";
+import { findUngroundedCitations } from "@/lib/negotiation/negotiationEngine";
 
 export interface AskEngineInput {
   report: AnalysisReport;
   question: string;
   history?: AskConversationMessage[];
+  /** The clause or finding the user selected in the UI, if any. */
+  focus?: QuestionFocus;
 }
 
 /**
@@ -35,440 +44,362 @@ function calibrateLanguage(text: string): string {
     .replace(/\bthis violates the law\b/gi, "this is subject to statutory restrictions under applicable law");
 }
 
-/**
- * Deterministic evidence-backed fallback answer generator
- * Used when Gemini API is unavailable, offline, or during test suites
- */
-function generateDeterministicGroundedAnswer(
-  report: AnalysisReport,
+// ─── Text helpers ─────────────────────────────────────────────────────────
+
+function truncateAtWord(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > max * 0.6 ? lastSpace : max)}…`;
+}
+
+function normalizeWs(s: string): string {
+  return s.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function lowerFirst(s: string): string {
+  return s.replace(/^./, (c) => c.toLowerCase());
+}
+
+function sectionLabel(clause: { section?: string; sectionNumber?: string }): string {
+  return clause.section || clause.sectionNumber || "the relevant clause";
+}
+
+const DISCLAIMER_LINE = /provides legal information|not legal advice|licensed legal counsel/i;
+
+function collectUncertainties(finding?: Finding, chain?: EvidenceChain): string[] {
+  const all = [
+    ...(finding?.uncertainties || []),
+    ...(chain?.uncertainties || []),
+    ...(chain?.uncertainty?.factualDependencies || []),
+  ]
+    .map((u) => u.trim())
+    .filter((u) => u.length > 8 && !DISCLAIMER_LINE.test(u));
+  const seen = new Set<string>();
+  return all.filter((u) => {
+    const k = normalizeWs(u);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function toFollowUpQuestion(uncertainty: string): string {
+  const core = uncertainty.replace(/[.]+$/, "").trim();
+  if (/^whether\s+/i.test(core)) return `Do you know ${lowerFirst(core)}?`;
+  if (/^(?:the\s+)?(?:exact|actual)\b/i.test(core)) return `Can you find out ${lowerFirst(core)}?`;
+  return `Can you confirm: ${lowerFirst(core)}?`;
+}
+
+function toWouldChange(uncertainty: string): string {
+  const core = uncertainty.replace(/[.]+$/, "").trim();
+  return `The answer could change depending on ${/^whether\s+/i.test(core) ? lowerFirst(core) : lowerFirst(core)}.`;
+}
+
+function legalContextFor(report: AnalysisReport, chain?: EvidenceChain): { text: string; sources: LegalSource[] } {
+  const sources = (chain?.legalSources || []).slice(0, 3);
+  const claims = chain?.legalClaims || [];
+  const jurisdiction = getJurisdictionLabel(report);
+
+  if (sources.length > 0 && claims.length > 0) {
+    const claim = claims[0];
+    const cites = sources.map((s) => s.citation).join("; ");
+    return { text: `${claim.claim} ${claim.explanation && claim.explanation !== claim.claim ? claim.explanation + " " : ""}(Verified sources: ${cites}.)`.replace(/\s+/g, " ").trim(), sources };
+  }
+  if (sources.length > 0) {
+    return { text: `Relevant verified authority: ${sources.map((s) => `${s.title} (${s.citation})`).join("; ")}.`, sources };
+  }
+  return {
+    text:
+      jurisdiction === "Unknown jurisdiction"
+        ? "LawPilot could not establish which law governs this document, and has no verified legal source linked to this issue. A lawyer should confirm the governing law before relying on any view of enforceability."
+        : `LawPilot has no verified legal source linked to this issue for ${jurisdiction}, so it cannot state how the law treats it. A lawyer qualified in that jurisdiction should confirm.`,
+    sources: [],
+  };
+}
+
+function clauseCitation(r: RankedClause, quote: string, idx = 1): AskAnswerCitation {
+  return {
+    id: `cit-clause-${r.clause.id}-${idx}`,
+    type: "document_clause",
+    clauseId: r.clause.id,
+    clauseTitle: r.clause.title,
+    sectionNumber: r.clause.sectionNumber || r.clause.section,
+    pageNumber: r.clause.pageNumber,
+    exactQuote: truncateAtWord(quote, 200),
+  };
+}
+
+function sourceCitations(sources: LegalSource[]): AskAnswerCitation[] {
+  return sources.map((s) => ({
+    id: `cit-src-${s.id}`,
+    type: "legal_source" as const,
+    sourceId: s.id,
+    sourceTitle: s.title,
+    citation: s.citation,
+    url: s.url,
+    jurisdiction: s.jurisdiction,
+    verificationStatus: s.verificationStatus,
+  }));
+}
+
+function baseAnswer(
   question: string,
-  classification: AskQuestionType
+  classification: AskQuestionType,
+  partial: Partial<AskAnswerStructure> & Pick<AskAnswerStructure, "answer">
 ): AskAnswerStructure {
-  const norm = question.toLowerCase();
-  const jurisdiction = report.jurisdictionContext?.country || "India";
-
-  // Check if Section 5 / Non-Compete is relevant
-  const isNonCompete =
-    norm.includes("non-compete") ||
-    norm.includes("non compete") ||
-    norm.includes("restraint of trade") ||
-    norm.includes("section 5");
-
-  // Check if Section 8 / Training Bond / Clawback is relevant
-  const isTrainingBond =
-    norm.includes("training") ||
-    norm.includes("bond") ||
-    norm.includes("recover") ||
-    norm.includes("clawback") ||
-    norm.includes("penalty") ||
-    norm.includes("section 8") ||
-    norm.includes("4,50,000") ||
-    norm.includes("18,500");
-
-  // Check if Notice Period / Termination is relevant
-  const isNoticePeriod =
-    norm.includes("notice") ||
-    norm.includes("period") ||
-    norm.includes("resignation") ||
-    norm.includes("terminate") ||
-    norm.includes("section 4") ||
-    norm.includes("90 days");
-
-  // Check if IP / Work Product is relevant
-  const isIP =
-    norm.includes("intellectual property") ||
-    norm.includes("ip") ||
-    norm.includes("inventions") ||
-    norm.includes("copyright") ||
-    norm.includes("section 7");
-
-  // Check if HR / Actions are asked
-  const isActionAsk =
-    classification === "ACTION_NEXT_STEP" ||
-    norm.includes("hr") ||
-    norm.includes("ask") ||
-    norm.includes("negotiate") ||
-    norm.includes("lawyer");
-
-  // Check if Missing Information is asked
-  const isMissingAsk =
-    classification === "MISSING_INFORMATION" ||
-    norm.includes("missing") ||
-    norm.includes("needed");
-
-  // 1. NON-COMPETE RESPONSE
-  if (isNonCompete) {
-    const clauseNonCompete = report.clauses.find(
-      (c) =>
-        c.title?.toLowerCase().includes("non-compete") ||
-        c.title?.toLowerCase().includes("restrictive covenant") ||
-        c.category === "restriction" ||
-        c.section === "Section 9" ||
-        (c.rawText || c.clauseText || "").toLowerCase().includes("non-compete")
-    );
-    const secLabel = clauseNonCompete?.section || clauseNonCompete?.sectionNumber || "Section 9";
-    const quote =
-      clauseNonCompete?.rawText ||
-      clauseNonCompete?.clauseText ||
-      "Employee agrees that during employment and for twelve (12) months following termination, Employee shall not engage with any competitor within India.";
-
-    const icaSource = (report.evidenceChains || [])
-      .flatMap((ch) => ch.legalSources || [])
-      .find((s) => s.citation.includes("27")) || {
-      id: "source-ica-section-27",
-      title: "Indian Contract Act, 1872 § 27 (Agreement in Restraint of Trade Void)",
-      publisher: "Ministry of Law and Justice, Government of India (India Code)",
-      sourceType: "official_legislation" as const,
-      jurisdiction: "India",
-      citation: "Indian Contract Act, 1872 § 27",
-      relevance: "Agreements in restraint of trade are void ab initio",
-      retrievedAt: "2026-03-01T00:00:00Z",
-      verificationStatus: "verified" as const,
-      url: "https://www.indiacode.nic.in/handle/123456789/2187",
-    };
-
-    return {
-      id: `ask-ans-${Date.now()}`,
-      question,
-      classification: "LEGAL_CONTEXT",
-      answer:
-        `The post-employment non-compete restriction in ${secLabel} raises serious enforceability concerns under Indian law. Under Section 27 of the Indian Contract Act, 1872, covenants restricting post-employment trade or profession are considered void ab initio, regardless of whether the geographic scope or duration appears reasonable.`,
-      whatDocumentSays: `${secLabel} provides: "${quote.slice(0, 220)}..."`,
-      legalContext:
-        "Under Section 27 of the Indian Contract Act, 1872, every agreement restraining anyone from exercising a lawful profession, trade, or business is to that extent void. The Supreme Court of India in Percept D'Mark (India) (P) Ltd. v. Zaheer Khan (2006) reaffirmed that negative covenants extending beyond the termination of an employment contract are unenforceable.",
-      whatIsUncertain:
-        "Whether non-solicitation of clients or employees (distinct from general employment) may be partially enforceable, and whether the counterparty would attempt to seek injunctive relief regardless of statutory limits.",
-      whatWouldChangeAnswer: [
-        "Whether the restrictive covenant applies strictly during active employment or after termination (in-term restrictions are generally valid; post-term are void).",
-        "Whether trade secrets or confidential proprietary source code were misappropriated, which courts can protect through confidentiality injunctions.",
-        "The specific governing law clause (if foreign law were validly chosen and applicable, though Indian courts maintain public policy oversight).",
-      ],
-      followUpQuestions: [
-        "Does your prospective role involve the use of proprietary confidential data from your current employer?",
-        "Did the employer provide separate, documented consideration specifically for the post-employment restriction?",
-      ],
-      whatToDoNext:
-        `Do not refuse to sign outright. Prepare a polite clarification to HR asking to amend ${secLabel} to limit restrictions to non-solicitation of active clients and protection of confidential information, rather than a blanket bar on employment.`,
-      sources: [icaSource],
-      citations: [
-        {
-          id: "cit-1",
-          type: "document_clause",
-          clauseId: clauseNonCompete?.id,
-          clauseTitle: clauseNonCompete?.title || "Non-Compete & Restrictive Covenants",
-          sectionNumber: secLabel.replace(/[^0-9]/g, "") || "9",
-          pageNumber: clauseNonCompete?.pageNumber || 2,
-          exactQuote: quote.slice(0, 160),
-        },
-        {
-          id: "cit-2",
-          type: "legal_source",
-          sourceId: icaSource.id,
-          sourceTitle: icaSource.title,
-          citation: icaSource.citation,
-          url: icaSource.url,
-          jurisdiction: "India",
-          verificationStatus: "verified",
-        },
-      ],
-      confidence: "high",
-      isOutOfScope: false,
-      isLiveAi: false,
-      disclaimer: GLOBAL_LEGAL_DISCLAIMER,
-    };
-  }
-
-  // 2. TRAINING BOND / CLAWBACK RESPONSE
-  if (isTrainingBond) {
-    const clauseBond = report.clauses.find(
-      (c) =>
-        c.title?.toLowerCase().includes("training") ||
-        c.title?.toLowerCase().includes("bond") ||
-        c.section === "Section 6" ||
-        c.section === "Section 8" ||
-        (c.category === "payment" && (c.rawText || c.clauseText || "").toLowerCase().includes("training"))
-    );
-    const secBond = clauseBond?.section || clauseBond?.sectionNumber || "Section 6";
-    const quote =
-      clauseBond?.rawText ||
-      clauseBond?.clauseText ||
-      "If Employee resigns within continuous tenure from the Effective Date, Employee shall reimburse Company INR 4,50,000 for training costs.";
-
-    const ica74Source = (report.evidenceChains || [])
-      .flatMap((ch) => ch.legalSources || [])
-      .find((s) => s.citation.includes("74")) || {
-      id: "source-ica-section-74",
-      title: "Indian Contract Act, 1872 § 74 (Compensation for Breach of Contract where Penalty Stipulated for)",
-      publisher: "Ministry of Law and Justice, Government of India (India Code)",
-      sourceType: "official_legislation" as const,
-      jurisdiction: "India",
-      citation: "Indian Contract Act, 1872 § 74",
-      relevance: "Stipulated damages serve strictly as a ceiling; actual losses must be proved",
-      retrievedAt: "2026-03-01T00:00:00Z",
-      verificationStatus: "verified" as const,
-      url: "https://www.indiacode.nic.in/handle/123456789/2187",
-    };
-
-    return {
-      id: `ask-ans-${Date.now()}`,
-      question,
-      classification: "LEGAL_CONTEXT",
-      answer:
-        "Under Section 74 of the Indian Contract Act, 1872, an employer cannot automatically recover an arbitrary fixed penalty amount. The stipulated sum operates only as an upper ceiling, and courts require the employer to prove actual, documented expenditure incurred on specialized training.",
-      whatDocumentSays: `${secBond} stipulates: "${quote.slice(0, 220)}..."`,
-      legalContext:
-        "Section 74 entitles the aggrieved party only to reasonable compensation not exceeding the named penalty. Supreme Court jurisprudence (Kailash Nath Associates v. DDA) confirms that proof of actual loss is not dispensed with unless damage is impossible to assess. Flat clawbacks without pro-rata reduction for completed service are routinely struck down as unconscionable penalties.",
-      whatIsUncertain:
-        "The exact documented expenses incurred by the employer, whether specialized third-party training was actually delivered, and whether the employer possesses signed training logs.",
-      whatWouldChangeAnswer: [
-        "Whether the employer actually paid verifiable third-party certification or training fees on the employee's behalf.",
-        "Whether the reimbursement amount amortizes pro-rata (reducing proportionally with each month worked).",
-        "Whether the employee left voluntarily or was terminated without cause by the employer.",
-      ],
-      followUpQuestions: [
-        "Did you attend specialized, accredited external training paid directly by the employer?",
-        "Does the agreement include a pro-rata amortization schedule reducing the liability over time?",
-      ],
-      whatToDoNext:
-        `Request an itemized breakdown of specialized training expenditures from HR in writing. Propose a pro-rata amortization formula (e.g. 1/18th reduction per month worked) for ${secBond} so the liability reduces gradually with tenure.`,
-      sources: [ica74Source],
-      citations: [
-        {
-          id: "cit-tb-1",
-          type: "document_clause",
-          clauseId: clauseBond?.id,
-          clauseTitle: clauseBond?.title || "Training Reimbursement & Minimum Service",
-          sectionNumber: secBond.replace(/[^0-9]/g, "") || "6",
-          pageNumber: clauseBond?.pageNumber || 2,
-          exactQuote: quote.slice(0, 160),
-        },
-        {
-          id: "cit-tb-2",
-          type: "legal_source",
-          sourceId: ica74Source.id,
-          sourceTitle: ica74Source.title,
-          citation: ica74Source.citation,
-          url: ica74Source.url,
-          jurisdiction: "India",
-          verificationStatus: "verified",
-        },
-      ],
-      confidence: "high",
-      isOutOfScope: false,
-      isLiveAi: false,
-      disclaimer: GLOBAL_LEGAL_DISCLAIMER,
-    };
-  }
-
-  // 3. NOTICE PERIOD / TERMINATION RESPONSE
-  if (isNoticePeriod) {
-    const clauseNotice = report.clauses.find(
-      (c) =>
-        c.title?.toLowerCase().includes("notice") ||
-        c.category === "notice" ||
-        c.section === "Section 5" ||
-        c.section === "Section 4"
-    );
-    const secNotice = clauseNotice?.section || clauseNotice?.sectionNumber || "Section 5";
-    const quote =
-      clauseNotice?.rawText ||
-      clauseNotice?.clauseText ||
-      "Either party may terminate employment by providing ninety (90) days' prior written notice or payment of basic salary in lieu thereof.";
-
-    return {
-      id: `ask-ans-${Date.now()}`,
-      question,
-      classification: "DOCUMENT_FACT",
-      answer:
-        "According to the agreement, the required notice period for termination is ninety (90) days by either party. The agreement also provides for payment of basic salary in lieu of notice.",
-      whatDocumentSays: `${secNotice} states: "${quote.slice(0, 200)}..."`,
-      legalContext:
-        "Under Indian employment law and state Shops and Establishments Acts (such as the Maharashtra Shops and Establishments Act, 2017), contractual notice periods agreed between parties are generally enforceable unless terms are unconscionable. Mutual notice requirements are standard in professional IT and engineering roles.",
-      whatIsUncertain:
-        "Whether the employer retains discretion to waive the notice period without pay, and whether shorter notice applies during the probationary period.",
-      whatWouldChangeAnswer: [
-        "Whether the employee is still in probation (which often provides a shorter 15 to 30 days notice).",
-        "Whether termination is initiated for cause (which typically eliminates notice requirements).",
-      ],
-      followUpQuestions: [
-        "Have you completed the probationary period specified in Section 3?",
-        "Does your appointment letter specify any separate buyout conditions?",
-      ],
-      whatToDoNext:
-        "Confirm in writing with HR whether notice buyout (payment in lieu) is an employee option or strictly at management's discretion. Keep a signed copy of your confirmation letter.",
-      sources: [],
-      citations: [
-        {
-          id: "cit-np-1",
-          type: "document_clause",
-          clauseId: clauseNotice?.id,
-          clauseTitle: clauseNotice?.title || "Termination & Notice Period",
-          sectionNumber: secNotice.replace(/[^0-9]/g, "") || "5",
-          pageNumber: clauseNotice?.pageNumber || 1,
-          exactQuote: quote.slice(0, 160),
-        },
-      ],
-      confidence: "high",
-      isOutOfScope: false,
-      isLiveAi: false,
-      disclaimer: GLOBAL_LEGAL_DISCLAIMER,
-    };
-  }
-
-  // 4. IP / INTELLECTUAL PROPERTY RESPONSE
-  if (isIP) {
-    const clauseIP = report.clauses.find(
-      (c) =>
-        c.title?.toLowerCase().includes("intellectual property") ||
-        c.category === "intellectual_property" ||
-        c.section === "Section 8" ||
-        c.section === "Section 7"
-    );
-    const secIP = clauseIP?.section || clauseIP?.sectionNumber || "Section 8";
-    const quote =
-      clauseIP?.rawText ||
-      clauseIP?.clauseText ||
-      "All inventions, software, designs, and work product conceived by Employee during the term of employment belong exclusively to the Company.";
-
-    return {
-      id: `ask-ans-${Date.now()}`,
-      question,
-      classification: "CLAUSE_EXPLANATION",
-      answer:
-        `${secIP} assigns all inventions, source code, designs, and intellectual property conceived during employment to the company. In its current form, it may be broad enough to capture off-hours personal projects unless explicitly excluded.`,
-      whatDocumentSays: `${secIP} states: "${quote.slice(0, 200)}..."`,
-      legalContext:
-        "Under the Indian Copyright Act, 1957 (Section 17(c)), works created in the course of employment under a contract of service belong to the employer unless an agreement to the contrary exists. However, broad clauses claiming works developed entirely outside work hours without company resources can be carved out by mutual agreement.",
-      whatIsUncertain:
-        "Whether personal open-source projects or side projects created on personal hardware are protected from company claims without a prior written disclosure schedule.",
-      whatWouldChangeAnswer: [
-        "Whether the invention uses company equipment, proprietary datasets, or trade secrets.",
-        "Whether the side project directly competes with the employer's business line.",
-      ],
-      followUpQuestions: [
-        "Do you have existing pre-employment inventions or active open-source projects?",
-        "Does the agreement include a 'Prior Inventions' disclosure schedule exhibit?",
-      ],
-      whatToDoNext:
-        "Request an Exhibit A (Prior Inventions Schedule) to list any personal open-source projects or pre-existing codebases you wish to protect from assignment.",
-      sources: [],
-      citations: [
-        {
-          id: "cit-ip-1",
-          type: "document_clause",
-          clauseId: clauseIP?.id,
-          clauseTitle: clauseIP?.title || "Intellectual Property Assignment",
-          sectionNumber: secIP.replace(/[^0-9]/g, "") || "8",
-          pageNumber: clauseIP?.pageNumber || 2,
-          exactQuote: quote.slice(0, 160),
-        },
-      ],
-      confidence: "high",
-      isOutOfScope: false,
-      isLiveAi: false,
-      disclaimer: GLOBAL_LEGAL_DISCLAIMER,
-    };
-  }
-
-  // 5. MISSING INFORMATION RESPONSE
-  if (isMissingAsk) {
-    return {
-      id: `ask-ans-${Date.now()}`,
-      question,
-      classification: "MISSING_INFORMATION",
-      answer:
-        "Based on LawPilot's document extraction, several critical operational and legal elements are absent from the four corners of this agreement that impact certainty.",
-      whatDocumentSays:
-        "The agreement references external company policies and handbooks without appending them as exhibits.",
-      legalContext:
-        "Contractual incorporation by reference requires the incorporated rules to be accessible and brought to the employee's attention prior to execution under contract law standards.",
-      whatIsUncertain:
-        "1. Detailed job duties and reporting structure.\n2. Itemized schedule of training costs justifying the ₹4,50,000 bond.\n3. Exhibit A listing prior inventions to protect personal IP.\n4. Clear terms governing employer notice buyout discretion.",
-      whatWouldChangeAnswer: [
-        "Receipt and review of the employee handbook and IT acceptable use policy.",
-        "A formal job description confirming whether the role involves trade secret exposure.",
-      ],
-      followUpQuestions: [
-        "Did HR provide the employee handbook referenced in the agreement?",
-        "Do you have an Exhibit A attachment to register existing personal inventions?",
-        "Has the employer documented the actual curriculum for the training program?",
-      ],
-      whatToDoNext:
-        "Ask HR for copies of all incorporated policies, employee handbooks, and an Exhibit A for prior inventions before signing.",
-      sources: [],
-      citations: [],
-      confidence: "high",
-      isOutOfScope: false,
-      isLiveAi: false,
-      disclaimer: GLOBAL_LEGAL_DISCLAIMER,
-    };
-  }
-
-  // 6. ACTION NEXT STEP RESPONSE
-  if (isActionAsk) {
-    return {
-      id: `ask-ans-${Date.now()}`,
-      question,
-      classification: "ACTION_NEXT_STEP",
-      answer:
-        "Here are three practical, non-adversarial preparation steps you can take immediately regarding this agreement:",
-      whatDocumentSays:
-        "The agreement contains high-attention terms in Section 5 (Non-Compete), Section 8 (Training Bond), and Section 4 (Notice Period).",
-      legalContext:
-        "Negotiating contract terms respectfully before signing is standard professional practice and preserves constructive relations with HR.",
-      whatIsUncertain:
-        "Company flexibility on standard offer terms vs company-wide non-negotiable policies.",
-      whatToDoNext:
-        "1. Clarify Training Bond: 'Could we include a pro-rata monthly amortization clause for Section 8 so the obligation reflects actual documented training costs?'\n2. Clarify Non-Compete: 'Could Section 5 be clarified to focus on non-solicitation of clients rather than a broad post-employment trade restriction?'\n3. Attach Exhibit A: 'I would like to append an Exhibit listing my pre-existing personal open-source projects.'",
-      followUpQuestions: [
-        "Are you speaking directly with the hiring manager or with a corporate HR recruiter?",
-        "What is your target signing deadline for this agreement?",
-      ],
-      sources: [],
-      citations: [],
-      confidence: "high",
-      isOutOfScope: false,
-      isLiveAi: false,
-      disclaimer: GLOBAL_LEGAL_DISCLAIMER,
-    };
-  }
-
-  // 7. GENERAL SUMMARY FALLBACK
-  const topFinding = report.findings[0];
-  const topQuote = topFinding?.evidence?.quotedText || topFinding?.description || "";
-  const topSection = topFinding?.evidence?.section || "1";
-
   return {
     id: `ask-ans-${Date.now()}`,
     question,
-    classification: classification,
-    answer: `LawPilot analyzed this agreement (${report.metadata.title}) under ${jurisdiction} legal context. ${topFinding ? `The most critical area requiring review is "${topFinding.title}".` : "The agreement appears to contain standard provisions."}`,
-    whatDocumentSays: topQuote
-      ? `Clause ${topSection}: "${topQuote.slice(0, 160)}..."`
-      : `The document contains ${report.clauses.length} clauses analyzed by LawPilot.`,
-    legalContext: topFinding?.whyItMatters || "Analysis grounded in applicable contract principles and statutory authorities.",
-    whatIsUncertain: "Factual specifics not stated within the written text of the agreement.",
-    whatToDoNext:
-      "Review the highlighted findings in the Document Viewer and check the Action Plan for specific preparation checklists.",
-    sources: (report.evidenceChains || []).flatMap((ch) => ch.legalSources || []).slice(0, 2),
-    citations: topFinding
-      ? [
-          {
-            id: "cit-gen-1",
-            type: "document_clause",
-            clauseId: topFinding.clauseId,
-            clauseTitle: topFinding.title,
-            sectionNumber: topSection,
-            pageNumber: topFinding.evidence?.pageNumber || 1,
-            exactQuote: topQuote.slice(0, 160),
-          },
-        ]
-      : [],
+    classification,
+    sources: [],
+    citations: [],
     confidence: "moderate",
     isOutOfScope: false,
     isLiveAi: false,
     disclaimer: GLOBAL_LEGAL_DISCLAIMER,
+    ...partial,
   };
+}
+
+const SEVERITY_ORDER: Record<string, number> = {
+  critical_attention: 0,
+  high_attention: 1,
+  review: 2,
+  context_dependent: 3,
+  informational: 4,
+};
+
+function findingsBySeverity(report: AnalysisReport): Finding[] {
+  return [...report.findings].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 5) - (SEVERITY_ORDER[b.severity] ?? 5));
+}
+
+// ─── Deterministic grounded answer ────────────────────────────────────────
+
+/**
+ * Builds an answer ONLY from the analyzed report: the clause the question is about (ranked from
+ * the question, or the clause/finding the user selected), its finding, its evidence chain, and the
+ * action plan. It never contains text that is not derived from the report, and it says plainly
+ * when the document does not appear to address the question.
+ */
+export function generateDeterministicGroundedAnswer(
+  report: AnalysisReport,
+  question: string,
+  classification: AskQuestionType,
+  focus?: QuestionFocus
+): AskAnswerStructure {
+  const jurisdiction = getJurisdictionLabel(report);
+  const wide = focus?.clauseId || focus?.findingId ? null : detectDocumentWideIntent(question);
+
+  // ── Document-wide questions ──────────────────────────────────────────
+  if (wide === "missing") {
+    const gaps = Array.from(
+      new Set([
+        ...(report.lawyerBrief?.missingInformation || []),
+        ...report.findings.flatMap((f) => f.uncertainties || []),
+        ...(!report.metadata.effectiveDate ? ["The agreement's effective date was not identified in the document."] : []),
+        ...((report.metadata.parties || []).length < 2 ? ["The parties to the agreement could not be reliably identified."] : []),
+        ...(report.jurisdictionContext?.country === "Unknown" ? ["The governing law is not clearly stated in the document."] : []),
+      ].filter((g) => g && !DISCLAIMER_LINE.test(g)))
+    ).slice(0, 6);
+    return baseAnswer(question, "MISSING_INFORMATION", {
+      answer: gaps.length
+        ? `Based on this analysis, ${gaps.length} point${gaps.length === 1 ? " is" : "s are"} absent or unclear in the document itself. The main ones are listed below.`
+        : "The analysis did not identify significant missing information, though a lawyer may still spot gaps.",
+      whatDocumentSays: `${report.clauses.length} clauses were analyzed in "${report.metadata.title}".`,
+      legalContext: `Jurisdiction: ${jurisdiction}.`,
+      whatIsUncertain: gaps.map((g, i) => `${i + 1}. ${g}`).join("\n") || undefined,
+      whatWouldChangeAnswer: gaps.slice(0, 3).map(toWouldChange),
+      followUpQuestions: gaps.slice(0, 3).map(toFollowUpQuestion),
+      whatToDoNext: "Ask the other party for any missing documents or definitions in writing, and note the answers before signing.",
+      confidence: "moderate",
+    });
+  }
+
+  if (wide === "actions" || wide === "lawyer") {
+    const plan = report.actionPlan;
+    const items = [...(plan?.urgentItems || []), ...(plan?.beforeSigning || []), ...(plan?.questionsToAsk || [])];
+    const top = findingsBySeverity(report).slice(0, 3);
+    const steps = items.slice(0, 4).map((i, n) => `${n + 1}. ${i.title}${i.practicalAdvice ? ` — ${truncateAtWord(i.practicalAdvice, 160)}` : ""}`);
+    const fallbackSteps = top.map((f, n) => `${n + 1}. Ask about ${f.evidence?.section || "the relevant clause"}: ${f.title}`);
+    const uncertainties = top.flatMap((f) => collectUncertainties(f, chainForFinding(report, f))).slice(0, 3);
+    return baseAnswer(question, "ACTION_NEXT_STEP", {
+      answer:
+        wide === "lawyer"
+          ? `Bring the ${top.length} highest-priority issues to a lawyer: ${top.map((f) => `${f.title} (${f.evidence?.section || "clause"})`).join("; ") || "none were flagged"}. The "Prepare for a Lawyer" brief collects them with the clause text.`
+          : `Here are practical, reversible steps drawn from this analysis:\n${(steps.length ? steps : fallbackSteps).join("\n") || "No specific steps were generated."}`,
+      whatDocumentSays: top[0]?.evidence?.quotedText ? `${top[0].evidence.section}: "${truncateAtWord(top[0].evidence.quotedText, 240)}"` : undefined,
+      legalContext: "Negotiating or clarifying terms in writing before signing is a low-risk, reversible step.",
+      whatIsUncertain: uncertainties.join(" ") || "How flexible the other party is on these terms is not stated in the document.",
+      whatWouldChangeAnswer: uncertainties.map(toWouldChange),
+      followUpQuestions: uncertainties.map(toFollowUpQuestion).slice(0, 3),
+      whatToDoNext: "Ask the other party to clarify these points in writing, then open the Next Steps tab to save them to your action plan.",
+      confidence: "moderate",
+    });
+  }
+
+  if (wide === "overview") {
+    const top = findingsBySeverity(report).slice(0, 4);
+    const uncertainties = top.flatMap((f) => collectUncertainties(f, chainForFinding(report, f))).slice(0, 3);
+    return baseAnswer(question, "RISK_INTERPRETATION", {
+      answer: top.length
+        ? `The most important areas in "${report.metadata.title}" are: ${top.map((f) => `${f.title} (${f.evidence?.section || "clause"})`).join("; ")}.`
+        : `LawPilot did not flag any clause as needing special attention in this ${report.metadata.documentType.replace(/_/g, " ")}.`,
+      whatDocumentSays: top[0]?.evidence?.quotedText ? `${top[0].evidence.section}: "${truncateAtWord(top[0].evidence.quotedText, 240)}"` : undefined,
+      legalContext: top[0] ? legalContextFor(report, chainForFinding(report, top[0])).text : `Jurisdiction: ${jurisdiction}.`,
+      whatIsUncertain: uncertainties.join(" ") || undefined,
+      whatWouldChangeAnswer: uncertainties.map(toWouldChange),
+      followUpQuestions: uncertainties.map(toFollowUpQuestion).slice(0, 3),
+      whatToDoNext: "Open the flagged items on the Overview tab to see each clause in the document.",
+      confidence: top.length ? "moderate" : "limited",
+    });
+  }
+
+  // ── Clause-specific questions ────────────────────────────────────────
+  const ranked = rankClauses(report, question, focus);
+  const top = ranked[0];
+
+  if (!top || top.score < RELEVANCE_THRESHOLD) {
+    const closest = ranked.slice(0, 2);
+    const flagged = findingsBySeverity(report).slice(0, 2);
+    return baseAnswer(question, classification, {
+      answer: `I couldn't find a clause in this document that clearly addresses that question, so I can't answer it from the agreement.${
+        closest.length ? ` The closest provisions are ${closest.map((c) => `${sectionLabel(c.clause)} (${c.clause.title})`).join(" and ")}.` : ""
+      }`,
+      whatDocumentSays: closest[0]
+        ? `${sectionLabel(closest[0].clause)}: "${truncateAtWord(closest[0].clause.rawText, 220)}"`
+        : undefined,
+      legalContext: `No verified legal source can be linked without a matching clause. Jurisdiction: ${jurisdiction}.`,
+      whatIsUncertain: "Whether the document addresses this topic elsewhere or in different wording, or leaves it unstated.",
+      whatWouldChangeAnswer: ["If a specific section covers this topic, naming it will let LawPilot answer from that clause."],
+      followUpQuestions: [
+        "Which section do you think covers this?",
+        ...(flagged[0] ? [`Would you like to ask about ${flagged[0].title} (${flagged[0].evidence?.section || "clause"}) instead?`] : []),
+      ],
+      whatToDoNext: "If this matters to your decision, ask the other party to confirm the point in writing before signing.",
+      citations: closest[0] ? [clauseCitation(closest[0], closest[0].clause.rawText)] : [],
+      confidence: "insufficient",
+    });
+  }
+
+  const { clause, finding, chain } = top;
+  const sec = sectionLabel(clause);
+  const sentences = bestSentences(clause.rawText || clause.clauseText || "", question, 2);
+  const quote = sentences.join(" ") || truncateAtWord(clause.rawText, 300);
+  const legal = legalContextFor(report, chain);
+  const uncertainties = collectUncertainties(finding, chain);
+  const plain = clause.plainEnglish || clause.plainEnglishSummary || "";
+
+  const durations = extractDurations(quote);
+  const durationNote =
+    classification === "DOCUMENT_FACT" && durations.length > 0
+      ? ` Stated period: ${durations.slice(0, 2).map((d) => d.raw).join("; ")}.`
+      : "";
+
+  // The evidence chain's own calibrated legal claim, when a verified source backs it.
+  const claimLead = legal.sources.length > 0 ? chain?.legalClaims?.[0]?.claim?.replace(/\s+/g, " ").trim() : undefined;
+
+  let answer: string;
+  switch (classification) {
+    case "RISK_INTERPRETATION":
+      answer = finding
+        ? `LawPilot flagged ${sec} (${clause.title}) because ${lowerFirst(finding.whyItMatters || finding.description)}${claimLead ? ` ${claimLead}` : ""}`
+        : `LawPilot did not flag ${sec} (${clause.title}) as a risk. ${plain}`;
+      break;
+    case "LEGAL_CONTEXT":
+      answer = `${finding ? `${finding.description} ` : `${plain} `}${claimLead ? `${claimLead} ` : ""}${legal.sources.length ? "Verified legal context is below." : "No verified legal source is linked to this issue, so this is what the document itself says."}`;
+      break;
+    case "CLAUSE_EXPLANATION":
+      answer = `${sec} (${clause.title}) ${plain ? `means, in plain English: ${lowerFirst(plain)}` : `states: "${truncateAtWord(quote, 260)}"`}`;
+      break;
+    default:
+      answer = `${sec} (${clause.title}) states: "${truncateAtWord(quote, 320)}"${durationNote}${plain && plain.length < 240 ? ` In plain English: ${lowerFirst(plain)}` : ""}`;
+  }
+
+  const nextFromChain = chain?.nextSteps?.[0]?.practicalAdvice || chain?.practicalNextStep?.practicalAdvice;
+  const nextFromPlan = (report.actionPlan?.beforeSigning || report.actionPlan?.questionsToAsk || []).find(
+    (i) => finding && i.findingId === finding.id
+  )?.practicalAdvice;
+
+  return baseAnswer(question, classification, {
+    answer: answer.replace(/\s+/g, " ").trim(),
+    whatDocumentSays: `${sec}: "${truncateAtWord(quote, 400)}"`,
+    legalContext: legal.text,
+    whatIsUncertain: uncertainties.slice(0, 3).join(" ") || "Facts outside the written agreement (how the term is applied in practice) are not stated in the document.",
+    whatWouldChangeAnswer: uncertainties.slice(0, 3).map(toWouldChange),
+    followUpQuestions: uncertainties.slice(0, 3).map(toFollowUpQuestion),
+    whatToDoNext:
+      nextFromChain ||
+      nextFromPlan ||
+      `Ask the other party to clarify ${sec} in writing before you rely on it, and note their reply.`,
+    sources: legal.sources,
+    citations: [clauseCitation(top, quote), ...sourceCitations(legal.sources)],
+    confidence: legal.sources.length > 0 ? "moderate" : "limited",
+  });
+}
+
+// ─── Live AI answer ───────────────────────────────────────────────────────
+
+const LiveAskSchema = z.object({
+  classification: z
+    .enum(["DOCUMENT_FACT", "CLAUSE_EXPLANATION", "LEGAL_CONTEXT", "RISK_INTERPRETATION", "ACTION_NEXT_STEP", "MISSING_INFORMATION", "OUT_OF_SCOPE"])
+    .nullish()
+    .catch(null),
+  answer: z.string().min(10),
+  whatDocumentSays: z.string().nullish().catch(null),
+  legalContext: z.string().nullish().catch(null),
+  whatIsUncertain: z.string().nullish().catch(null),
+  whatWouldChangeAnswer: z.array(z.string()).catch([]),
+  followUpQuestions: z.array(z.string()).catch([]),
+  whatToDoNext: z.string().nullish().catch(null),
+  citedClauseSections: z.array(z.string()).catch([]),
+  citedLegalSourceIds: z.array(z.string()).catch([]),
+  confidence: z.enum(["high", "moderate", "limited", "insufficient", "low"]).catch("moderate"),
+  isOutOfScope: z.boolean().catch(false),
+});
+
+function buildLivePrompt(
+  context: ReturnType<typeof buildAskContext>,
+  classificationType: AskQuestionType,
+  focus?: QuestionFocus
+): string {
+  return `
+${ASK_LAWPILOT_SYSTEM_PROMPT}
+
+ADDITIONAL RULES FOR THIS ANSWER:
+- Answer the SPECIFIC question asked, using the clause(s) most relevant to it. Do not answer about a different topic.
+- If the provided document context does not address the question, say so plainly instead of guessing.
+- Only cite legal authorities that appear in the "VERIFIED LEGAL CONTEXT" section. If none appear, say no verified legal source is available; do not use outside legal knowledge.
+- Always fill whatIsUncertain, whatWouldChangeAnswer (1-3 items) and followUpQuestions (1-3 items).
+${focus?.clauseId || focus?.findingId ? "- The user selected a specific clause/finding; the first clause and finding below are that selection.\n" : ""}
+CONVERSATION RECENT HISTORY:
+${context.conversationHistorySummary}
+
+QUESTION CLASSIFICATION HINT:
+Category: ${classificationType}
+
+USER QUESTION:
+"${context.sanitizedQuestion}"
+
+${context.untrustedContextXml}
+
+Respond ONLY in valid JSON matching this exact structure:
+{
+  "classification": "${classificationType}",
+  "answer": "Plain-English answer directly answering the question",
+  "whatDocumentSays": "Verbatim quote and section from the document",
+  "legalContext": "Verified legal information from the evidence chains, or a statement that none is available",
+  "whatIsUncertain": "Facts or legal questions that cannot be determined",
+  "whatWouldChangeAnswer": ["Contingent fact 1", "Contingent fact 2"],
+  "followUpQuestions": ["Max 3 high-value questions"],
+  "whatToDoNext": "Safe, practical, and reversible preparation step",
+  "citedClauseSections": ["section numbers e.g. 5, 8"],
+  "citedLegalSourceIds": ["source ids"],
+  "confidence": "high" | "moderate" | "limited" | "insufficient",
+  "isOutOfScope": false
+}
+`.trim();
 }
 
 /**
@@ -476,7 +407,7 @@ function generateDeterministicGroundedAnswer(
  * Orchestrates grounded question answering with Gemini and fallback intelligence
  */
 export async function askLawPilot(input: AskEngineInput): Promise<AskAnswerStructure> {
-  const { report, question, history = [] } = input;
+  const { report, question, history = [], focus } = input;
   const sanitizedQuestion = sanitizeUserQuestion(question);
 
   // 1. Classify the question
@@ -500,141 +431,74 @@ export async function askLawPilot(input: AskEngineInput): Promise<AskAnswerStruc
     };
   }
 
+  // The deterministic answer is always computed: it is the grounded fallback AND the source of
+  // any field (uncertainty, follow-ups, verbatim quote, citations) the live model leaves out.
+  const grounded = generateDeterministicGroundedAnswer(report, sanitizedQuestion, classificationResult.type, focus);
+
+  if (!isGeminiConfigured()) return grounded;
+
   // 3. Build token-efficient, filtered context with prompt-injection defense
-  const context = buildAskContext(report, sanitizedQuestion, history);
+  const context = buildAskContext(report, sanitizedQuestion, history, focus);
 
-  // 4. Try Gemini live intelligence if available
-  const gemini = getGeminiClient();
-  if (gemini) {
-    try {
-      const prompt = `
-${ASK_LAWPILOT_SYSTEM_PROMPT}
+  const result = await generateJson({
+    label: "ask",
+    contents: buildLivePrompt(context, classificationResult.type, focus),
+    schema: LiveAskSchema,
+    temperature: 0.2,
+    maxOutputTokens: 4096,
+    totalTimeoutMs: 25_000,
+    attemptTimeoutMs: 18_000,
+  });
 
-CONVERSATION RECENT HISTORY:
-${context.conversationHistorySummary}
+  if (!result.ok) return grounded;
+  const parsed = result.data;
 
-QUESTION CLASSIFICATION HINT:
-Category: ${classificationResult.type}
+  // A grounded "not addressed" verdict is authoritative: do not let the model invent an answer.
+  if (grounded.confidence === "insufficient") return grounded;
 
-USER QUESTION:
-"${context.sanitizedQuestion}"
+  const allReportSources = (report.evidenceChains || []).flatMap((ch) => ch.legalSources || []);
+  const allowedForCitationCheck = (context.relevantSources.length ? context.relevantSources : allReportSources).map((s) => ({
+    citation: s.citation,
+    title: s.title,
+  }));
 
-${context.untrustedContextXml}
+  // Legal context must not introduce authority that is not in the evidence chains.
+  const legalText = parsed.legalContext ? calibrateLanguage(parsed.legalContext) : undefined;
+  const legalViolations = legalText ? findUngroundedCitations(`${legalText} ${parsed.answer}`, allowedForCitationCheck as never) : [];
+  const legalContext = legalViolations.length === 0 && legalText ? legalText : grounded.legalContext;
 
-Respond ONLY in valid JSON matching this exact structure:
-{
-  "classification": "${classificationResult.type}",
-  "answer": "Plain-English accessible answer directly answering the question",
-  "whatDocumentSays": "Verbatim quote and section from document if relevant",
-  "legalContext": "Verified legal information from evidence chains if relevant",
-  "whatIsUncertain": "Facts or legal questions that cannot be determined",
-  "whatWouldChangeAnswer": ["Contingent fact 1", "Contingent fact 2"],
-  "followUpQuestions": ["Max 3 high-value questions"],
-  "whatToDoNext": "Safe, practical, and reversible preparation step",
-  "citedClauseSections": ["section numbers e.g. 5, 8"],
-  "citedLegalSourceIds": ["source ids"],
-  "confidence": "high",
-  "isOutOfScope": false
-}
-`.trim();
+  // The quoted document text must really be in the report; otherwise use the verbatim quote.
+  const quoteOk = (q?: string | null) => {
+    if (!q) return false;
+    const stripped = normalizeWs(q.replace(/^[^"“]*["“]/, "").replace(/["”][^"”]*$/, ""));
+    return stripped.length > 12 && report.clauses.some((c) => normalizeWs(c.rawText || "").includes(stripped.slice(0, 80)));
+  };
 
-      const response = await gemini.models.generateContent({
-        model: GEMINI_CONFIG.defaultModel,
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        config: {
-          temperature: GEMINI_CONFIG.temperature,
-          responseMimeType: "application/json",
-        },
-      });
-
-      const rawText = response.text?.trim();
-      if (rawText) {
-        const jsonCandidate: unknown = JSON.parse(rawText);
-        const validation = AskAnswerSchema.safeParse(jsonCandidate);
-        if (!validation.success) {
-          throw new Error(
-            `Gemini returned a response that did not match the expected Ask LawPilot schema: ${validation.error.message}`
-          );
-        }
-        const parsed = validation.data;
-
-        // Build citations from report
-        const citations: AskAnswerCitation[] = [];
-
-        // Add clause citations
-        if (parsed.citedClauseSections && Array.isArray(parsed.citedClauseSections)) {
-          for (const sec of parsed.citedClauseSections) {
-            const matched = report.clauses.find(
-              (c) =>
-                c.section === `Section ${sec}` ||
-                c.sectionNumber === sec ||
-                c.title?.toLowerCase().includes(`section ${sec}`)
-            );
-            if (matched) {
-              citations.push({
-                id: `cit-clause-${matched.id}`,
-                type: "document_clause",
-                clauseId: matched.id,
-                clauseTitle: matched.title,
-                sectionNumber: matched.sectionNumber || matched.section,
-                pageNumber: matched.pageNumber,
-                exactQuote: (matched.rawText || matched.clauseText || "").slice(0, 160),
-              });
-            }
-          }
-        }
-
-        // Add legal source citations
-        const sources: LegalSource[] = [];
-        if (parsed.citedLegalSourceIds && Array.isArray(parsed.citedLegalSourceIds)) {
-          const allReportSources = (report.evidenceChains || []).flatMap((ch) => ch.legalSources || []);
-          for (const sId of parsed.citedLegalSourceIds) {
-            const found = allReportSources.find((s) => s.id === sId || s.citation.includes(sId));
-            if (found) {
-              sources.push(found);
-              citations.push({
-                id: `cit-src-${found.id}`,
-                type: "legal_source",
-                sourceId: found.id,
-                sourceTitle: found.title,
-                citation: found.citation,
-                url: found.url,
-                jurisdiction: found.jurisdiction,
-                verificationStatus: found.verificationStatus,
-              });
-            }
-          }
-        }
-
-        return {
-          id: `ask-ans-${Date.now()}`,
-          question: sanitizedQuestion,
-          classification: parsed.classification,
-          answer: calibrateLanguage(parsed.answer),
-          whatDocumentSays: parsed.whatDocumentSays ? calibrateLanguage(parsed.whatDocumentSays) : undefined,
-          legalContext: parsed.legalContext ? calibrateLanguage(parsed.legalContext) : undefined,
-          whatIsUncertain: parsed.whatIsUncertain ? calibrateLanguage(parsed.whatIsUncertain) : undefined,
-          whatWouldChangeAnswer: parsed.whatWouldChangeAnswer?.map(calibrateLanguage),
-          followUpQuestions: (parsed.followUpQuestions || []).slice(0, 3).map(calibrateLanguage),
-          whatToDoNext: parsed.whatToDoNext ? calibrateLanguage(parsed.whatToDoNext) : undefined,
-          sources: sources.length > 0 ? sources : context.relevantSources.slice(0, 2),
-          citations,
-          confidence: parsed.confidence,
-          isOutOfScope: parsed.isOutOfScope,
-          isLiveAi: true,
-          disclaimer: GLOBAL_LEGAL_DISCLAIMER,
-        };
-      }
-    } catch {
-      // Fall through to deterministic grounded answer
-    }
+  const citations: AskAnswerCitation[] = [...grounded.citations.filter((c) => c.type === "document_clause")];
+  const sources: LegalSource[] = [];
+  for (const sId of parsed.citedLegalSourceIds) {
+    const found = allReportSources.find((s) => s.id === sId || s.citation === sId);
+    if (found && !sources.some((s) => s.id === found.id)) sources.push(found);
   }
+  const finalSources = sources.length > 0 ? sources : grounded.sources;
+  citations.push(...sourceCitations(finalSources));
 
-  // 5. Deterministic grounded answer fallback
-  return generateDeterministicGroundedAnswer(report, sanitizedQuestion, classificationResult.type);
+  return {
+    id: `ask-ans-${Date.now()}`,
+    question: sanitizedQuestion,
+    classification: parsed.classification ?? classificationResult.type,
+    answer: calibrateLanguage(parsed.answer),
+    whatDocumentSays: quoteOk(parsed.whatDocumentSays) ? calibrateLanguage(parsed.whatDocumentSays as string) : grounded.whatDocumentSays,
+    legalContext,
+    whatIsUncertain: parsed.whatIsUncertain ? calibrateLanguage(parsed.whatIsUncertain) : grounded.whatIsUncertain,
+    whatWouldChangeAnswer: parsed.whatWouldChangeAnswer.length > 0 ? parsed.whatWouldChangeAnswer.slice(0, 3).map(calibrateLanguage) : grounded.whatWouldChangeAnswer,
+    followUpQuestions: (parsed.followUpQuestions.length > 0 ? parsed.followUpQuestions : grounded.followUpQuestions || []).slice(0, 3).map(calibrateLanguage),
+    whatToDoNext: parsed.whatToDoNext ? calibrateLanguage(parsed.whatToDoNext) : grounded.whatToDoNext,
+    sources: finalSources,
+    citations,
+    confidence: parsed.confidence,
+    isOutOfScope: parsed.isOutOfScope,
+    isLiveAi: true,
+    disclaimer: GLOBAL_LEGAL_DISCLAIMER,
+  };
 }
