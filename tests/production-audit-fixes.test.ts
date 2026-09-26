@@ -89,6 +89,41 @@ describe("1. Gemini client: failures are handled and visible, never silent", () 
     expect(result.ok).toBe(false);
   });
 
+  it("reuses a cached answer for an identical request instead of spending quota again", async () => {
+    generateContent.mockResolvedValue({ text: '{"ok":true}', candidates: [] });
+    const first = await generateJson({ label: "c", contents: "same prompt", schema });
+    const tracker = new AiRunTracker();
+    const second = await generateJson({ label: "c", contents: "same prompt", schema, tracker });
+    expect(first.ok && second.ok).toBe(true);
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(tracker.summarize().mode).toBe("live");
+
+    await generateJson({ label: "c", contents: "different prompt", schema });
+    expect(generateContent).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares one provider call between concurrent identical requests", async () => {
+    generateContent.mockResolvedValue({ text: '{"ok":true}', candidates: [] });
+    const [a, b] = await Promise.all([
+      generateJson({ label: "d", contents: "x", schema }),
+      generateJson({ label: "d", contents: "x", schema }),
+    ]);
+    expect(a.ok && b.ok).toBe(true);
+    expect(generateContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips a model that just ran out of quota on the next call", async () => {
+    generateContent
+      .mockRejectedValueOnce(Object.assign(new Error("quota exceeded GenerateRequestsPerDayPerProjectPerModel"), { status: 429 }))
+      .mockResolvedValue({ text: '{"ok":true}', candidates: [] });
+    await generateJson({ label: "q", contents: "first", schema });
+    const exhaustedModel = generateContent.mock.calls[0][0].model;
+
+    await generateJson({ label: "q", contents: "second", schema });
+    expect(generateContent).toHaveBeenCalledTimes(3);
+    expect(generateContent.mock.calls[2][0].model).not.toBe(exhaustedModel);
+  });
+
   it("returns a clear failure when no key is configured", async () => {
     delete process.env.GEMINI_API_KEY;
     const result = await generateJson({ label: "k", contents: "x", schema });

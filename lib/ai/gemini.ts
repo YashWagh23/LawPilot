@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import type { ZodType } from "zod";
 import type { AiAnalysisStatus } from "@/types";
@@ -135,6 +136,8 @@ interface ErrorInfo {
   message: string;
   retryAfterMs?: number;
   isTimeout: boolean;
+  /** 429 caused by a per-day quota (resets daily, so retrying soon is pointless). */
+  isDailyQuota?: boolean;
 }
 
 function describeError(err: unknown): ErrorInfo {
@@ -152,7 +155,8 @@ function describeError(err: unknown): ErrorInfo {
       : undefined;
   const retryMatch = message.match(/retry in ([\d.]+)s/i) || message.match(/"retryDelay":\s*"([\d.]+)s"/i);
   const retryAfterMs = retryMatch ? Math.ceil(parseFloat(retryMatch[1]) * 1000) : undefined;
-  return { status, message: message.replace(/\s+/g, " ").slice(0, 200), retryAfterMs, isTimeout };
+  const isDailyQuota = /PerDay|per day/i.test(message);
+  return { status, message: message.replace(/\s+/g, " ").slice(0, 200), retryAfterMs, isTimeout, isDailyQuota };
 }
 
 function sleep(ms: number): Promise<void> {
@@ -178,16 +182,106 @@ const modelsWithoutThinkingSupport = new Set<string>();
 const PROVIDER_COOLDOWN_MS = 20_000;
 let providerCooldownUntil = 0;
 
-/** Test hook. */
+/**
+ * Quota savers (per server instance, best-effort):
+ *  - Identical requests (same step, prompt and settings) reuse a recent successful answer, and
+ *    concurrent duplicates share a single provider call. Re-running the same document, question
+ *    or negotiation, or React's dev-mode double request, no longer spends quota twice.
+ *  - A model that answered "quota exceeded" is skipped for a while instead of being hit again on
+ *    every call; the chain goes straight to the next model with its own quota bucket.
+ */
+const RESPONSE_CACHE_TTL_MS = 6 * 60 * 60_000;
+const RESPONSE_CACHE_MAX_ENTRIES = 200;
+const responseCache = new Map<string, { data: unknown; model: string; expiresAt: number }>();
+const inFlightRequests = new Map<string, Promise<GenerateJsonResult<unknown>>>();
+
+const MODEL_QUOTA_COOLDOWN_MIN_MS = 60_000;
+const MODEL_QUOTA_COOLDOWN_MAX_MS = 30 * 60_000;
+const modelCooldownUntil = new Map<string, number>();
+
+function quotaCooldownMs(info: ErrorInfo): number {
+  if (info.isDailyQuota) return MODEL_QUOTA_COOLDOWN_MAX_MS;
+  const requested = info.retryAfterMs ?? MODEL_QUOTA_COOLDOWN_MIN_MS;
+  return Math.min(Math.max(requested, MODEL_QUOTA_COOLDOWN_MIN_MS), MODEL_QUOTA_COOLDOWN_MAX_MS);
+}
+
+function requestCacheKey<T>(opts: GenerateJsonOptions<T>): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify([
+        opts.label,
+        opts.systemInstruction ?? "",
+        opts.contents,
+        opts.temperature ?? null,
+        opts.maxOutputTokens ?? null,
+      ])
+    )
+    .digest("hex");
+}
+
+/** Test hook. Also clears the response cache and per-model quota cooldowns. */
 export function resetGeminiCircuitBreaker(): void {
   providerCooldownUntil = 0;
+  modelCooldownUntil.clear();
+  responseCache.clear();
+  inFlightRequests.clear();
 }
 
 /**
  * Calls Gemini and returns schema-validated JSON, or an explicit failure reason.
  * Never throws: callers decide how to degrade (and the tracker records why).
+ * Successful answers are cached briefly; failures are never cached.
  */
 export async function generateJson<T>(opts: GenerateJsonOptions<T>): Promise<GenerateJsonResult<T>> {
+  if (!getGeminiClient()) {
+    return { ok: false, reason: "GEMINI_API_KEY is not configured" };
+  }
+
+  const key = requestCacheKey(opts);
+  const cached = responseCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    // Re-insert to keep recently used entries at the end (LRU eviction order).
+    responseCache.delete(key);
+    responseCache.set(key, cached);
+    opts.tracker?.record({ label: opts.label, model: cached.model, ok: true, ms: 0 });
+    return { ok: true, data: structuredClone(cached.data) as T, model: cached.model };
+  }
+  if (cached) responseCache.delete(key);
+
+  const pending = inFlightRequests.get(key);
+  if (pending) {
+    const shared = await pending;
+    if (!shared.ok) {
+      opts.tracker?.record({ label: opts.label, model: "-", ok: false, ms: 0, error: shared.reason });
+      return shared;
+    }
+    opts.tracker?.record({ label: opts.label, model: shared.model, ok: true, ms: 0 });
+    return { ok: true, data: structuredClone(shared.data) as T, model: shared.model };
+  }
+
+  const call = generateJsonUncached(opts);
+  inFlightRequests.set(key, call);
+  try {
+    const result = await call;
+    if (result.ok) {
+      responseCache.set(key, {
+        data: structuredClone(result.data),
+        model: result.model,
+        expiresAt: Date.now() + RESPONSE_CACHE_TTL_MS,
+      });
+      while (responseCache.size > RESPONSE_CACHE_MAX_ENTRIES) {
+        const oldest = responseCache.keys().next().value;
+        if (oldest === undefined) break;
+        responseCache.delete(oldest);
+      }
+    }
+    return result;
+  } finally {
+    inFlightRequests.delete(key);
+  }
+}
+
+async function generateJsonUncached<T>(opts: GenerateJsonOptions<T>): Promise<GenerateJsonResult<T>> {
   const gemini = getGeminiClient();
   if (!gemini) {
     return { ok: false, reason: "GEMINI_API_KEY is not configured" };
@@ -199,13 +293,21 @@ export async function generateJson<T>(opts: GenerateJsonOptions<T>): Promise<Gen
     return { ok: false, reason };
   }
 
+  const now = Date.now();
+  const modelChain = getGeminiModelChain().filter((m) => (modelCooldownUntil.get(m) ?? 0) <= now);
+  if (modelChain.length === 0) {
+    const reason = "skipped: every Gemini model is over quota (cooling down)";
+    opts.tracker?.record({ label: opts.label, model: "-", ok: false, ms: 0, error: reason });
+    return { ok: false, reason };
+  }
+
   const started = Date.now();
   const totalBudget = opts.totalTimeoutMs ?? 30_000;
   const attemptCap = opts.attemptTimeoutMs ?? 20_000;
   const remaining = () => totalBudget - (Date.now() - started);
   const failures: string[] = [];
 
-  for (const model of getGeminiModelChain()) {
+  for (const model of modelChain) {
     // At most two tries per model: the second one only after a short, explicitly-requested delay
     // or a transient provider error.
     for (let attempt = 1; attempt <= 2; attempt++) {
@@ -268,12 +370,14 @@ export async function generateJson<T>(opts: GenerateJsonOptions<T>): Promise<Gen
           return finishFailure(opts, failures, "authentication/permission error");
         }
 
-        // Rate limited: wait only if the provider says it is brief; otherwise try the next model.
+        // Rate limited: wait only if the provider says it is brief; otherwise rest this model for a
+        // while (so later calls skip it) and try the next one.
         if (info.status === 429) {
           if (attempt === 1 && info.retryAfterMs !== undefined && info.retryAfterMs <= 4000 && remaining() > info.retryAfterMs + 4000) {
             await sleep(info.retryAfterMs + 250);
             continue;
           }
+          modelCooldownUntil.set(model, Date.now() + quotaCooldownMs(info));
           break;
         }
 
