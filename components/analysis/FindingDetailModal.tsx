@@ -134,15 +134,17 @@ export function FindingDetailModal({
             </blockquote>
           </div>
 
-          {/* Section 3: Why It May Matter */}
-          <div className="pt-5 space-y-2">
-            <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-              Why it may matter
-            </p>
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed lp-text-pretty">
-              {finding.whyItMayMatter}
-            </p>
-          </div>
+          {/* Section 3: Why It May Matter (skipped when it repeats Section 1 verbatim) */}
+          {finding.whyItMayMatter.trim() !== finding.whyWeFlagged.trim() && (
+            <div className="pt-5 space-y-2">
+              <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                Why it may matter
+              </p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed lp-text-pretty">
+                {finding.whyItMayMatter}
+              </p>
+            </div>
+          )}
 
           {/* Section 4: What to Verify */}
           {finding.whatToVerify.length > 0 && (

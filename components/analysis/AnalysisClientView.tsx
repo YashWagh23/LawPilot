@@ -87,9 +87,13 @@ export function AnalysisClientView({ report }: AnalysisClientViewProps) {
   // Verification: reflects what the evidence chains actually verified (never assumed).
   const verification = useMemo(() => getReportVerificationState(report), [report]);
 
-  // Transform findings into clean Presentation models
+  // Transform findings into clean Presentation models, highest severity first
+  // (stable sort keeps document order within the same tier)
   const presentationFindings = useMemo(() => {
-    return report.findings.map((f) => toFindingPresentation(f, report));
+    const tierRank = { HIGH: 0, MEDIUM: 1, REVIEW: 2, INFO: 3 } as const;
+    return report.findings
+      .map((f) => toFindingPresentation(f, report))
+      .sort((a, b) => tierRank[a.severityLabel] - tierRank[b.severityLabel]);
   }, [report]);
 
   // Current active finding presentation
