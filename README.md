@@ -1,12 +1,76 @@
-# LawPilot
+<div align="center">
 
-> **Understand. Verify. Act.**
+# ⚖️ LawPilot
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black) ![React](https://img.shields.io/badge/React-19-61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6) ![Tests](https://img.shields.io/badge/tests-306%20passing-brightgreen) ![Zero Auth](https://img.shields.io/badge/auth-none%20required-lightgrey)
+### Understand. Verify. Act.
+
+Plain-English contract analysis with an auditable Evidence Chain behind every finding.
+
+[![Live Demo](https://img.shields.io/badge/live%20demo-lawpilot--sepia.vercel.app-4f46e5?logo=vercel&logoColor=white)](https://lawpilot-sepia.vercel.app/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](#architecture--tech-stack)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](#architecture--tech-stack)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](#architecture--tech-stack)
+[![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white)](#ai--legal-grounding)
+[![Tests](https://img.shields.io/badge/tests-359%20passing-brightgreen?logo=vitest&logoColor=white)](#testing--verification)
+[![Zero Auth](https://img.shields.io/badge/auth-none%20required-lightgrey)](#security--privacy)
+[![India-first](https://img.shields.io/badge/grounding-India%20%C2%B7%20Maharashtra-FF9933)](#india-first-maharashtra-aware)
 
 **Live Demo:** [lawpilot-sepia.vercel.app](https://lawpilot-sepia.vercel.app/)
 
+[Features](#core-features) · [Screenshots](#screenshots) · [Evidence Chain](#what-makes-lawpilot-different-the-evidence-chain) · [Negotiation Copilot](#negotiation-copilot) · [Local Setup](#local-setup) · [Testing](#testing--verification)
+
+<a href="https://lawpilot-sepia.vercel.app/analysis/demo-employment-agreement"><img src="docs/screenshots/analysis-overview.png" alt="LawPilot Analysis Overview for a sample employment agreement: India · Maharashtra jurisdiction, Verified status, and five prioritized findings (HIGH and MEDIUM), each with Negotiate and Why this matters actions" width="900"></a>
+
+<sub>Analysis Overview of the built-in sample employment agreement. Click the image to open it in the live demo.</sub>
+
+</div>
+
 LawPilot turns dense legal documents and real-world legal situations into plain-English findings, evidence-backed legal context, and practical next steps — without requiring a law degree, an account, or a database.
+
+> **Informational tool, not legal advice.** LawPilot helps you prepare for a professional consultation; it does not replace one. See the [Disclaimer](#disclaimer).
+
+---
+
+<details open>
+<summary><b>Table of contents</b></summary>
+
+- [Highlights](#highlights)
+- [The Problem](#the-problem)
+- [The Solution](#the-solution)
+- [What Makes LawPilot Different: The Evidence Chain](#what-makes-lawpilot-different-the-evidence-chain)
+- [Core Features](#core-features)
+- [Screenshots](#screenshots)
+- [Negotiation Copilot](#negotiation-copilot)
+- [India-First, Maharashtra-Aware](#india-first-maharashtra-aware)
+- [Supported Document Formats](#supported-document-formats)
+- [AI & Legal Grounding](#ai--legal-grounding)
+- [Architecture & Tech Stack](#architecture--tech-stack)
+- [Efficiency](#efficiency)
+- [Accessibility](#accessibility)
+- [Security & Privacy](#security--privacy)
+- [Testing & Verification](#testing--verification)
+- [Problem Statement Alignment](#problem-statement-alignment-ai-for-legal-assistance--access)
+- [Local Setup](#local-setup)
+- [Disclaimer](#disclaimer)
+
+</details>
+
+---
+
+## Highlights
+
+| | |
+|---|---|
+| 📄 **Document Review** | Upload a PDF, DOCX, or TXT and get clause-by-clause findings prioritized by impact (HIGH / MEDIUM / REVIEW / INFO), with plain-English explanations. |
+| 🔗 **Evidence Chain** | Every finding links to the exact contract quote, a curated legal source, an explicit verification status, and stated uncertainty. |
+| 🤝 **Negotiation Copilot** | Turns a material finding into a draft clause revision, a fallback position, and a courteous message to the other party, citing only sources already in that finding's Evidence Chain. |
+| 💬 **Ask LawPilot** | Grounded Q&A answered from your document and its Evidence Chains, with a "Still uncertain" note and follow-up questions. |
+| 🔀 **Compare Documents** | Semantic diff of two drafts: added, removed, modified, and moved clauses, with materiality scoring. |
+| ✅ **Action Plan & Lawyer Brief** | Reversible next steps plus a printable, copyable brief for a lawyer consultation. |
+| 🧭 **Situation Navigator** | No document? Describe what happened and get missing facts, relevant concepts, and next steps. |
+| 🛡️ **Works without AI** | Every Gemini-backed flow has a deterministic fallback, so the app stays usable with no API key. |
+
+**Verification-state consistency.** One shared module (`lib/analysis/verificationState.ts`) decides the verification badges shown in the Analysis view, Ask LawPilot, the Evidence Chain views, the Compare clause view, and the Lawyer Brief. A finding shows as **Verified** only when the verification gate marked it verified *and* at least one legal source survived validation. When no source could be verified, the analysis says so ("the findings rest on the document text alone") instead of showing a verified badge.
 
 ---
 
@@ -82,6 +146,57 @@ The Evidence Chain is a typed data structure (`EvidenceChain` in `types/index.ts
 | **Negotiation Copilot** | Analysis → Overview → "Negotiate" on a material finding, or "Negotiate this" in the finding detail | Drafts a proposed clause revision, a fallback position, and a polite message to the counterparty for one finding. Legal references come only from that finding's Evidence Chain. Saved drafts appear in the Action Plan and the Lawyer Brief. See [Negotiation Copilot](#negotiation-copilot). |
 
 All AI-powered flows have a deterministic, non-AI fallback (see [Reliability](#reliability--fallback-behavior)), so the app remains fully functional without a configured API key.
+
+---
+
+## Screenshots
+
+All screenshots are captured from the running app using the built-in sample data (a fictional Indian employment agreement, the sample redline pair, and the sample situation), in light mode at 1440 × 900.
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/landing.png" alt="LawPilot landing page with the headline 'Legal documents weren't written for humans. LawPilot was.' and Analyze a document / See a sample analysis buttons">
+      <p align="center"><b>Landing</b><br><sub>Start with your own document or the sample analysis. No account required.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/finding-detail.png" alt="Finding detail modal for the ₹4,50,000 training bond: why it was flagged, the exact contract quote, why it may matter, and what to verify">
+      <p align="center"><b>Finding detail</b><br><sub>Why it was flagged, the verbatim clause, and what to verify, with Negotiate, Ask, and View in Document actions.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/negotiation-copilot.png" alt="Negotiation Copilot modal marked 'Draft for review, not legal advice' and 'AI-refined and validated', showing the negotiation issue, current wording, and a suggested revised clause">
+      <p align="center"><b>Negotiation Copilot</b><br><sub>A draft-for-review clause revision grounded in the finding's Evidence Chain, saved to the Action Plan and Lawyer Brief.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/ask-lawpilot.png" alt="Ask LawPilot answering 'Can my employer recover the training amount?' with a grounded answer, a Still uncertain note, and follow-up questions">
+      <p align="center"><b>Ask LawPilot</b><br><sub>Grounded answers with a "Still uncertain" note, follow-ups, and the contract quote and legal source on demand.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/action-plan.png" alt="Next Steps tab showing 'Your Next Steps' checklist with completion tracking and a Prepare for a Lawyer button">
+      <p align="center"><b>Action Plan</b><br><sub>Reversible preparation steps with completion tracking, including saved negotiation drafts.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/lawyer-brief.png" alt="Lawyer Brief marked Legal Counsel Ready, with Copy Brief (MD), Download, and Print Brief actions and the attorney preparation brief below">
+      <p align="center"><b>Lawyer Brief</b><br><sub>A structured intake brief for counsel you can copy as Markdown, download, or print.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/compare.png" alt="Compare view: 'What changed?' summary with 5 material changes such as notice 60 days to 90 days and non-compete 6 months to 12 months, each with an Inspect link">
+      <p align="center"><b>Compare Documents</b><br><sub>Material changes between two drafts, with a side-by-side clause view and legal assessment.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/situation-navigator.png" alt="Situation Navigator structured assessment for an unpaid freelance invoice: situation summary and applicable legal concepts with caveats">
+      <p align="center"><b>Situation Navigator</b><br><sub>A structured assessment from a plain-English description: what happened, what it may involve, what's missing, and what to do next.</sub></p>
+    </td>
+  </tr>
+</table>
+
+<p align="right"><a href="#readme">↑ Back to top</a></p>
 
 ---
 
@@ -259,6 +374,8 @@ npx tsc --noEmit   # TypeScript strict mode — 0 errors
 npm run lint       # ESLint — 0 errors, 0 warnings
 npm run build      # Production build (Next.js/Turbopack) — succeeds
 ```
+
+> **Latest run on the current codebase:** `npx vitest run` → **23 test files, 359 tests, all passing.** The per-file table below was written before the three newest suites were added (`numbered-section-preservation.test.ts`, `production-audit-fixes.test.ts`, `verification-badge-and-heuristic-labels.test.ts`), and some per-file counts have grown since. It is kept unchanged as the original record.
 
 ### Automated Suite (20 files · 268 tests)
 
